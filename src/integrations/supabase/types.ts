@@ -14,7 +14,452 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      bank_accounts: {
+        Row: {
+          created_at: string
+          currency: string | null
+          current_balance: number
+          id: string
+          last_updated: string
+          name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          currency?: string | null
+          current_balance?: number
+          id?: string
+          last_updated?: string
+          name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          currency?: string | null
+          current_balance?: number
+          id?: string
+          last_updated?: string
+          name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      big_purchase_goals: {
+        Row: {
+          category: Database["public"]["Enums"]["purchase_category"]
+          created_at: string
+          current_saved: number
+          id: string
+          monthly_contribution: number
+          name: string
+          notes: string | null
+          priority: Database["public"]["Enums"]["priority_level"]
+          target_amount: number
+          target_date: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          category?: Database["public"]["Enums"]["purchase_category"]
+          created_at?: string
+          current_saved?: number
+          id?: string
+          monthly_contribution: number
+          name: string
+          notes?: string | null
+          priority?: Database["public"]["Enums"]["priority_level"]
+          target_amount: number
+          target_date?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          category?: Database["public"]["Enums"]["purchase_category"]
+          created_at?: string
+          current_saved?: number
+          id?: string
+          monthly_contribution?: number
+          name?: string
+          notes?: string | null
+          priority?: Database["public"]["Enums"]["priority_level"]
+          target_amount?: number
+          target_date?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      budgets: {
+        Row: {
+          created_at: string
+          currency: string | null
+          daily_limit: number | null
+          days_in_month: number | null
+          id: string
+          left_budget: number | null
+          month: string
+          notes: string | null
+          spent_budget: number | null
+          status: string | null
+          total_budget: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          currency?: string | null
+          daily_limit?: number | null
+          days_in_month?: number | null
+          id?: string
+          left_budget?: number | null
+          month: string
+          notes?: string | null
+          spent_budget?: number | null
+          status?: string | null
+          total_budget: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          currency?: string | null
+          daily_limit?: number | null
+          days_in_month?: number | null
+          id?: string
+          left_budget?: number | null
+          month?: string
+          notes?: string | null
+          spent_budget?: number | null
+          status?: string | null
+          total_budget?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      expenses: {
+        Row: {
+          amount: number
+          card_id: string | null
+          category: string
+          created_at: string
+          description: string
+          expense_date: string
+          expense_month: string | null
+          id: string
+          kind: Database["public"]["Enums"]["expense_kind"]
+          month: string
+          month_of_expense: string | null
+          payment_method: Database["public"]["Enums"]["payment_method"]
+          recurring_day_of_month: number | null
+          recurring_type: Database["public"]["Enums"]["recurring_type"] | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          card_id?: string | null
+          category: string
+          created_at?: string
+          description: string
+          expense_date: string
+          expense_month?: string | null
+          id?: string
+          kind?: Database["public"]["Enums"]["expense_kind"]
+          month: string
+          month_of_expense?: string | null
+          payment_method: Database["public"]["Enums"]["payment_method"]
+          recurring_day_of_month?: number | null
+          recurring_type?: Database["public"]["Enums"]["recurring_type"] | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          card_id?: string | null
+          category?: string
+          created_at?: string
+          description?: string
+          expense_date?: string
+          expense_month?: string | null
+          id?: string
+          kind?: Database["public"]["Enums"]["expense_kind"]
+          month?: string
+          month_of_expense?: string | null
+          payment_method?: Database["public"]["Enums"]["payment_method"]
+          recurring_day_of_month?: number | null
+          recurring_type?: Database["public"]["Enums"]["recurring_type"] | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      incomes: {
+        Row: {
+          amount: number
+          created_at: string
+          description: string | null
+          id: string
+          income_date: string | null
+          month: string
+          name: string
+          recurring_day_of_month: number | null
+          recurring_type: Database["public"]["Enums"]["recurring_type"] | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          income_date?: string | null
+          month: string
+          name: string
+          recurring_day_of_month?: number | null
+          recurring_type?: Database["public"]["Enums"]["recurring_type"] | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          income_date?: string | null
+          month?: string
+          name?: string
+          recurring_day_of_month?: number | null
+          recurring_type?: Database["public"]["Enums"]["recurring_type"] | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      recurring_incomes: {
+        Row: {
+          created_at: string
+          day_of_month: number
+          default_amount: number
+          id: string
+          is_active: boolean
+          name: string
+          notes: string | null
+          source: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          day_of_month: number
+          default_amount: number
+          id?: string
+          is_active?: boolean
+          name: string
+          notes?: string | null
+          source: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          day_of_month?: number
+          default_amount?: number
+          id?: string
+          is_active?: boolean
+          name?: string
+          notes?: string | null
+          source?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      recurring_payments: {
+        Row: {
+          card_id: string | null
+          category: string
+          created_at: string
+          day_of_month: number
+          default_amount: number
+          id: string
+          is_active: boolean
+          name: string
+          notes: string | null
+          payment_method: Database["public"]["Enums"]["payment_method"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          card_id?: string | null
+          category: string
+          created_at?: string
+          day_of_month: number
+          default_amount: number
+          id?: string
+          is_active?: boolean
+          name: string
+          notes?: string | null
+          payment_method: Database["public"]["Enums"]["payment_method"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          card_id?: string | null
+          category?: string
+          created_at?: string
+          day_of_month?: number
+          default_amount?: number
+          id?: string
+          is_active?: boolean
+          name?: string
+          notes?: string | null
+          payment_method?: Database["public"]["Enums"]["payment_method"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      recurring_savings: {
+        Row: {
+          action_type: Database["public"]["Enums"]["savings_action"]
+          card_id: string | null
+          created_at: string
+          day_of_month: number
+          default_amount: number
+          id: string
+          is_active: boolean
+          name: string
+          notes: string | null
+          transfer_method: Database["public"]["Enums"]["transfer_method"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          action_type: Database["public"]["Enums"]["savings_action"]
+          card_id?: string | null
+          created_at?: string
+          day_of_month: number
+          default_amount: number
+          id?: string
+          is_active?: boolean
+          name: string
+          notes?: string | null
+          transfer_method: Database["public"]["Enums"]["transfer_method"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          action_type?: Database["public"]["Enums"]["savings_action"]
+          card_id?: string | null
+          created_at?: string
+          day_of_month?: number
+          default_amount?: number
+          id?: string
+          is_active?: boolean
+          name?: string
+          notes?: string | null
+          transfer_method?: Database["public"]["Enums"]["transfer_method"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      savings: {
+        Row: {
+          action: Database["public"]["Enums"]["savings_action"] | null
+          action_amount: number | null
+          amount: number
+          card_id: string | null
+          created_at: string
+          currency: string | null
+          id: string
+          month: string
+          monthly_deposit: number | null
+          name: string
+          recurring_day_of_month: number | null
+          recurring_type: Database["public"]["Enums"]["recurring_type"] | null
+          transfer_method: Database["public"]["Enums"]["transfer_method"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          action?: Database["public"]["Enums"]["savings_action"] | null
+          action_amount?: number | null
+          amount: number
+          card_id?: string | null
+          created_at?: string
+          currency?: string | null
+          id?: string
+          month: string
+          monthly_deposit?: number | null
+          name: string
+          recurring_day_of_month?: number | null
+          recurring_type?: Database["public"]["Enums"]["recurring_type"] | null
+          transfer_method: Database["public"]["Enums"]["transfer_method"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          action?: Database["public"]["Enums"]["savings_action"] | null
+          action_amount?: number | null
+          amount?: number
+          card_id?: string | null
+          created_at?: string
+          currency?: string | null
+          id?: string
+          month?: string
+          monthly_deposit?: number | null
+          name?: string
+          recurring_day_of_month?: number | null
+          recurring_type?: Database["public"]["Enums"]["recurring_type"] | null
+          transfer_method?: Database["public"]["Enums"]["transfer_method"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      savings_growth: {
+        Row: {
+          created_at: string
+          id: string
+          month: string
+          notes: string | null
+          savings_id: string
+          user_id: string
+          value_after_growth: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          month: string
+          notes?: string | null
+          savings_id: string
+          user_id: string
+          value_after_growth: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          month?: string
+          notes?: string | null
+          savings_id?: string
+          user_id?: string
+          value_after_growth?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "savings_growth_savings_id_fkey"
+            columns: ["savings_id"]
+            isOneToOne: false
+            referencedRelation: "savings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -23,7 +468,20 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      expense_kind: "planned" | "payed" | "predicted"
+      payment_method: "bank_transfer" | "credit_card"
+      priority_level: "high" | "medium" | "low"
+      purchase_category:
+        | "furniture"
+        | "electronics"
+        | "education"
+        | "vehicle"
+        | "property"
+        | "vacation"
+        | "other"
+      recurring_type: "monthly" | "weekly"
+      savings_action: "deposit" | "withdrawal"
+      transfer_method: "bank_account" | "credit_card"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +608,22 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      expense_kind: ["planned", "payed", "predicted"],
+      payment_method: ["bank_transfer", "credit_card"],
+      priority_level: ["high", "medium", "low"],
+      purchase_category: [
+        "furniture",
+        "electronics",
+        "education",
+        "vehicle",
+        "property",
+        "vacation",
+        "other",
+      ],
+      recurring_type: ["monthly", "weekly"],
+      savings_action: ["deposit", "withdrawal"],
+      transfer_method: ["bank_account", "credit_card"],
+    },
   },
 } as const
