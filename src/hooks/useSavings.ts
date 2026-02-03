@@ -69,6 +69,28 @@ export const useSavings = () => {
     },
   });
 
+  // Soft delete - marks the account as closed rather than deleting history
+  const closeSavingsAccount = useMutation({
+    mutationFn: async (name: string) => {
+      if (!user) throw new Error('Not authenticated');
+      // Find all records for this account name and mark them as closed
+      const { error } = await supabase
+        .from('savings')
+        .update({ closed_at: new Date().toISOString() })
+        .eq('user_id', user.id)
+        .eq('name', name);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['savings'] });
+      toast({ title: 'Savings account closed', description: 'Historical data has been preserved' });
+    },
+    onError: (error) => {
+      toast({ title: 'Failed to close account', description: error.message, variant: 'destructive' });
+    },
+  });
+
+  // Hard delete - only for specific records (used internally)
   const deleteSavings = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase
@@ -79,7 +101,7 @@ export const useSavings = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['savings'] });
-      toast({ title: 'Savings deleted successfully' });
+      toast({ title: 'Savings record deleted' });
     },
     onError: (error) => {
       toast({ title: 'Failed to delete savings', description: error.message, variant: 'destructive' });
@@ -93,5 +115,6 @@ export const useSavings = () => {
     addSavings: addSavings.mutate,
     updateSavings: updateSavings.mutate,
     deleteSavings: deleteSavings.mutate,
+    closeSavingsAccount: closeSavingsAccount.mutate,
   };
 };
