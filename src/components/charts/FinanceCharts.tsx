@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import {
   AreaChart,
   Area,
@@ -13,7 +14,7 @@ import {
   Bar,
   Legend,
 } from 'recharts';
-import { mockMonthlyData, mockCategoryData, mockSavingsGrowth } from '@/lib/mockData';
+import { useFinance } from '@/contexts/FinanceContext';
 import { formatCurrency } from '@/lib/formatters';
 
 interface CustomTooltipProps {
@@ -42,13 +43,53 @@ const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
   return null;
 };
 
+// Helper to get last N months
+const getLastNMonths = (n: number): string[] => {
+  const months: string[] = [];
+  const today = new Date();
+  for (let i = n - 1; i >= 0; i--) {
+    const date = new Date(today.getFullYear(), today.getMonth() - i, 1);
+    months.push(`${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`);
+  }
+  return months;
+};
+
+// Helper to format month for display
+const formatMonth = (monthKey: string): string => {
+  const [year, month] = monthKey.split('-').map(Number);
+  return new Date(year, month - 1).toLocaleDateString('en-US', { month: 'short' });
+};
+
 export const IncomeExpenseChart = () => {
+  const { incomes, expenses } = useFinance();
+
+  const chartData = useMemo(() => {
+    const last6Months = getLastNMonths(6);
+    
+    return last6Months.map(monthKey => {
+      const monthIncome = incomes
+        .filter(i => i.month === monthKey)
+        .reduce((sum, i) => sum + Number(i.amount), 0);
+      
+      const monthExpenses = expenses
+        .filter(e => e.month === monthKey)
+        .reduce((sum, e) => sum + Number(e.amount), 0);
+
+      return {
+        month: formatMonth(monthKey),
+        monthKey,
+        income: monthIncome,
+        expenses: monthExpenses,
+      };
+    });
+  }, [incomes, expenses]);
+
   return (
     <div className="glass rounded-xl p-5 shadow-card animate-slide-up">
       <h3 className="font-semibold mb-4">Income vs Expenses</h3>
       <div className="h-64">
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={mockMonthlyData} barGap={8}>
+          <BarChart data={chartData} barGap={8}>
             <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
             <XAxis 
               dataKey="month" 
@@ -85,6 +126,48 @@ export const IncomeExpenseChart = () => {
 };
 
 export const SpendingByCategoryChart = () => {
+  const { expenses, currentMonth } = useFinance();
+
+  const chartData = useMemo(() => {
+    const categoryTotals = expenses
+      .filter(e => e.month === currentMonth)
+      .reduce((acc, e) => {
+        const category = e.category || 'other';
+        acc[category] = (acc[category] || 0) + Number(e.amount);
+        return acc;
+      }, {} as Record<string, number>);
+
+    const categoryColors: Record<string, string> = {
+      room: 'hsl(var(--chart-1))',
+      gifts: 'hsl(var(--chart-2))',
+      psychologist: 'hsl(var(--chart-3))',
+      college: 'hsl(var(--chart-4))',
+      vacation: 'hsl(var(--chart-5))',
+      debit_from_credit_card: 'hsl(var(--warning))',
+      budget: 'hsl(var(--accent))',
+      other: 'hsl(var(--muted))',
+    };
+
+    return Object.entries(categoryTotals)
+      .map(([name, value]) => ({
+        name: name.replace(/_/g, ' '),
+        value,
+        color: categoryColors[name] || 'hsl(var(--muted))',
+      }))
+      .sort((a, b) => b.value - a.value);
+  }, [expenses, currentMonth]);
+
+  if (chartData.length === 0) {
+    return (
+      <div className="glass rounded-xl p-5 shadow-card animate-slide-up">
+        <h3 className="font-semibold mb-4">Spending by Category</h3>
+        <div className="h-64 flex items-center justify-center text-muted-foreground">
+          No expense data for this month
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="glass rounded-xl p-5 shadow-card animate-slide-up">
       <h3 className="font-semibold mb-4">Spending by Category</h3>
@@ -92,7 +175,7 @@ export const SpendingByCategoryChart = () => {
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
             <Pie
-              data={mockCategoryData}
+              data={chartData}
               cx="50%"
               cy="50%"
               innerRadius={60}
@@ -100,7 +183,7 @@ export const SpendingByCategoryChart = () => {
               paddingAngle={4}
               dataKey="value"
             >
-              {mockCategoryData.map((entry, index) => (
+              {chartData.map((entry, index) => (
                 <Cell key={`cell-${index}`} fill={entry.color} />
               ))}
             </Pie>
@@ -109,7 +192,7 @@ export const SpendingByCategoryChart = () => {
               layout="vertical" 
               align="right" 
               verticalAlign="middle"
-              formatter={(value) => <span className="text-xs text-foreground">{value}</span>}
+              formatter={(value) => <span className="text-xs text-foreground capitalize">{value}</span>}
             />
           </PieChart>
         </ResponsiveContainer>
@@ -119,12 +202,41 @@ export const SpendingByCategoryChart = () => {
 };
 
 export const SavingsGrowthChart = () => {
+  const { savings } = useFinance();
+
+  const chartData = useMemo(() => {
+    const last6Months = getLastNMonths(6);
+    
+    return last6Months.map(monthKey => {
+      // Get latest savings per account for this month or earlier
+      const savingsUpToMonth = savings.filter(s => s.month <= monthKey);
+      
+      const latestPerAccount = savingsUpToMonth.reduce((acc, saving) => {
+        const existing = acc.get(saving.name);
+        if (!existing || saving.month > existing.month || 
+            (saving.month === existing.month && new Date(saving.updated_at) > new Date(existing.updated_at))) {
+          acc.set(saving.name, saving);
+        }
+        return acc;
+      }, new Map<string, typeof savings[0]>());
+
+      const total = Array.from(latestPerAccount.values())
+        .reduce((sum, s) => sum + Number(s.amount), 0);
+
+      return {
+        month: formatMonth(monthKey),
+        monthKey,
+        total,
+      };
+    });
+  }, [savings]);
+
   return (
     <div className="glass rounded-xl p-5 shadow-card animate-slide-up">
       <h3 className="font-semibold mb-4">Savings Growth</h3>
       <div className="h-64">
         <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={mockSavingsGrowth}>
+          <AreaChart data={chartData}>
             <defs>
               <linearGradient id="savingsGradient" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
