@@ -70,8 +70,9 @@ const IncomesList = () => {
       <div className="flex items-center justify-between mb-4">
         <div>
           <h3 className="font-semibold">Income</h3>
-          <p className="text-sm text-muted-foreground">
-            Total: {formatCurrency(totalIncome)}
+          <p className="text-lg font-bold text-success">{formatCurrency(totalIncome)}</p>
+          <p className="text-xs text-muted-foreground mt-1">
+            {monthlyIncomes.length} source{monthlyIncomes.length !== 1 ? 's' : ''} this month
           </p>
         </div>
         <Dialog open={isOpen} onOpenChange={setIsOpen}>

@@ -37,6 +37,19 @@ const ExpensesList = () => {
 
   const monthlyExpenses = expenses.filter((e) => e.month === currentMonth);
   const totalExpenses = monthlyExpenses.reduce((sum, e) => sum + e.amount, 0);
+  const paidExpenses = monthlyExpenses.filter(e => e.kind === 'payed').reduce((sum, e) => sum + e.amount, 0);
+  const plannedExpenses = monthlyExpenses.filter(e => e.kind === 'planned').reduce((sum, e) => sum + e.amount, 0);
+  const predictedExpenses = monthlyExpenses.filter(e => e.kind === 'predicted').reduce((sum, e) => sum + e.amount, 0);
+
+  const formatCardName = (cardId?: string) => {
+    if (!cardId) return '';
+    const cardNames: Record<string, string> = {
+      'fly-card': 'Fly Card',
+      'hever': 'Hever',
+      'visa': 'Visa',
+    };
+    return cardNames[cardId] || cardId;
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -82,9 +95,12 @@ const ExpensesList = () => {
       <div className="flex items-center justify-between mb-4">
         <div>
           <h3 className="font-semibold">Expenses</h3>
-          <p className="text-sm text-muted-foreground">
-            Total: {formatCurrency(totalExpenses)}
-          </p>
+          <p className="text-lg font-bold">{formatCurrency(totalExpenses)}</p>
+          <div className="flex gap-3 text-xs text-muted-foreground mt-1">
+            <span className="text-success">Paid: {formatCurrency(paidExpenses)}</span>
+            <span className="text-warning">Planned: {formatCurrency(plannedExpenses)}</span>
+            <span className="text-muted-foreground">Predicted: {formatCurrency(predictedExpenses)}</span>
+          </div>
         </div>
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
           <DialogTrigger asChild>
@@ -141,6 +157,7 @@ const ExpensesList = () => {
                       <SelectItem value="psychologist">Psychologist</SelectItem>
                       <SelectItem value="college">College</SelectItem>
                       <SelectItem value="vacation">Vacation</SelectItem>
+                      <SelectItem value="debit_from_credit_card">Debit from Credit Card</SelectItem>
                       <SelectItem value="budget">Budget</SelectItem>
                       <SelectItem value="other">Other</SelectItem>
                     </SelectContent>
@@ -238,7 +255,7 @@ const ExpensesList = () => {
                       <Repeat className="h-3 w-3 text-muted-foreground" />
                     )}
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <span
                       className={cn(
                         'text-xs px-2 py-0.5 rounded-full',
@@ -247,6 +264,11 @@ const ExpensesList = () => {
                     >
                       {expense.category.replace(/_/g, ' ')}
                     </span>
+                    {expense.category === 'debit_from_credit_card' && expense.cardId && (
+                      <span className="text-xs px-2 py-0.5 rounded-full bg-primary/20 text-primary">
+                        {formatCardName(expense.cardId)}
+                      </span>
+                    )}
                     <span className="text-xs text-muted-foreground capitalize">
                       {expense.kind}
                     </span>
