@@ -348,7 +348,7 @@ const RecurringPaymentsPanel = () => {
                   </Select>
                 </div>
               </div>
-              {formData.paymentMethod === 'credit_card' && (
+              {(formData.paymentMethod === 'credit_card' || formData.category === 'debit_from_credit_card') && (
                 <div className="space-y-2">
                   <Label>Card</Label>
                   <Select
