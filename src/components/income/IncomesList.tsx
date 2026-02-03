@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useFinance } from '@/contexts/FinanceContext';
 import { formatCurrency, formatDate } from '@/lib/formatters';
+import { isDateUpToToday, isCurrentMonth } from '@/lib/dateUtils';
 import { Plus, Trash2, Briefcase, Gift, Heart, Pencil } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -32,7 +33,12 @@ const IncomesList = () => {
   });
 
   const monthlyIncomes = incomes.filter((i) => i.month === currentMonth);
-  const totalIncome = monthlyIncomes.reduce((sum, i) => sum + i.amount, 0);
+  
+  // For current month, only count items up to today's date
+  const shouldFilterByDate = isCurrentMonth(currentMonth);
+  const incomesUpToDate = monthlyIncomes.filter(i => !shouldFilterByDate || isDateUpToToday(i.incomeDate));
+  
+  const totalIncome = incomesUpToDate.reduce((sum, i) => sum + i.amount, 0);
 
   const resetForm = () => {
     setFormData({ description: '', amount: '', name: 'work' });
@@ -95,7 +101,12 @@ const IncomesList = () => {
           <h3 className="font-semibold">Income</h3>
           <p className="text-lg font-bold text-success">{formatCurrency(totalIncome)}</p>
           <p className="text-xs text-muted-foreground mt-1">
-            {monthlyIncomes.length} source{monthlyIncomes.length !== 1 ? 's' : ''} this month
+            {incomesUpToDate.length} source{incomesUpToDate.length !== 1 ? 's' : ''} this month
+            {monthlyIncomes.length > incomesUpToDate.length && (
+              <span className="text-warning ml-1">
+                (+{monthlyIncomes.length - incomesUpToDate.length} future)
+              </span>
+            )}
           </p>
         </div>
         <Dialog open={isOpen} onOpenChange={(open) => { setIsOpen(open); if (!open) resetForm(); }}>

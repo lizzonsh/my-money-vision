@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useMemo } from 'react';
 import { Budget, Expense, Income, Savings, BigPurchaseGoal, BankAccount, RecurringPayment, RecurringSavingsTemplate, RecurringIncome } from '@/types/finance';
 import {
   mockBudget,
@@ -11,6 +11,7 @@ import {
   mockRecurringSavings,
   mockRecurringIncomes
 } from '@/lib/mockData';
+import { isDateUpToToday, isCurrentMonth, getCurrentMonth } from '@/lib/dateUtils';
 
 interface FinanceContextType {
   budget: Budget;
@@ -226,12 +227,16 @@ export const FinanceProvider = ({ children }: { children: ReactNode }) => {
   // spent_budget = credit_card_expenses - planned_paid_expenses
   // left_budget = total_budget - spent_budget
   // daily_limit = left_budget / days_remaining
-  const calculatedBudget = (() => {
+  // IMPORTANT: Only count expenses up to today's date
+  const calculatedBudget = useMemo(() => {
     const totalBudget = typeof budget.totalBudget === 'string' 
       ? parseFloat(budget.totalBudget) 
       : budget.totalBudget;
 
-    const monthExpenses = expenses.filter(e => e.month === currentMonth);
+    // Only include expenses from the current month AND up to today's date
+    const monthExpenses = expenses.filter(e => 
+      e.month === currentMonth && isDateUpToToday(e.expenseDate)
+    );
     
     // Credit card total expenses (debit_from_credit_card category)
     const creditCardExpenses = monthExpenses
@@ -252,7 +257,7 @@ export const FinanceProvider = ({ children }: { children: ReactNode }) => {
     const dailyLimit = leftBudget / daysRemaining;
 
     return { spentBudget, leftBudget, dailyLimit };
-  })();
+  }, [budget, expenses, currentMonth]);
 
   return (
     <FinanceContext.Provider
