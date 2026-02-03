@@ -54,10 +54,34 @@ const SavingsCurrentStatus = () => {
       return acc;
     }, new Map<string, Savings>());
 
-  const uniqueSavings = Array.from(latestSavingsPerName.values());
+  // Match recurring savings to savings accounts by name
+  const getRecurringSavingsForAccount = (accountName: string) => {
+    return recurringSavings.filter(
+      rs => rs.is_active && rs.name.toLowerCase() === accountName.toLowerCase()
+    );
+  };
+
+  // Calculate recurring contribution for an account
+  const getRecurringContribution = (accountName: string) => {
+    const matching = getRecurringSavingsForAccount(accountName);
+    const deposits = matching
+      .filter(rs => rs.action_type === 'deposit')
+      .reduce((sum, rs) => sum + Number(rs.default_amount), 0);
+    const withdrawals = matching
+      .filter(rs => rs.action_type === 'withdrawal')
+      .reduce((sum, rs) => sum + Number(rs.default_amount), 0);
+    return deposits - withdrawals;
+  };
+
+  // Build unique savings with recurring info attached
+  const uniqueSavingsWithRecurring = Array.from(latestSavingsPerName.values()).map(saving => ({
+    ...saving,
+    recurringContribution: getRecurringContribution(saving.name),
+    matchingRecurringSavings: getRecurringSavingsForAccount(saving.name),
+  }));
 
   // Total portfolio value (sum of latest values per account)
-  const totalPortfolioValue = uniqueSavings.reduce((sum, s) => sum + Number(s.amount), 0);
+  const totalPortfolioValue = uniqueSavingsWithRecurring.reduce((sum, s) => sum + Number(s.amount), 0);
 
   // Total monthly deposits from recurring savings templates (active ones)
   const activeRecurringSavings = recurringSavings.filter(rs => rs.is_active);
@@ -128,7 +152,7 @@ const SavingsCurrentStatus = () => {
           <h3 className="font-semibold">Current Portfolio</h3>
           <p className="text-lg font-bold">{formatCurrency(totalPortfolioValue)}</p>
           <p className="text-xs text-muted-foreground mt-1">
-            {uniqueSavings.length} account{uniqueSavings.length !== 1 ? 's' : ''}
+            {uniqueSavingsWithRecurring.length} account{uniqueSavingsWithRecurring.length !== 1 ? 's' : ''}
             {netRecurringMonthly !== 0 && (
               <span className={netRecurringMonthly > 0 ? "text-success ml-2" : "text-destructive ml-2"}>
                 {netRecurringMonthly > 0 ? '+' : ''}{formatCurrency(netRecurringMonthly)}/mo recurring
@@ -242,12 +266,12 @@ const SavingsCurrentStatus = () => {
       </div>
 
       <div className="space-y-3">
-        {uniqueSavings.length === 0 ? (
+        {uniqueSavingsWithRecurring.length === 0 ? (
           <p className="text-sm text-muted-foreground text-center py-4">
             No savings accounts
           </p>
         ) : (
-          uniqueSavings.map((saving) => (
+          uniqueSavingsWithRecurring.map((saving) => (
             <div
               key={saving.id}
               className="p-4 rounded-lg bg-secondary/30 hover:bg-secondary/50 transition-colors group"
@@ -267,10 +291,16 @@ const SavingsCurrentStatus = () => {
                 <div className="flex items-center gap-2">
                   <div className="text-right">
                     <p className="text-lg font-bold">{formatCurrency(Number(saving.amount))}</p>
-                    {saving.monthly_deposit && (
-                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                        <TrendingUp className="h-3 w-3 text-success" />
-                        <span>+{formatCurrency(Number(saving.monthly_deposit))}/mo</span>
+                    {(saving.recurringContribution !== 0 || saving.monthly_deposit) && (
+                      <div className="flex items-center gap-1 text-xs">
+                        <TrendingUp className={cn("h-3 w-3", (saving.recurringContribution || Number(saving.monthly_deposit) || 0) > 0 ? "text-success" : "text-destructive")} />
+                        <span className={(saving.recurringContribution || Number(saving.monthly_deposit) || 0) > 0 ? "text-success" : "text-destructive"}>
+                          {(saving.recurringContribution || Number(saving.monthly_deposit) || 0) > 0 ? '+' : ''}
+                          {formatCurrency(saving.recurringContribution || Number(saving.monthly_deposit) || 0)}/mo
+                        </span>
+                        {saving.recurringContribution !== 0 && (
+                          <span className="text-muted-foreground">(recurring)</span>
+                        )}
                       </div>
                     )}
                   </div>
