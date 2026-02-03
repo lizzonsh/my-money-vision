@@ -10,6 +10,7 @@ import {
   Menu,
   X,
   ChevronLeft,
+  CircleDollarSign,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -41,7 +42,10 @@ const Sidebar = ({ children }: SidebarProps) => {
         >
           <Menu className="h-5 w-5" />
         </button>
-        <h1 className="ml-4 text-lg font-bold text-gradient">MoneyFlow</h1>
+        <div className="ml-4 flex items-center gap-2">
+          <CircleDollarSign className="h-6 w-6 text-primary" />
+          <h1 className="text-lg font-bold">MoneyFlow</h1>
+        </div>
       </div>
 
       {/* Mobile sidebar overlay */}
@@ -63,8 +67,13 @@ const Sidebar = ({ children }: SidebarProps) => {
         <div className="flex flex-col h-full">
           {/* Logo */}
           <div className="h-16 flex items-center justify-between px-4 border-b border-border/50">
-            {!collapsed && (
-              <h1 className="text-xl font-bold text-gradient">MoneyFlow</h1>
+            {!collapsed ? (
+              <div className="flex items-center gap-2">
+                <CircleDollarSign className="h-7 w-7 text-primary" />
+                <h1 className="text-xl font-bold">MoneyFlow</h1>
+              </div>
+            ) : (
+              <CircleDollarSign className="h-7 w-7 text-primary mx-auto" />
             )}
             <button
               onClick={() => {
