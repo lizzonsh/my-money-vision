@@ -51,6 +51,11 @@ const BudgetProgress = () => {
       total_budget: parseFloat(editBudget.totalBudget),
       days_in_month: parseInt(editBudget.daysInMonth),
       notes: editBudget.notes || null,
+      currency: 'ILS',
+      daily_limit: null,
+      left_budget: null,
+      spent_budget: null,
+      status: null,
     };
 
     if (budget) {

@@ -19,8 +19,7 @@ const AnalyticsPage = () => {
     .reduce((sum, e) => sum + e.amount, 0);
 
   const totalSavings = savings
-    .filter((s) => s.type === 'savings')
-    .reduce((sum, s) => sum + s.amount, 0);
+    .reduce((sum, s) => sum + Number(s.amount), 0);
 
   const savingsRate = monthlyIncome > 0 
     ? ((monthlyIncome - monthlyExpenses) / monthlyIncome * 100) 
