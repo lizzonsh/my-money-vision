@@ -56,6 +56,7 @@ export const getCategoryColor = (category: string): string => {
     vacation: 'hsl(var(--chart-5))',
     total: 'hsl(var(--primary))',
     debit_from_credit_card: 'hsl(var(--warning))',
+    budget: 'hsl(var(--accent))',
     other: 'hsl(var(--muted-foreground))',
   };
   return colors[category] || colors.other;

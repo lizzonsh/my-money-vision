@@ -12,7 +12,7 @@ export interface Expense {
   expenseDate: string;
   month: string;
   amount: number;
-  category: 'room' | 'gifts' | 'psychologist' | 'college' | 'vacation' | 'total' | 'debit_from_credit_card' | 'other';
+  category: 'room' | 'gifts' | 'psychologist' | 'college' | 'vacation' | 'total' | 'debit_from_credit_card' | 'budget' | 'other';
   kind: 'planned' | 'payed' | 'predicted';
   recurring?: {
     type: 'monthly' | 'weekly';
