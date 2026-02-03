@@ -6,6 +6,7 @@ import StatCard from '@/components/dashboard/StatCard';
 import BudgetProgress from '@/components/dashboard/BudgetProgress';
 import RecentTransactions from '@/components/dashboard/RecentTransactions';
 import SavingsGoals from '@/components/dashboard/SavingsGoals';
+import SavingsActivity from '@/components/dashboard/SavingsActivity';
 import MonthNavigation from '@/components/navigation/MonthNavigation';
 import {
   IncomeExpenseChart,
@@ -174,9 +175,10 @@ const Dashboard = () => {
       </div>
 
       {/* Middle Section */}
-      <div className="grid gap-6 lg:grid-cols-3">
+      <div className="grid gap-6 lg:grid-cols-4">
         <BudgetProgress />
         <RecentTransactions />
+        <SavingsActivity />
         <SavingsGoals />
       </div>
 
