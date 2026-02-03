@@ -69,21 +69,23 @@ export const useSavings = () => {
     },
   });
 
-  // Soft delete - marks the account as closed rather than deleting history
+  // Soft delete - marks the account as closed from a specific month forward
   const closeSavingsAccount = useMutation({
-    mutationFn: async (name: string) => {
+    mutationFn: async ({ name, fromMonth }: { name: string; fromMonth: string }) => {
       if (!user) throw new Error('Not authenticated');
-      // Find all records for this account name and mark them as closed
+      // Set closed_at to the first day of the selected month
+      // This means it will be hidden from this month forward, but visible in previous months
+      const closedDate = new Date(fromMonth + '-01T00:00:00.000Z').toISOString();
       const { error } = await supabase
         .from('savings')
-        .update({ closed_at: new Date().toISOString() })
+        .update({ closed_at: closedDate })
         .eq('user_id', user.id)
         .eq('name', name);
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['savings'] });
-      toast({ title: 'Savings account closed', description: 'Historical data has been preserved' });
+      toast({ title: 'Savings account closed', description: 'Historical data has been preserved for previous months' });
     },
     onError: (error) => {
       toast({ title: 'Failed to close account', description: error.message, variant: 'destructive' });
