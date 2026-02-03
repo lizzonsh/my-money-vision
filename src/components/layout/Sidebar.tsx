@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard,
   Receipt,
@@ -12,8 +12,11 @@ import {
   ChevronLeft,
   CircleDollarSign,
   Settings,
+  LogOut,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/contexts/AuthContext';
+import { Button } from '@/components/ui/button';
 
 const navigation = [
   { name: 'Dashboard', href: '/', icon: LayoutDashboard },
@@ -33,6 +36,13 @@ const Sidebar = ({ children }: SidebarProps) => {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+  const { user, signOut } = useAuth();
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/login');
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -125,19 +135,27 @@ const Sidebar = ({ children }: SidebarProps) => {
             })}
           </nav>
 
-          {/* Footer */}
-          {!collapsed && (
-            <div className="p-4 border-t border-border/50">
-              <div className="glass rounded-lg p-3 text-center">
-                <p className="text-xs text-muted-foreground">
-                  Track your finances
-                </p>
-                <p className="text-xs text-primary font-medium">
-                  Plan your future
+          {/* User & Logout */}
+          <div className="p-3 border-t border-border/50">
+            {!collapsed && user && (
+              <div className="mb-2 px-3 py-2">
+                <p className="text-xs text-muted-foreground truncate">
+                  {user.email}
                 </p>
               </div>
-            </div>
-          )}
+            )}
+            <Button
+              variant="ghost"
+              onClick={handleSignOut}
+              className={cn(
+                'w-full justify-start gap-3 text-muted-foreground hover:text-destructive',
+                collapsed && 'justify-center px-0'
+              )}
+            >
+              <LogOut className="h-5 w-5" />
+              {!collapsed && <span>Sign out</span>}
+            </Button>
+          </div>
         </div>
       </aside>
 
