@@ -22,7 +22,7 @@ import {
 import { cn } from '@/lib/utils';
 
 const SavingsCurrentStatus = () => {
-  const { savings, addSavings, updateSavings, deleteSavings } = useFinance();
+  const { savings, addSavings, updateSavings, deleteSavings, currentMonth } = useFinance();
   const [isOpen, setIsOpen] = useState(false);
   const [editingSaving, setEditingSaving] = useState<Savings | null>(null);
   const [formData, setFormData] = useState({
@@ -34,14 +34,16 @@ const SavingsCurrentStatus = () => {
     action: 'deposit',
   });
 
-  // Get the latest record per savings account name (across ALL time, not just current month)
-  const latestSavingsPerName = savings.reduce((acc, saving) => {
-    const existing = acc.get(saving.name);
-    if (!existing || new Date(saving.updated_at) > new Date(existing.updated_at)) {
-      acc.set(saving.name, saving);
-    }
-    return acc;
-  }, new Map<string, Savings>());
+  // Get the latest record per savings account name UP TO the selected month
+  const latestSavingsPerName = savings
+    .filter(s => s.month <= currentMonth) // Only include entries up to selected month
+    .reduce((acc, saving) => {
+      const existing = acc.get(saving.name);
+      if (!existing || new Date(saving.updated_at) > new Date(existing.updated_at)) {
+        acc.set(saving.name, saving);
+      }
+      return acc;
+    }, new Map<string, Savings>());
 
   const uniqueSavings = Array.from(latestSavingsPerName.values());
 
@@ -80,9 +82,9 @@ const SavingsCurrentStatus = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const today = new Date();
+    // Use the selected month from context instead of today's date
     const savingData = {
-      month: `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`,
+      month: currentMonth,
       name: formData.name,
       amount: parseFloat(formData.amount),
       currency: 'ILS',

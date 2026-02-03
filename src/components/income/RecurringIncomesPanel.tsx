@@ -1,8 +1,11 @@
 import { useState } from 'react';
 import { useFinance, RecurringIncome } from '@/contexts/FinanceContext';
 import { formatCurrency } from '@/lib/formatters';
-import { Plus, Trash2, Pencil, Repeat, Play, Pause, Briefcase, Gift, Heart, HelpCircle } from 'lucide-react';
+import { format } from 'date-fns';
+import { Plus, Trash2, Pencil, Repeat, Play, Pause, Briefcase, Gift, Heart, HelpCircle, CalendarIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -37,6 +40,7 @@ const RecurringIncomesPanel = () => {
     source: 'work',
     dayOfMonth: '',
     notes: '',
+    endDate: null as Date | null,
   });
 
   const resetForm = () => {
@@ -46,6 +50,7 @@ const RecurringIncomesPanel = () => {
       source: 'work',
       dayOfMonth: '',
       notes: '',
+      endDate: null,
     });
     setEditingIncome(null);
   };
@@ -58,6 +63,7 @@ const RecurringIncomesPanel = () => {
       source: income.source,
       dayOfMonth: income.day_of_month.toString(),
       notes: income.notes || '',
+      endDate: income.end_date ? new Date(income.end_date) : null,
     });
     setIsOpen(true);
   };
@@ -71,6 +77,7 @@ const RecurringIncomesPanel = () => {
       day_of_month: parseInt(formData.dayOfMonth) || 1,
       is_active: true,
       notes: formData.notes || null,
+      end_date: formData.endDate ? format(formData.endDate, 'yyyy-MM-dd') : null,
     };
 
     if (editingIncome) {
@@ -186,6 +193,44 @@ const RecurringIncomesPanel = () => {
                     <SelectItem value="other">Other</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>End Date (Optional)</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full justify-start text-left font-normal",
+                        !formData.endDate && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {formData.endDate ? format(formData.endDate, "PPP") : "No end date"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={formData.endDate || undefined}
+                      onSelect={(date) => setFormData({ ...formData, endDate: date || null })}
+                      initialFocus
+                      className="p-3 pointer-events-auto"
+                    />
+                    {formData.endDate && (
+                      <div className="p-2 border-t">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="w-full"
+                          onClick={() => setFormData({ ...formData, endDate: null })}
+                        >
+                          Clear end date
+                        </Button>
+                      </div>
+                    )}
+                  </PopoverContent>
+                </Popover>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="notes">Notes</Label>

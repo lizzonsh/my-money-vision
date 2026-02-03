@@ -277,6 +277,7 @@ export type Database = {
           created_at: string
           day_of_month: number
           default_amount: number
+          end_date: string | null
           id: string
           is_active: boolean
           name: string
@@ -289,6 +290,7 @@ export type Database = {
           created_at?: string
           day_of_month: number
           default_amount: number
+          end_date?: string | null
           id?: string
           is_active?: boolean
           name: string
@@ -301,6 +303,7 @@ export type Database = {
           created_at?: string
           day_of_month?: number
           default_amount?: number
+          end_date?: string | null
           id?: string
           is_active?: boolean
           name?: string
@@ -318,6 +321,7 @@ export type Database = {
           created_at: string
           day_of_month: number
           default_amount: number
+          end_date: string | null
           id: string
           is_active: boolean
           name: string
@@ -332,6 +336,7 @@ export type Database = {
           created_at?: string
           day_of_month: number
           default_amount: number
+          end_date?: string | null
           id?: string
           is_active?: boolean
           name: string
@@ -346,6 +351,7 @@ export type Database = {
           created_at?: string
           day_of_month?: number
           default_amount?: number
+          end_date?: string | null
           id?: string
           is_active?: boolean
           name?: string
@@ -363,6 +369,7 @@ export type Database = {
           created_at: string
           day_of_month: number
           default_amount: number
+          end_date: string | null
           id: string
           is_active: boolean
           name: string
@@ -377,6 +384,7 @@ export type Database = {
           created_at?: string
           day_of_month: number
           default_amount: number
+          end_date?: string | null
           id?: string
           is_active?: boolean
           name: string
@@ -391,6 +399,7 @@ export type Database = {
           created_at?: string
           day_of_month?: number
           default_amount?: number
+          end_date?: string | null
           id?: string
           is_active?: boolean
           name?: string
