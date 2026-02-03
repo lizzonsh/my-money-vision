@@ -1,0 +1,146 @@
+import { useState } from 'react';
+import { Link, useLocation } from 'react-router-dom';
+import {
+  LayoutDashboard,
+  Receipt,
+  Wallet,
+  PiggyBank,
+  Target,
+  BarChart3,
+  Menu,
+  X,
+  ChevronLeft,
+} from 'lucide-react';
+import { cn } from '@/lib/utils';
+
+const navigation = [
+  { name: 'Dashboard', href: '/', icon: LayoutDashboard },
+  { name: 'Expenses', href: '/expenses', icon: Receipt },
+  { name: 'Income', href: '/income', icon: Wallet },
+  { name: 'Savings', href: '/savings', icon: PiggyBank },
+  { name: 'Goals', href: '/goals', icon: Target },
+  { name: 'Analytics', href: '/analytics', icon: BarChart3 },
+];
+
+interface SidebarProps {
+  children: React.ReactNode;
+}
+
+const Sidebar = ({ children }: SidebarProps) => {
+  const [collapsed, setCollapsed] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const location = useLocation();
+
+  return (
+    <div className="min-h-screen bg-background">
+      {/* Mobile header */}
+      <div className="lg:hidden fixed top-0 left-0 right-0 z-50 h-16 glass border-b border-border/50 flex items-center px-4">
+        <button
+          onClick={() => setMobileOpen(true)}
+          className="p-2 hover:bg-secondary rounded-lg transition-colors"
+        >
+          <Menu className="h-5 w-5" />
+        </button>
+        <h1 className="ml-4 text-lg font-bold text-gradient">MoneyFlow</h1>
+      </div>
+
+      {/* Mobile sidebar overlay */}
+      {mobileOpen && (
+        <div
+          className="lg:hidden fixed inset-0 z-50 bg-black/50 backdrop-blur-sm"
+          onClick={() => setMobileOpen(false)}
+        />
+      )}
+
+      {/* Sidebar */}
+      <aside
+        className={cn(
+          'fixed top-0 left-0 z-50 h-full glass border-r border-border/50 transition-all duration-300',
+          collapsed ? 'w-16' : 'w-64',
+          mobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+        )}
+      >
+        <div className="flex flex-col h-full">
+          {/* Logo */}
+          <div className="h-16 flex items-center justify-between px-4 border-b border-border/50">
+            {!collapsed && (
+              <h1 className="text-xl font-bold text-gradient">MoneyFlow</h1>
+            )}
+            <button
+              onClick={() => {
+                setCollapsed(!collapsed);
+                setMobileOpen(false);
+              }}
+              className={cn(
+                'p-2 hover:bg-secondary rounded-lg transition-colors',
+                collapsed && 'mx-auto'
+              )}
+            >
+              {mobileOpen ? (
+                <X className="h-5 w-5" />
+              ) : (
+                <ChevronLeft
+                  className={cn(
+                    'h-5 w-5 transition-transform',
+                    collapsed && 'rotate-180'
+                  )}
+                />
+              )}
+            </button>
+          </div>
+
+          {/* Navigation */}
+          <nav className="flex-1 p-3 space-y-1">
+            {navigation.map((item) => {
+              const isActive = location.pathname === item.href;
+              return (
+                <Link
+                  key={item.name}
+                  to={item.href}
+                  onClick={() => setMobileOpen(false)}
+                  className={cn(
+                    'flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all',
+                    isActive
+                      ? 'bg-primary text-primary-foreground shadow-glow'
+                      : 'hover:bg-secondary text-muted-foreground hover:text-foreground'
+                  )}
+                >
+                  <item.icon className={cn('h-5 w-5 flex-shrink-0')} />
+                  {!collapsed && (
+                    <span className="font-medium">{item.name}</span>
+                  )}
+                </Link>
+              );
+            })}
+          </nav>
+
+          {/* Footer */}
+          {!collapsed && (
+            <div className="p-4 border-t border-border/50">
+              <div className="glass rounded-lg p-3 text-center">
+                <p className="text-xs text-muted-foreground">
+                  Track your finances
+                </p>
+                <p className="text-xs text-primary font-medium">
+                  Plan your future
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
+      </aside>
+
+      {/* Main content */}
+      <main
+        className={cn(
+          'min-h-screen transition-all duration-300 pt-16 lg:pt-0',
+          collapsed ? 'lg:pl-16' : 'lg:pl-64'
+        )}
+      >
+        <div className="p-4 lg:p-6">{children}</div>
+      </main>
+    </div>
+  );
+};
+
+export default Sidebar;

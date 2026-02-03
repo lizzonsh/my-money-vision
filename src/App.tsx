@@ -3,7 +3,14 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Index from "./pages/Index";
+import { FinanceProvider } from "@/contexts/FinanceContext";
+import Sidebar from "@/components/layout/Sidebar";
+import Dashboard from "@/pages/Dashboard";
+import ExpensesPage from "@/pages/ExpensesPage";
+import IncomePage from "@/pages/IncomePage";
+import SavingsPage from "@/pages/SavingsPage";
+import GoalsPage from "@/pages/GoalsPage";
+import AnalyticsPage from "@/pages/AnalyticsPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -11,15 +18,24 @@ const queryClient = new QueryClient();
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
+      <FinanceProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Sidebar>
+            <Routes>
+              <Route path="/" element={<Dashboard />} />
+              <Route path="/expenses" element={<ExpensesPage />} />
+              <Route path="/income" element={<IncomePage />} />
+              <Route path="/savings" element={<SavingsPage />} />
+              <Route path="/goals" element={<GoalsPage />} />
+              <Route path="/analytics" element={<AnalyticsPage />} />
+              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </Sidebar>
+        </BrowserRouter>
+      </FinanceProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );
