@@ -47,6 +47,47 @@ export type Database = {
         }
         Relationships: []
       }
+      bank_balance_history: {
+        Row: {
+          balance: number
+          bank_account_id: string
+          created_at: string
+          id: string
+          month: string
+          notes: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          balance?: number
+          bank_account_id: string
+          created_at?: string
+          id?: string
+          month: string
+          notes?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          balance?: number
+          bank_account_id?: string
+          created_at?: string
+          id?: string
+          month?: string
+          notes?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bank_balance_history_bank_account_id_fkey"
+            columns: ["bank_account_id"]
+            isOneToOne: false
+            referencedRelation: "bank_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       big_purchase_goals: {
         Row: {
           category: Database["public"]["Enums"]["purchase_category"]

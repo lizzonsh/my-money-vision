@@ -40,7 +40,10 @@ const calcPercentChange = (current: number, previous: number): { value: number; 
 };
 
 const Dashboard = () => {
-  const { incomes, expenses, savings, totalBankBalance, currentMonth, isLoading } = useFinance();
+  const { incomes, expenses, savings, totalBankBalance, currentMonth, isLoading, getTotalBalanceForMonth } = useFinance();
+  
+  // Get bank balance for the selected month (from history or current)
+  const monthlyBankBalance = getTotalBalanceForMonth(currentMonth) || totalBankBalance;
 
   const stats = useMemo(() => {
     // For current month, only count items up to today's date
@@ -103,7 +106,7 @@ const Dashboard = () => {
       .reduce((sum, s) => sum + Number(s.amount), 0);
 
     // Net worth = savings + incomes + bank balance - monthly expenses
-    const netWorth = totalSavings + monthlyIncome + totalBankBalance - monthlyExpenses;
+    const netWorth = totalSavings + monthlyIncome + monthlyBankBalance - monthlyExpenses;
     const netFlow = monthlyIncome - monthlyExpenses;
 
     // Calculate trends
@@ -122,7 +125,7 @@ const Dashboard = () => {
       expenseTrend,
       savingsTrend,
     };
-  }, [incomes, expenses, savings, totalBankBalance, currentMonth]);
+  }, [incomes, expenses, savings, monthlyBankBalance, currentMonth]);
 
   if (isLoading) {
     return (

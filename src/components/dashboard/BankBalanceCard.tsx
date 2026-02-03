@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useFinance } from '@/contexts/FinanceContext';
-import { formatCurrency } from '@/lib/formatters';
-import { Building2, Pencil, Plus, Trash2 } from 'lucide-react';
+import { formatCurrency, formatMonth } from '@/lib/formatters';
+import { Building2, Pencil, Plus, Trash2, History, Save } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -17,18 +17,40 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
+import { cn } from '@/lib/utils';
 
 const BankBalanceCard = () => {
-  const { bankAccounts, totalBankBalance, addBankAccount, updateBankAccount, deleteBankAccount } = useFinance();
+  const { 
+    bankAccounts, 
+    totalBankBalance, 
+    addBankAccount, 
+    updateBankAccount, 
+    deleteBankAccount,
+    currentMonth,
+    upsertBalanceHistory,
+    getBalanceForMonth,
+    getTotalBalanceForMonth,
+  } = useFinance();
+  
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [editingAccount, setEditingAccount] = useState<{ id: string; name: string; balance: string } | null>(null);
   const [newAccount, setNewAccount] = useState({ name: '', balance: '' });
 
+  // Get total balance for the selected month from history, or fall back to current balance
+  const monthlyTotal = getTotalBalanceForMonth(currentMonth);
+  const displayTotal = monthlyTotal > 0 ? monthlyTotal : totalBankBalance;
+
+  const getAccountBalanceForMonth = (accountId: string, currentBalance: number) => {
+    const history = getBalanceForMonth(accountId, currentMonth);
+    return history ? history.balance : currentBalance;
+  };
+
   const handleAddAccount = (e: React.FormEvent) => {
     e.preventDefault();
+    const balance = parseFloat(newAccount.balance) || 0;
     addBankAccount({
       name: newAccount.name,
-      current_balance: parseFloat(newAccount.balance) || 0,
+      current_balance: balance,
       currency: 'ILS',
       last_updated: new Date().toISOString(),
     });
@@ -37,12 +59,33 @@ const BankBalanceCard = () => {
   };
 
   const handleUpdateBalance = (id: string, balance: string) => {
+    const balanceNum = parseFloat(balance) || 0;
+    
+    // Update current balance
     updateBankAccount({
       id,
-      current_balance: parseFloat(balance) || 0,
+      current_balance: balanceNum,
       last_updated: new Date().toISOString(),
     });
+    
+    // Also save to history for this month
+    upsertBalanceHistory({
+      bank_account_id: id,
+      month: currentMonth,
+      balance: balanceNum,
+      notes: null,
+    });
+    
     setEditingAccount(null);
+  };
+
+  const handleSaveMonthlyBalance = (id: string, balance: number) => {
+    upsertBalanceHistory({
+      bank_account_id: id,
+      month: currentMonth,
+      balance,
+      notes: null,
+    });
   };
 
   return (
@@ -52,14 +95,17 @@ const BankBalanceCard = () => {
           <Building2 className="h-5 w-5 text-primary" />
           <div>
             <p className="text-xs text-muted-foreground">Bank Balance</p>
-            <p className="font-semibold">{formatCurrency(totalBankBalance)}</p>
+            <p className="font-semibold">{formatCurrency(displayTotal)}</p>
           </div>
         </div>
       </PopoverTrigger>
-      <PopoverContent className="w-80 p-0" align="end">
+      <PopoverContent className="w-96 p-0" align="end">
         <div className="p-4 border-b">
           <div className="flex items-center justify-between">
-            <h4 className="font-semibold">Bank Accounts</h4>
+            <div>
+              <h4 className="font-semibold">Bank Accounts</h4>
+              <p className="text-xs text-muted-foreground">{formatMonth(currentMonth)}</p>
+            </div>
             <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
               <DialogTrigger asChild>
                 <Button size="sm" variant="ghost" className="h-8 w-8 p-0">
@@ -98,73 +144,102 @@ const BankBalanceCard = () => {
             </Dialog>
           </div>
         </div>
-        <div className="max-h-64 overflow-y-auto">
+        <div className="max-h-72 overflow-y-auto">
           {bankAccounts.length === 0 ? (
             <p className="p-4 text-sm text-muted-foreground text-center">
               No bank accounts yet
             </p>
           ) : (
             <div className="divide-y">
-              {bankAccounts.map((account) => (
-                <div key={account.id} className="p-3 flex items-center justify-between group">
-                  {editingAccount?.id === account.id ? (
-                    <div className="flex-1 flex items-center gap-2">
-                      <Input
-                        type="number"
-                        value={editingAccount.balance}
-                        onChange={(e) => setEditingAccount({ ...editingAccount, balance: e.target.value })}
-                        className="h-8"
-                        autoFocus
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') handleUpdateBalance(account.id, editingAccount.balance);
-                          if (e.key === 'Escape') setEditingAccount(null);
-                        }}
-                      />
-                      <Button
-                        size="sm"
-                        className="h-8"
-                        onClick={() => handleUpdateBalance(account.id, editingAccount.balance)}
-                      >
-                        Save
-                      </Button>
-                    </div>
-                  ) : (
-                    <>
-                      <div>
-                        <p className="text-sm font-medium">{account.name}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {formatCurrency(account.current_balance)}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button
-                          onClick={() => setEditingAccount({
-                            id: account.id,
-                            name: account.name,
-                            balance: account.current_balance.toString(),
-                          })}
-                          className="p-1.5 hover:bg-secondary rounded"
+              {bankAccounts.map((account) => {
+                const monthBalance = getAccountBalanceForMonth(account.id, account.current_balance);
+                const hasHistory = !!getBalanceForMonth(account.id, currentMonth);
+                
+                return (
+                  <div key={account.id} className="p-3 group">
+                    {editingAccount?.id === account.id ? (
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1">
+                          <p className="text-xs text-muted-foreground mb-1">{account.name}</p>
+                          <Input
+                            type="number"
+                            value={editingAccount.balance}
+                            onChange={(e) => setEditingAccount({ ...editingAccount, balance: e.target.value })}
+                            className="h-8"
+                            autoFocus
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') handleUpdateBalance(account.id, editingAccount.balance);
+                              if (e.key === 'Escape') setEditingAccount(null);
+                            }}
+                          />
+                        </div>
+                        <Button
+                          size="sm"
+                          className="h-8"
+                          onClick={() => handleUpdateBalance(account.id, editingAccount.balance)}
                         >
-                          <Pencil className="h-3 w-3 text-muted-foreground" />
-                        </button>
-                        <button
-                          onClick={() => deleteBankAccount(account.id)}
-                          className="p-1.5 hover:bg-destructive/10 rounded"
-                        >
-                          <Trash2 className="h-3 w-3 text-destructive" />
-                        </button>
+                          Save
+                        </Button>
                       </div>
-                    </>
-                  )}
-                </div>
-              ))}
+                    ) : (
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <div>
+                            <p className="text-sm font-medium">{account.name}</p>
+                            <div className="flex items-center gap-2">
+                              <p className="text-xs text-muted-foreground">
+                                {formatCurrency(monthBalance)}
+                              </p>
+                              {hasHistory && (
+                                <span className="inline-flex items-center gap-0.5 text-[10px] text-primary bg-primary/10 px-1.5 py-0.5 rounded">
+                                  <History className="h-2.5 w-2.5" />
+                                  saved
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          {!hasHistory && (
+                            <button
+                              onClick={() => handleSaveMonthlyBalance(account.id, account.current_balance)}
+                              className="p-1.5 hover:bg-primary/10 rounded"
+                              title="Save balance for this month"
+                            >
+                              <Save className="h-3 w-3 text-primary" />
+                            </button>
+                          )}
+                          <button
+                            onClick={() => setEditingAccount({
+                              id: account.id,
+                              name: account.name,
+                              balance: monthBalance.toString(),
+                            })}
+                            className="p-1.5 hover:bg-secondary rounded"
+                            title="Edit balance"
+                          >
+                            <Pencil className="h-3 w-3 text-muted-foreground" />
+                          </button>
+                          <button
+                            onClick={() => deleteBankAccount(account.id)}
+                            className="p-1.5 hover:bg-destructive/10 rounded"
+                            title="Delete account"
+                          >
+                            <Trash2 className="h-3 w-3 text-destructive" />
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>
         <div className="p-3 border-t bg-muted/30">
           <div className="flex items-center justify-between">
-            <span className="text-sm font-medium">Total</span>
-            <span className="font-bold">{formatCurrency(totalBankBalance)}</span>
+            <span className="text-sm font-medium">Total ({formatMonth(currentMonth)})</span>
+            <span className="font-bold">{formatCurrency(displayTotal)}</span>
           </div>
         </div>
       </PopoverContent>
