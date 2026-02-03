@@ -23,7 +23,7 @@ import {
 import { cn } from '@/lib/utils';
 
 const SavingsMonthlyActivity = () => {
-  const { savings, currentMonth, addSavings, updateSavings, deleteSavings } = useFinance();
+  const { savings, recurringSavings, currentMonth, addSavings, updateSavings, deleteSavings } = useFinance();
   const [isOpen, setIsOpen] = useState(false);
   const [editingActivity, setEditingActivity] = useState<Savings | null>(null);
   const [formData, setFormData] = useState({
@@ -50,14 +50,27 @@ const SavingsMonthlyActivity = () => {
   );
 
   // Calculate deposits for this month (action_amount where action is deposit)
-  const monthlyDeposits = savingsUpToDate
+  const actualDeposits = savingsUpToDate
     .filter(s => s.action === 'deposit' && s.action_amount)
     .reduce((sum, s) => sum + Number(s.action_amount || 0), 0);
 
   // Calculate withdrawals for this month
-  const monthlyWithdrawals = savingsUpToDate
+  const actualWithdrawals = savingsUpToDate
     .filter(s => s.action === 'withdrawal' && s.action_amount)
     .reduce((sum, s) => sum + Number(s.action_amount || 0), 0);
+
+  // Add recurring savings (active templates)
+  const activeRecurringSavings = recurringSavings.filter(rs => rs.is_active);
+  const recurringDeposits = activeRecurringSavings
+    .filter(rs => rs.action_type === 'deposit')
+    .reduce((sum, rs) => sum + Number(rs.default_amount), 0);
+  const recurringWithdrawals = activeRecurringSavings
+    .filter(rs => rs.action_type === 'withdrawal')
+    .reduce((sum, rs) => sum + Number(rs.default_amount), 0);
+
+  // Total including recurring
+  const monthlyDeposits = actualDeposits + recurringDeposits;
+  const monthlyWithdrawals = actualWithdrawals + recurringWithdrawals;
 
   // Net change
   const netChange = monthlyDeposits - monthlyWithdrawals;
