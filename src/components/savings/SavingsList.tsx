@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useFinance } from '@/contexts/FinanceContext';
 import { formatCurrency } from '@/lib/formatters';
+import { isDateUpToToday, isCurrentMonth } from '@/lib/dateUtils';
 import { Plus, Trash2, PiggyBank, TrendingUp, ArrowDownRight, Pencil } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -23,7 +24,7 @@ import { cn } from '@/lib/utils';
 import { Savings } from '@/types/finance';
 
 const SavingsList = () => {
-  const { savings, addSavings, updateSavings, deleteSavings } = useFinance();
+  const { savings, currentMonth, addSavings, updateSavings, deleteSavings } = useFinance();
   const [isOpen, setIsOpen] = useState(false);
   const [editingSaving, setEditingSaving] = useState<Savings | null>(null);
   const [formData, setFormData] = useState({
@@ -35,15 +36,21 @@ const SavingsList = () => {
     action: 'deposit',
   });
 
-  const totalSavings = savings
+  // For current month, only count items up to today's date
+  const shouldFilterByDate = isCurrentMonth(currentMonth);
+  const savingsUpToDate = savings.filter(s => 
+    !isCurrentMonth(s.month) || !shouldFilterByDate || isDateUpToToday(s.updateDate)
+  );
+
+  const totalSavings = savingsUpToDate
     .filter(s => s.action !== 'withdrawal')
     .reduce((sum, s) => sum + s.amount, 0);
 
-  const totalWithdrawals = savings
+  const totalWithdrawals = savingsUpToDate
     .filter(s => s.action === 'withdrawal')
     .reduce((sum, s) => sum + (s.actionAmount || 0), 0);
 
-  const monthlyDeposits = savings
+  const monthlyDeposits = savingsUpToDate
     .filter(s => s.recurring?.monthlyDeposit)
     .reduce((sum, s) => sum + (s.recurring?.monthlyDeposit || 0), 0);
 
