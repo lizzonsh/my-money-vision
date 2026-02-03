@@ -152,11 +152,25 @@ const RecurringPaymentsPanel = () => {
     const activePayments = recurringPayments.filter(p => p.is_active);
     const [year, month] = currentMonth.split('-').map(Number);
     
+    // Get existing expense names for current month to avoid duplicates
+    const existingExpenseNames = expenses
+      .filter(e => e.month === currentMonth)
+      .map(e => e.description.toLowerCase());
+    
+    // Filter out payments that already have an expense this month
+    const paymentsToApply = activePayments.filter(
+      p => !existingExpenseNames.includes(p.name.toLowerCase())
+    );
+    
+    if (paymentsToApply.length === 0) {
+      return; // Nothing to apply
+    }
+    
     // Track applied payment names for undo
-    const appliedNames = activePayments.map(p => p.name);
+    const appliedNames = paymentsToApply.map(p => p.name);
     setLastAppliedExpenseIds(appliedNames);
     
-    activePayments.forEach((payment) => {
+    paymentsToApply.forEach((payment) => {
       const expenseDate = `${year}-${String(month).padStart(2, '0')}-${String(payment.day_of_month).padStart(2, '0')}`;
       
       addExpense({
