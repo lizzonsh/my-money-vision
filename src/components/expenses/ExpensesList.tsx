@@ -51,9 +51,35 @@ const ExpensesList = () => {
   const shouldFilterByDate = isCurrentMonth(currentMonth);
   const expensesUpToDate = monthlyExpenses.filter(e => !shouldFilterByDate || isDateUpToToday(e.expense_date));
   
+  // Separate credit card debit from regular expenses
+  const creditCardDebits = expensesUpToDate.filter(e => e.category === 'debit_from_credit_card');
+  const creditCardDebitTotal = creditCardDebits.reduce((sum, e) => sum + Number(e.amount), 0);
+  
+  // Regular expenses (excluding credit card debits and planned credit card expenses to avoid double counting)
+  // Credit card planned expenses will be counted when they become debit_from_credit_card next month
+  const regularExpenses = expensesUpToDate.filter(e => 
+    e.category !== 'debit_from_credit_card' && 
+    !(e.payment_method === 'credit_card' && e.kind === 'planned')
+  );
+  
+  const bankTransferExpenses = regularExpenses
+    .filter(e => e.payment_method === 'bank_transfer')
+    .reduce((sum, e) => sum + Number(e.amount), 0);
+  
+  const creditCardPaidExpenses = regularExpenses
+    .filter(e => e.payment_method === 'credit_card' && e.kind === 'payed')
+    .reduce((sum, e) => sum + Number(e.amount), 0);
+  
+  // Planned credit card expenses (for display only, not counted in totals)
+  const plannedCreditCardExpenses = expensesUpToDate
+    .filter(e => e.payment_method === 'credit_card' && e.kind === 'planned')
+    .reduce((sum, e) => sum + Number(e.amount), 0);
+  
+  // Total that affects current month = bank transfers + credit card debits (actual withdrawals)
+  const effectiveTotal = bankTransferExpenses + creditCardDebitTotal + creditCardPaidExpenses;
+  
+  // For display purposes - all expenses
   const totalExpenses = expensesUpToDate.reduce((sum, e) => sum + Number(e.amount), 0);
-  const paidExpenses = expensesUpToDate.filter(e => e.kind === 'payed').reduce((sum, e) => sum + Number(e.amount), 0);
-  const plannedExpenses = expensesUpToDate.filter(e => e.kind === 'planned').reduce((sum, e) => sum + Number(e.amount), 0);
   const predictedExpenses = monthlyExpenses.filter(e => e.kind === 'predicted').reduce((sum, e) => sum + Number(e.amount), 0);
 
   const formatCardName = (cardId?: string | null) => {
@@ -167,11 +193,16 @@ const ExpensesList = () => {
       <div className="flex items-center justify-between mb-4">
         <div>
           <h3 className="font-semibold">Expenses</h3>
-          <p className="text-lg font-bold">{formatCurrency(totalExpenses)}</p>
-          <div className="flex gap-3 text-xs text-muted-foreground mt-1">
-            <span className="text-success">Paid: {formatCurrency(paidExpenses)}</span>
-            <span className="text-warning">Planned: {formatCurrency(plannedExpenses)}</span>
-            <span className="text-muted-foreground">Predicted: {formatCurrency(predictedExpenses)}</span>
+          <p className="text-lg font-bold">{formatCurrency(effectiveTotal)}</p>
+          <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground mt-1">
+            <span className="text-success">Bank: {formatCurrency(bankTransferExpenses)}</span>
+            <span className="text-warning">CC Debit: {formatCurrency(creditCardDebitTotal)}</span>
+            {plannedCreditCardExpenses > 0 && (
+              <span className="text-muted-foreground">(Planned CC: {formatCurrency(plannedCreditCardExpenses)})</span>
+            )}
+            {predictedExpenses > 0 && (
+              <span className="text-muted-foreground">Predicted: {formatCurrency(predictedExpenses)}</span>
+            )}
           </div>
         </div>
         <Dialog open={isOpen} onOpenChange={(open) => { setIsOpen(open); if (!open) resetForm(); }}>
