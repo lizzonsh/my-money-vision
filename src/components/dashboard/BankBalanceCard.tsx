@@ -53,8 +53,23 @@ const BankBalanceCard = () => {
     .filter(i => i.month === currentMonth && (!shouldFilterByDate || isDateUpToToday(i.income_date || '')))
     .reduce((sum, i) => sum + Number(i.amount), 0);
 
-  // Calculate expenses paid (bank transfers - these reduce bank balance)
-  const monthlyExpensesPaid = expenses
+  // Calculate previous month for credit card debit (debited on 3rd of current month)
+  const [year, month] = currentMonth.split('-').map(Number);
+  const prevMonth = month === 1 
+    ? `${year - 1}-12` 
+    : `${year}-${String(month - 1).padStart(2, '0')}`;
+
+  // Credit card expenses from LAST month (debited on 3rd of current month)
+  const lastMonthCreditCardExpenses = expenses
+    .filter(e => 
+      e.month === prevMonth && 
+      e.kind === 'payed' && 
+      e.payment_method === 'credit_card'
+    )
+    .reduce((sum, e) => sum + Number(e.amount), 0);
+
+  // Bank transfer expenses from CURRENT month (immediate)
+  const currentMonthBankTransfers = expenses
     .filter(e => 
       e.month === currentMonth && 
       e.kind === 'payed' && 
@@ -62,6 +77,9 @@ const BankBalanceCard = () => {
       (!shouldFilterByDate || isDateUpToToday(e.expense_date))
     )
     .reduce((sum, e) => sum + Number(e.amount), 0);
+
+  // Total bank payments = last month's credit cards + current month's bank transfers
+  const monthlyExpensesPaid = lastMonthCreditCardExpenses + currentMonthBankTransfers;
 
   // Calculate savings deposits and withdrawals (bank account transfers)
   const monthlySavings = savings.filter(s => 
@@ -309,14 +327,27 @@ const BankBalanceCard = () => {
                 <span className="text-success font-medium">+{formatCurrency(monthlyIncomes)}</span>
               </div>
               
-              {/* Expenses */}
-              <div className="flex items-center justify-between text-sm py-1">
-                <div className="flex items-center gap-2">
-                  <CreditCard className="h-3.5 w-3.5 text-destructive" />
-                  <span>Bank Payments</span>
+              {/* Credit Card Debit (last month) */}
+              {lastMonthCreditCardExpenses > 0 && (
+                <div className="flex items-center justify-between text-sm py-1">
+                  <div className="flex items-center gap-2">
+                    <CreditCard className="h-3.5 w-3.5 text-destructive" />
+                    <span>Credit Card Debit (prev month)</span>
+                  </div>
+                  <span className="text-destructive font-medium">-{formatCurrency(lastMonthCreditCardExpenses)}</span>
                 </div>
-                <span className="text-destructive font-medium">-{formatCurrency(monthlyExpensesPaid)}</span>
-              </div>
+              )}
+              
+              {/* Bank Transfers (current month) */}
+              {currentMonthBankTransfers > 0 && (
+                <div className="flex items-center justify-between text-sm py-1">
+                  <div className="flex items-center gap-2">
+                    <ArrowUpRight className="h-3.5 w-3.5 text-destructive" />
+                    <span>Bank Transfers</span>
+                  </div>
+                  <span className="text-destructive font-medium">-{formatCurrency(currentMonthBankTransfers)}</span>
+                </div>
+              )}
               
               {/* Savings Deposits */}
               <div className="flex items-center justify-between text-sm py-1">
