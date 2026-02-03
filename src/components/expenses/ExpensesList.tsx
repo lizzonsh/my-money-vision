@@ -73,6 +73,7 @@ const ExpensesList = () => {
     college: 'bg-chart-4/20 text-chart-4',
     vacation: 'bg-chart-5/20 text-chart-5',
     debit_from_credit_card: 'bg-warning/20 text-warning',
+    budget: 'bg-accent/20 text-accent-foreground',
     other: 'bg-muted text-muted-foreground',
   };
 
@@ -140,6 +141,7 @@ const ExpensesList = () => {
                       <SelectItem value="psychologist">Psychologist</SelectItem>
                       <SelectItem value="college">College</SelectItem>
                       <SelectItem value="vacation">Vacation</SelectItem>
+                      <SelectItem value="budget">Budget</SelectItem>
                       <SelectItem value="other">Other</SelectItem>
                     </SelectContent>
                   </Select>
