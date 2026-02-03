@@ -1,4 +1,4 @@
-import { Budget, Expense, Income, Savings, BigPurchaseGoal, BankAccount, RecurringPayment, RecurringSavingsTemplate } from '@/types/finance';
+import { Budget, Expense, Income, Savings, BigPurchaseGoal, BankAccount, RecurringPayment, RecurringSavingsTemplate, RecurringIncome } from '@/types/finance';
 
 export const mockBudget: Budget = {
   _id: '1',
@@ -311,5 +311,35 @@ export const mockRecurringSavings: RecurringSavingsTemplate[] = [
     dayOfMonth: 1,
     isActive: false,
     notes: 'For unexpected expenses'
+  }
+];
+
+export const mockRecurringIncomes: RecurringIncome[] = [
+  {
+    _id: 'rinc1',
+    name: 'Monthly Salary',
+    defaultAmount: 12500,
+    source: 'work',
+    dayOfMonth: 1,
+    isActive: true,
+    notes: 'Main job salary'
+  },
+  {
+    _id: 'rinc2',
+    name: 'Freelance Projects',
+    defaultAmount: 1500,
+    source: 'bit',
+    dayOfMonth: 5,
+    isActive: true,
+    notes: 'Average freelance income'
+  },
+  {
+    _id: 'rinc3',
+    name: 'Family Support',
+    defaultAmount: 500,
+    source: 'mom',
+    dayOfMonth: 15,
+    isActive: true,
+    notes: 'Monthly support from mom'
   }
 ];
