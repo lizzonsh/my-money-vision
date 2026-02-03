@@ -3,6 +3,8 @@ import {
   SpendingByCategoryChart,
   SavingsGrowthChart,
 } from '@/components/charts/FinanceCharts';
+import NetWorthProjection from '@/components/predictions/NetWorthProjection';
+import NextMonthBankPrediction from '@/components/predictions/NextMonthBankPrediction';
 import { useFinance } from '@/contexts/FinanceContext';
 import { formatCurrency } from '@/lib/formatters';
 import { mockMonthlyData } from '@/lib/mockData';
@@ -65,6 +67,13 @@ const AnalyticsPage = () => {
       </div>
 
       <SavingsGrowthChart />
+
+      {/* Predictions */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        <NextMonthBankPrediction />
+        <NetWorthProjection />
+
+      </div>
 
       {/* Insights */}
       <div className="glass rounded-xl p-6 animate-slide-up">
