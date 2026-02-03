@@ -1,9 +1,9 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { format } from 'date-fns';
 import { useFinance, Income } from '@/contexts/FinanceContext';
 import { formatCurrency, formatDate } from '@/lib/formatters';
 import { isDateUpToToday, isCurrentMonth } from '@/lib/dateUtils';
-import { Plus, Trash2, Briefcase, Gift, Heart, Pencil, CalendarIcon } from 'lucide-react';
+import { Plus, Trash2, Briefcase, Gift, Heart, Pencil, CalendarIcon, PiggyBank } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -25,8 +25,18 @@ import {
 } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
 
+interface IncomeItem {
+  id: string;
+  name: string;
+  description: string | null;
+  amount: number;
+  income_date: string | null;
+  updated_at: string;
+  isWithdrawal?: boolean;
+}
+
 const IncomesList = () => {
-  const { incomes, currentMonth, addIncome, updateIncome, deleteIncome } = useFinance();
+  const { incomes, savings, currentMonth, addIncome, updateIncome, deleteIncome } = useFinance();
   const [isOpen, setIsOpen] = useState(false);
   const [editingIncome, setEditingIncome] = useState<Income | null>(null);
   const [formData, setFormData] = useState({
@@ -36,24 +46,56 @@ const IncomesList = () => {
     incomeDate: new Date(),
   });
 
-  const monthlyIncomes = incomes.filter((i) => i.month === currentMonth);
-  
   // For current month, only count items up to today's date
   const shouldFilterByDate = isCurrentMonth(currentMonth);
+  
+  // Get regular incomes
+  const monthlyIncomes = incomes.filter((i) => i.month === currentMonth);
   const incomesUpToDate = monthlyIncomes.filter(i => !shouldFilterByDate || isDateUpToToday(i.income_date || ''));
 
+  // Get savings withdrawals as income
+  const withdrawalsAsIncome = useMemo(() => {
+    return savings
+      .filter(s => s.month === currentMonth && s.action === 'withdrawal' && s.action_amount && s.action_amount > 0)
+      .filter(s => !shouldFilterByDate || isDateUpToToday(s.updated_at))
+      .map(s => ({
+        id: `withdrawal-${s.id}`,
+        name: 'savings_withdrawal',
+        description: `Withdrawal from ${s.name}`,
+        amount: Number(s.action_amount),
+        income_date: s.updated_at.split('T')[0],
+        updated_at: s.updated_at,
+        isWithdrawal: true,
+      }));
+  }, [savings, currentMonth, shouldFilterByDate]);
+
+  // Combine incomes and withdrawals
+  const allIncomeItems: IncomeItem[] = useMemo(() => {
+    const regularIncomes = incomesUpToDate.map(i => ({
+      id: i.id,
+      name: i.name,
+      description: i.description,
+      amount: Number(i.amount),
+      income_date: i.income_date,
+      updated_at: i.updated_at,
+      isWithdrawal: false,
+    }));
+    return [...regularIncomes, ...withdrawalsAsIncome];
+  }, [incomesUpToDate, withdrawalsAsIncome]);
+
   // Get only the latest record per income name/source for display
-  const latestIncomesPerName = incomesUpToDate.reduce((acc, income) => {
-    const existing = acc.get(income.name);
+  const latestIncomesPerName = allIncomeItems.reduce((acc, income) => {
+    const key = income.isWithdrawal ? `${income.name}-${income.id}` : income.name;
+    const existing = acc.get(key);
     if (!existing || new Date(income.updated_at) > new Date(existing.updated_at)) {
-      acc.set(income.name, income);
+      acc.set(key, income);
     }
     return acc;
-  }, new Map<string, Income>());
+  }, new Map<string, IncomeItem>());
 
   const uniqueIncomes = Array.from(latestIncomesPerName.values());
   
-  const totalIncome = incomesUpToDate.reduce((sum, i) => sum + Number(i.amount), 0);
+  const totalIncome = allIncomeItems.reduce((sum, i) => sum + i.amount, 0);
 
   const resetForm = () => {
     setFormData({ description: '', amount: '', name: 'work', incomeDate: new Date() });
@@ -103,6 +145,8 @@ const IncomesList = () => {
         return <Gift className="h-4 w-4" />;
       case 'mom':
         return <Heart className="h-4 w-4" />;
+      case 'savings_withdrawal':
+        return <PiggyBank className="h-4 w-4" />;
       default:
         return <Briefcase className="h-4 w-4" />;
     }
@@ -112,6 +156,7 @@ const IncomesList = () => {
     work: 'bg-success/10 text-success',
     bit: 'bg-chart-2/10 text-chart-2',
     mom: 'bg-chart-3/10 text-chart-3',
+    savings_withdrawal: 'bg-primary/10 text-primary',
     other: 'bg-muted text-muted-foreground',
   };
 
@@ -247,18 +292,30 @@ const IncomesList = () => {
                     {income.income_date ? formatDate(income.income_date) : ''}
                   </p>
                 </div>
-                <button
-                  onClick={() => handleOpenEdit(income)}
-                  className="p-1.5 opacity-0 group-hover:opacity-100 hover:bg-secondary rounded transition-all"
-                >
-                  <Pencil className="h-4 w-4 text-muted-foreground" />
-                </button>
-                <button
-                  onClick={() => deleteIncome(income.id)}
-                  className="p-1.5 opacity-0 group-hover:opacity-100 hover:bg-destructive/10 rounded transition-all"
-                >
-                  <Trash2 className="h-4 w-4 text-destructive" />
-                </button>
+                {!income.isWithdrawal && (
+                  <>
+                    <button
+                      onClick={() => {
+                        const originalIncome = incomesUpToDate.find(i => i.id === income.id);
+                        if (originalIncome) handleOpenEdit(originalIncome);
+                      }}
+                      className="p-1.5 opacity-0 group-hover:opacity-100 hover:bg-secondary rounded transition-all"
+                    >
+                      <Pencil className="h-4 w-4 text-muted-foreground" />
+                    </button>
+                    <button
+                      onClick={() => deleteIncome(income.id)}
+                      className="p-1.5 opacity-0 group-hover:opacity-100 hover:bg-destructive/10 rounded transition-all"
+                    >
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </button>
+                  </>
+                )}
+                {income.isWithdrawal && (
+                  <span className="text-xs text-muted-foreground px-2 py-1 bg-muted/50 rounded">
+                    From Savings
+                  </span>
+                )}
               </div>
             </div>
           ))
