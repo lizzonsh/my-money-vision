@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useFinance } from '@/contexts/FinanceContext';
 import { formatCurrency, formatMonth } from '@/lib/formatters';
 import { isDateUpToToday, isCurrentMonth } from '@/lib/dateUtils';
-import { Building2, Pencil, Plus, Trash2, History, Save, ArrowDownRight, ArrowUpRight, PiggyBank, CreditCard, TrendingUp } from 'lucide-react';
+import { Building2, Pencil, Plus, Trash2, History, Save, ArrowDownRight, ArrowUpRight, PiggyBank, CreditCard, TrendingUp, CalendarIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -18,6 +18,13 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 
 const BankBalanceCard = () => {
@@ -37,8 +44,20 @@ const BankBalanceCard = () => {
   } = useFinance();
   
   const [isAddOpen, setIsAddOpen] = useState(false);
-  const [editingAccount, setEditingAccount] = useState<{ id: string; name: string; balance: string } | null>(null);
-  const [newAccount, setNewAccount] = useState({ name: '', balance: '' });
+  const [editingAccount, setEditingAccount] = useState<{ id: string; name: string; balance: string; month: string } | null>(null);
+  const [newAccount, setNewAccount] = useState({ name: '', balance: '', month: '' });
+
+  // Generate month options (past 12 months + next 6 months)
+  const getMonthOptions = () => {
+    const options: string[] = [];
+    const now = new Date();
+    for (let i = -12; i <= 6; i++) {
+      const date = new Date(now.getFullYear(), now.getMonth() + i, 1);
+      options.push(`${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`);
+    }
+    return options;
+  };
+  const monthOptions = getMonthOptions();
 
   // Get total balance for the selected month from history, or fall back to current balance
   const monthlyTotal = getTotalBalanceForMonth(currentMonth);
@@ -113,30 +132,37 @@ const BankBalanceCard = () => {
   const handleAddAccount = (e: React.FormEvent) => {
     e.preventDefault();
     const balance = parseFloat(newAccount.balance) || 0;
+    const targetMonth = newAccount.month || currentMonth;
+    
     addBankAccount({
       name: newAccount.name,
       current_balance: balance,
       currency: 'ILS',
       last_updated: new Date().toISOString(),
     });
-    setNewAccount({ name: '', balance: '' });
+    
+    // If a specific month was selected, we'll need to save balance history after account is created
+    // For now, we rely on the current balance being set
+    setNewAccount({ name: '', balance: '', month: '' });
     setIsAddOpen(false);
   };
 
-  const handleUpdateBalance = (id: string, balance: string) => {
+  const handleUpdateBalance = (id: string, balance: string, targetMonth: string) => {
     const balanceNum = parseFloat(balance) || 0;
     
-    // Update current balance
-    updateBankAccount({
-      id,
-      current_balance: balanceNum,
-      last_updated: new Date().toISOString(),
-    });
+    // If updating for current month, also update the account's current balance
+    if (targetMonth === currentMonth) {
+      updateBankAccount({
+        id,
+        current_balance: balanceNum,
+        last_updated: new Date().toISOString(),
+      });
+    }
     
-    // Also save to history for this month
+    // Save to history for the selected month
     upsertBalanceHistory({
       bank_account_id: id,
-      month: currentMonth,
+      month: targetMonth,
       balance: balanceNum,
       notes: null,
     });
@@ -223,28 +249,47 @@ const BankBalanceCard = () => {
                 return (
                   <div key={account.id} className="p-3 group">
                     {editingAccount?.id === account.id ? (
-                      <div className="flex items-center gap-2">
-                        <div className="flex-1">
-                          <p className="text-xs text-muted-foreground mb-1">{account.name}</p>
+                      <div className="space-y-2">
+                        <p className="text-xs text-muted-foreground">{account.name}</p>
+                        <div className="flex items-center gap-2">
                           <Input
                             type="number"
                             value={editingAccount.balance}
                             onChange={(e) => setEditingAccount({ ...editingAccount, balance: e.target.value })}
-                            className="h-8"
+                            className="h-8 flex-1"
+                            placeholder="Balance"
                             autoFocus
                             onKeyDown={(e) => {
-                              if (e.key === 'Enter') handleUpdateBalance(account.id, editingAccount.balance);
+                              if (e.key === 'Enter') handleUpdateBalance(account.id, editingAccount.balance, editingAccount.month);
                               if (e.key === 'Escape') setEditingAccount(null);
                             }}
                           />
                         </div>
-                        <Button
-                          size="sm"
-                          className="h-8"
-                          onClick={() => handleUpdateBalance(account.id, editingAccount.balance)}
-                        >
-                          Save
-                        </Button>
+                        <div className="flex items-center gap-2">
+                          <Select
+                            value={editingAccount.month}
+                            onValueChange={(value) => setEditingAccount({ ...editingAccount, month: value })}
+                          >
+                            <SelectTrigger className="h-8 flex-1">
+                              <CalendarIcon className="h-3 w-3 mr-2" />
+                              <SelectValue placeholder="Select month" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {monthOptions.map((month) => (
+                                <SelectItem key={month} value={month}>
+                                  {formatMonth(month)}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <Button
+                            size="sm"
+                            className="h-8"
+                            onClick={() => handleUpdateBalance(account.id, editingAccount.balance, editingAccount.month)}
+                          >
+                            Save
+                          </Button>
+                        </div>
                       </div>
                     ) : (
                       <div className="flex items-center justify-between">
@@ -279,6 +324,7 @@ const BankBalanceCard = () => {
                               id: account.id,
                               name: account.name,
                               balance: monthBalance.toString(),
+                              month: currentMonth,
                             })}
                             className="p-1.5 hover:bg-secondary rounded"
                             title="Edit balance"
