@@ -309,9 +309,9 @@ const SavingsList = () => {
                     <Pencil className="h-4 w-4 text-muted-foreground" />
                   </button>
                   <button
-                    onClick={() => closeSavingsAccount(saving.name)}
+                    onClick={() => closeSavingsAccount(saving.name, currentMonth)}
                     className="p-1.5 opacity-0 group-hover:opacity-100 hover:bg-destructive/10 rounded transition-all"
-                    title="Close account (preserves history)"
+                    title="Close account from this month (preserves history)"
                   >
                     <Trash2 className="h-4 w-4 text-destructive" />
                   </button>

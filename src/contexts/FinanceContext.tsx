@@ -49,7 +49,7 @@ interface FinanceContextType {
   addSavings: (saving: Omit<Savings, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => void;
   updateSavings: (data: { id: string } & Partial<Savings>) => void;
   deleteSavings: (id: string) => void;
-  closeSavingsAccount: (name: string) => void;
+  closeSavingsAccount: (name: string, fromMonth: string) => void;
   
   // Big purchase operations
   addBigPurchase: (goal: Omit<BigPurchaseGoal, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => void;
@@ -195,7 +195,7 @@ export const FinanceProvider = ({ children }: { children: ReactNode }) => {
         addSavings: savingsHook.addSavings,
         updateSavings: savingsHook.updateSavings,
         deleteSavings: savingsHook.deleteSavings,
-        closeSavingsAccount: savingsHook.closeSavingsAccount,
+        closeSavingsAccount: (name: string, fromMonth: string) => savingsHook.closeSavingsAccount({ name, fromMonth }),
         
         // Big purchase operations
         addBigPurchase: bigPurchasesHook.addBigPurchase,
