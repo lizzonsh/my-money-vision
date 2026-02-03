@@ -1,34 +1,118 @@
+import { useState } from 'react';
 import { useFinance } from '@/contexts/FinanceContext';
 import { formatCurrency } from '@/lib/formatters';
 import { Progress } from '@/components/ui/progress';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Pencil } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 
 const BudgetProgress = () => {
-  const { budget, expenses, currentMonth } = useFinance();
-  
-  // Parse totalBudget as number (MongoDB may store as string)
+  const { budget, updateBudget, calculatedBudget, currentMonth } = useFinance();
+  const [isOpen, setIsOpen] = useState(false);
+  const [editBudget, setEditBudget] = useState({
+    totalBudget: '',
+    daysInMonth: '',
+    notes: '',
+  });
+
   const totalBudget = typeof budget.totalBudget === 'string' 
     ? parseFloat(budget.totalBudget) 
     : budget.totalBudget;
-  
-  const monthlyExpenses = expenses
-    .filter(e => e.month === currentMonth && e.kind !== 'predicted')
-    .reduce((sum, e) => sum + e.amount, 0);
-  
-  const remaining = totalBudget - monthlyExpenses;
-  const percentage = Math.min((monthlyExpenses / totalBudget) * 100, 100);
-  const isOverBudget = remaining < 0;
-  
-  // Calculate daily budget based on remaining days
+
+  const { spentBudget, leftBudget, dailyLimit } = calculatedBudget;
+  const percentage = Math.min((spentBudget / totalBudget) * 100, 100);
+  const isOverBudget = leftBudget < 0;
+
   const today = new Date();
   const daysInMonth = budget.daysInMonth || new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
-  const daysRemaining = daysInMonth - today.getDate() + 1;
-  const dailyLimit = remaining > 0 ? remaining / daysRemaining : 0;
+  const daysRemaining = Math.max(1, daysInMonth - today.getDate() + 1);
+
+  const handleOpenEdit = () => {
+    setEditBudget({
+      totalBudget: totalBudget.toString(),
+      daysInMonth: (budget.daysInMonth || daysInMonth).toString(),
+      notes: budget.notes || '',
+    });
+    setIsOpen(true);
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    updateBudget({
+      ...budget,
+      totalBudget: parseFloat(editBudget.totalBudget),
+      daysInMonth: parseInt(editBudget.daysInMonth),
+      notes: editBudget.notes || undefined,
+    });
+    setIsOpen(false);
+  };
 
   return (
     <div className="glass rounded-xl p-5 shadow-card animate-slide-up">
       <div className="flex items-center justify-between mb-4">
         <h3 className="font-semibold">Monthly Budget</h3>
-        <span className="text-sm text-muted-foreground">{budget.month}</span>
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-muted-foreground">{budget.month || currentMonth}</span>
+          <Dialog open={isOpen} onOpenChange={setIsOpen}>
+            <DialogTrigger asChild>
+              <button 
+                onClick={handleOpenEdit}
+                className="p-1.5 hover:bg-secondary rounded transition-colors"
+              >
+                <Pencil className="h-4 w-4 text-muted-foreground" />
+              </button>
+            </DialogTrigger>
+            <DialogContent className="glass">
+              <DialogHeader>
+                <DialogTitle>Edit Budget</DialogTitle>
+              </DialogHeader>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="totalBudget">Total Budget (₪)</Label>
+                  <Input
+                    id="totalBudget"
+                    type="number"
+                    value={editBudget.totalBudget}
+                    onChange={(e) => setEditBudget({ ...editBudget, totalBudget: e.target.value })}
+                    placeholder="0"
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="daysInMonth">Days in Month</Label>
+                  <Input
+                    id="daysInMonth"
+                    type="number"
+                    value={editBudget.daysInMonth}
+                    onChange={(e) => setEditBudget({ ...editBudget, daysInMonth: e.target.value })}
+                    placeholder="30"
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="notes">Notes</Label>
+                  <Input
+                    id="notes"
+                    value={editBudget.notes}
+                    onChange={(e) => setEditBudget({ ...editBudget, notes: e.target.value })}
+                    placeholder="Optional notes"
+                  />
+                </div>
+                <Button type="submit" className="w-full">
+                  Save Budget
+                </Button>
+              </form>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
       
       <div className="space-y-4">
@@ -36,11 +120,11 @@ const BudgetProgress = () => {
           <div className="flex justify-between text-sm mb-2">
             <span className="text-muted-foreground">Spent</span>
             <span className={isOverBudget ? 'text-destructive' : ''}>
-              {formatCurrency(monthlyExpenses)} / {formatCurrency(totalBudget)}
+              {formatCurrency(Math.abs(spentBudget))} / {formatCurrency(totalBudget)}
             </span>
           </div>
           <Progress 
-            value={percentage} 
+            value={Math.abs(percentage)} 
             className={`h-3 ${isOverBudget ? '[&>div]:bg-destructive' : '[&>div]:bg-primary'}`}
           />
         </div>
@@ -49,7 +133,7 @@ const BudgetProgress = () => {
           <div className="text-center p-3 rounded-lg bg-secondary/50">
             <p className="text-xs text-muted-foreground mb-1">Remaining</p>
             <p className={`text-lg font-bold ${isOverBudget ? 'text-destructive' : 'text-success'}`}>
-              {formatCurrency(Math.abs(remaining))}
+              {formatCurrency(Math.abs(leftBudget))}
               {isOverBudget && <span className="text-xs ml-1">over</span>}
             </p>
           </div>

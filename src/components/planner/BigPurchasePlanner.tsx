@@ -6,7 +6,7 @@ import {
   calculateMonthsToGoal,
   formatMonth,
 } from '@/lib/formatters';
-import { Plus, Trash2, Target, Calendar, TrendingUp } from 'lucide-react';
+import { Plus, Trash2, Target, Calendar, TrendingUp, Pencil } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -27,11 +27,13 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
+import { BigPurchaseGoal } from '@/types/finance';
 
 const BigPurchasePlanner = () => {
-  const { bigPurchases, addBigPurchase, deleteBigPurchase } = useFinance();
+  const { bigPurchases, addBigPurchase, updateBigPurchase, deleteBigPurchase } = useFinance();
   const [isOpen, setIsOpen] = useState(false);
-  const [newGoal, setNewGoal] = useState({
+  const [editingGoal, setEditingGoal] = useState<BigPurchaseGoal | null>(null);
+  const [formData, setFormData] = useState({
     name: '',
     targetAmount: '',
     currentSaved: '',
@@ -42,19 +44,8 @@ const BigPurchasePlanner = () => {
     notes: '',
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    addBigPurchase({
-      name: newGoal.name,
-      targetAmount: parseFloat(newGoal.targetAmount),
-      currentSaved: parseFloat(newGoal.currentSaved) || 0,
-      monthlyContribution: parseFloat(newGoal.monthlyContribution),
-      targetDate: newGoal.targetDate || undefined,
-      priority: newGoal.priority as any,
-      category: newGoal.category as any,
-      notes: newGoal.notes || undefined,
-    });
-    setNewGoal({
+  const resetForm = () => {
+    setFormData({
       name: '',
       targetAmount: '',
       currentSaved: '',
@@ -64,6 +55,43 @@ const BigPurchasePlanner = () => {
       category: 'other',
       notes: '',
     });
+    setEditingGoal(null);
+  };
+
+  const handleOpenEdit = (goal: BigPurchaseGoal) => {
+    setEditingGoal(goal);
+    setFormData({
+      name: goal.name,
+      targetAmount: goal.targetAmount.toString(),
+      currentSaved: goal.currentSaved.toString(),
+      monthlyContribution: goal.monthlyContribution.toString(),
+      targetDate: goal.targetDate || '',
+      priority: goal.priority,
+      category: goal.category,
+      notes: goal.notes || '',
+    });
+    setIsOpen(true);
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const goalData = {
+      name: formData.name,
+      targetAmount: parseFloat(formData.targetAmount),
+      currentSaved: parseFloat(formData.currentSaved) || 0,
+      monthlyContribution: parseFloat(formData.monthlyContribution),
+      targetDate: formData.targetDate || undefined,
+      priority: formData.priority as 'high' | 'medium' | 'low',
+      category: formData.category as 'furniture' | 'electronics' | 'education' | 'vehicle' | 'property' | 'vacation' | 'other',
+      notes: formData.notes || undefined,
+    };
+
+    if (editingGoal) {
+      updateBigPurchase(editingGoal._id, goalData);
+    } else {
+      addBigPurchase(goalData);
+    }
+    resetForm();
     setIsOpen(false);
   };
 
@@ -92,7 +120,7 @@ const BigPurchasePlanner = () => {
             Plan and track your financial goals
           </p>
         </div>
-        <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <Dialog open={isOpen} onOpenChange={(open) => { setIsOpen(open); if (!open) resetForm(); }}>
           <DialogTrigger asChild>
             <Button className="gap-2">
               <Plus className="h-4 w-4" />
@@ -101,15 +129,15 @@ const BigPurchasePlanner = () => {
           </DialogTrigger>
           <DialogContent className="glass max-w-md">
             <DialogHeader>
-              <DialogTitle>Create Savings Goal</DialogTitle>
+              <DialogTitle>{editingGoal ? 'Edit Goal' : 'Create Savings Goal'}</DialogTitle>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="name">Goal Name</Label>
                 <Input
                   id="name"
-                  value={newGoal.name}
-                  onChange={(e) => setNewGoal({ ...newGoal, name: e.target.value })}
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   placeholder="e.g., New Laptop"
                   required
                 />
@@ -120,10 +148,8 @@ const BigPurchasePlanner = () => {
                   <Input
                     id="targetAmount"
                     type="number"
-                    value={newGoal.targetAmount}
-                    onChange={(e) =>
-                      setNewGoal({ ...newGoal, targetAmount: e.target.value })
-                    }
+                    value={formData.targetAmount}
+                    onChange={(e) => setFormData({ ...formData, targetAmount: e.target.value })}
                     placeholder="0"
                     required
                   />
@@ -133,10 +159,8 @@ const BigPurchasePlanner = () => {
                   <Input
                     id="currentSaved"
                     type="number"
-                    value={newGoal.currentSaved}
-                    onChange={(e) =>
-                      setNewGoal({ ...newGoal, currentSaved: e.target.value })
-                    }
+                    value={formData.currentSaved}
+                    onChange={(e) => setFormData({ ...formData, currentSaved: e.target.value })}
                     placeholder="0"
                   />
                 </div>
@@ -147,10 +171,8 @@ const BigPurchasePlanner = () => {
                   <Input
                     id="monthlyContribution"
                     type="number"
-                    value={newGoal.monthlyContribution}
-                    onChange={(e) =>
-                      setNewGoal({ ...newGoal, monthlyContribution: e.target.value })
-                    }
+                    value={formData.monthlyContribution}
+                    onChange={(e) => setFormData({ ...formData, monthlyContribution: e.target.value })}
                     placeholder="0"
                     required
                   />
@@ -160,10 +182,8 @@ const BigPurchasePlanner = () => {
                   <Input
                     id="targetDate"
                     type="month"
-                    value={newGoal.targetDate}
-                    onChange={(e) =>
-                      setNewGoal({ ...newGoal, targetDate: e.target.value })
-                    }
+                    value={formData.targetDate}
+                    onChange={(e) => setFormData({ ...formData, targetDate: e.target.value })}
                   />
                 </div>
               </div>
@@ -171,10 +191,8 @@ const BigPurchasePlanner = () => {
                 <div className="space-y-2">
                   <Label>Category</Label>
                   <Select
-                    value={newGoal.category}
-                    onValueChange={(value) =>
-                      setNewGoal({ ...newGoal, category: value })
-                    }
+                    value={formData.category}
+                    onValueChange={(value) => setFormData({ ...formData, category: value })}
                   >
                     <SelectTrigger>
                       <SelectValue />
@@ -193,10 +211,8 @@ const BigPurchasePlanner = () => {
                 <div className="space-y-2">
                   <Label>Priority</Label>
                   <Select
-                    value={newGoal.priority}
-                    onValueChange={(value) =>
-                      setNewGoal({ ...newGoal, priority: value })
-                    }
+                    value={formData.priority}
+                    onValueChange={(value) => setFormData({ ...formData, priority: value })}
                   >
                     <SelectTrigger>
                       <SelectValue />
@@ -213,14 +229,14 @@ const BigPurchasePlanner = () => {
                 <Label htmlFor="notes">Notes</Label>
                 <Textarea
                   id="notes"
-                  value={newGoal.notes}
-                  onChange={(e) => setNewGoal({ ...newGoal, notes: e.target.value })}
+                  value={formData.notes}
+                  onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                   placeholder="Any additional notes..."
                   rows={2}
                 />
               </div>
               <Button type="submit" className="w-full">
-                Create Goal
+                {editingGoal ? 'Save Changes' : 'Create Goal'}
               </Button>
             </form>
           </DialogContent>
@@ -263,12 +279,20 @@ const BigPurchasePlanner = () => {
                       </p>
                     </div>
                   </div>
-                  <button
-                    onClick={() => deleteBigPurchase(goal._id)}
-                    className="p-1.5 opacity-0 group-hover:opacity-100 hover:bg-destructive/10 rounded transition-all"
-                  >
-                    <Trash2 className="h-4 w-4 text-destructive" />
-                  </button>
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => handleOpenEdit(goal)}
+                      className="p-1.5 opacity-0 group-hover:opacity-100 hover:bg-secondary rounded transition-all"
+                    >
+                      <Pencil className="h-4 w-4 text-muted-foreground" />
+                    </button>
+                    <button
+                      onClick={() => deleteBigPurchase(goal._id)}
+                      className="p-1.5 opacity-0 group-hover:opacity-100 hover:bg-destructive/10 rounded transition-all"
+                    >
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </button>
+                  </div>
                 </div>
 
                 <div className="space-y-4">
