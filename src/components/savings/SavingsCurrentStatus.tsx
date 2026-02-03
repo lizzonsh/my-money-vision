@@ -35,10 +35,17 @@ const SavingsCurrentStatus = () => {
   });
 
   // Get the latest record per savings account name UP TO the selected month
-  // Filter out closed accounts (where closed_at exists and is set)
+  // For closed accounts: show them if they were closed AFTER the selected month (history preserved)
+  const currentMonthDate = new Date(currentMonth + '-01');
+  
   const latestSavingsPerName = savings
     .filter(s => s.month <= currentMonth) // Only include entries up to selected month
-    .filter(s => !s.closed_at) // Exclude closed accounts entirely from current view
+    .filter(s => {
+      // Show if not closed, OR if closed after the selected month (so history is visible)
+      if (!s.closed_at) return true;
+      const closedDate = new Date(s.closed_at);
+      return closedDate > currentMonthDate;
+    })
     .reduce((acc, saving) => {
       const existing = acc.get(saving.name);
       if (!existing || new Date(saving.updated_at) > new Date(existing.updated_at)) {
