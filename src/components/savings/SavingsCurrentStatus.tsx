@@ -22,7 +22,7 @@ import {
 import { cn } from '@/lib/utils';
 
 const SavingsCurrentStatus = () => {
-  const { savings, addSavings, updateSavings, closeSavingsAccount, currentMonth } = useFinance();
+  const { savings, recurringSavings, addSavings, updateSavings, closeSavingsAccount, currentMonth } = useFinance();
   const [isOpen, setIsOpen] = useState(false);
   const [editingSaving, setEditingSaving] = useState<Savings | null>(null);
   const [formData, setFormData] = useState({
@@ -59,10 +59,15 @@ const SavingsCurrentStatus = () => {
   // Total portfolio value (sum of latest values per account)
   const totalPortfolioValue = uniqueSavings.reduce((sum, s) => sum + Number(s.amount), 0);
 
-  // Total monthly deposits (recurring)
-  const totalMonthlyDeposits = uniqueSavings
-    .filter(s => s.monthly_deposit)
-    .reduce((sum, s) => sum + Number(s.monthly_deposit || 0), 0);
+  // Total monthly deposits from recurring savings templates (active ones)
+  const activeRecurringSavings = recurringSavings.filter(rs => rs.is_active);
+  const totalRecurringDeposits = activeRecurringSavings
+    .filter(rs => rs.action_type === 'deposit')
+    .reduce((sum, rs) => sum + Number(rs.default_amount), 0);
+  const totalRecurringWithdrawals = activeRecurringSavings
+    .filter(rs => rs.action_type === 'withdrawal')
+    .reduce((sum, rs) => sum + Number(rs.default_amount), 0);
+  const netRecurringMonthly = totalRecurringDeposits - totalRecurringWithdrawals;
 
   const resetForm = () => {
     setFormData({
@@ -124,8 +129,10 @@ const SavingsCurrentStatus = () => {
           <p className="text-lg font-bold">{formatCurrency(totalPortfolioValue)}</p>
           <p className="text-xs text-muted-foreground mt-1">
             {uniqueSavings.length} account{uniqueSavings.length !== 1 ? 's' : ''}
-            {totalMonthlyDeposits > 0 && (
-              <span className="text-success ml-2">+{formatCurrency(totalMonthlyDeposits)}/mo recurring</span>
+            {netRecurringMonthly !== 0 && (
+              <span className={netRecurringMonthly > 0 ? "text-success ml-2" : "text-destructive ml-2"}>
+                {netRecurringMonthly > 0 ? '+' : ''}{formatCurrency(netRecurringMonthly)}/mo recurring
+              </span>
             )}
           </p>
         </div>

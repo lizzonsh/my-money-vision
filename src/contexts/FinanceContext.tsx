@@ -129,7 +129,8 @@ export const FinanceProvider = ({ children }: { children: ReactNode }) => {
     bankBalanceHistoryHook.isLoading;
 
   // Calculate budget based on user's logic:
-  // left_budget = debit_from_credit_card - planned_expenses
+  // spentBudget = only payed expenses (NOT planned)
+  // leftBudget = totalBudget - spentBudget
   const calculatedBudget = useMemo(() => {
     const budget = budgetsHook.getBudgetForMonth(currentMonth);
     const totalBudget = budget ? Number(budget.total_budget) : 0;
@@ -139,19 +140,16 @@ export const FinanceProvider = ({ children }: { children: ReactNode }) => {
       e.month === currentMonth && isDateUpToToday(e.expense_date)
     );
     
-    // Credit card total expenses (debit_from_credit_card category) - this is the available budget from credit card
-    const debitFromCreditCard = monthExpenses
-      .filter(e => e.category === 'debit_from_credit_card')
+    // Only count PAYED expenses as spent (exclude planned)
+    const payedExpenses = monthExpenses
+      .filter(e => e.kind === 'payed')
       .reduce((sum, e) => sum + Number(e.amount), 0);
     
-    // Planned expenses (committed spending)
-    const plannedExpenses = monthExpenses
-      .filter(e => e.kind === 'planned')
-      .reduce((sum, e) => sum + Number(e.amount), 0);
+    // Spent budget = only payed expenses
+    const spentBudget = payedExpenses;
     
-    // Left budget = debit from credit card - planned expenses
-    const leftBudget = debitFromCreditCard - plannedExpenses;
-    const spentBudget = plannedExpenses;
+    // Left budget = total budget - spent
+    const leftBudget = totalBudget - spentBudget;
     
     const today = new Date();
     const [year, month] = currentMonth.split('-').map(Number);
