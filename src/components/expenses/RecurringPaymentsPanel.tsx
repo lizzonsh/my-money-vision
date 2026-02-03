@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { useFinance, RecurringPayment } from '@/contexts/FinanceContext';
+import { useExpenseCategories } from '@/hooks/useExpenseCategories';
 import { formatCurrency } from '@/lib/formatters';
 import { getCurrentMonth } from '@/lib/dateUtils';
 import { format } from 'date-fns';
-import { Plus, Trash2, Pencil, Repeat, Play, Pause, Undo2, CalendarIcon } from 'lucide-react';
+import { Plus, Trash2, Pencil, Repeat, Play, Pause, Undo2, CalendarIcon, PlusCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -37,9 +38,13 @@ const RecurringPaymentsPanel = () => {
     currentMonth,
   } = useFinance();
   
+  const { categories, addCategory, isAddingCategory } = useExpenseCategories();
+  
   const [isOpen, setIsOpen] = useState(false);
   const [editingPayment, setEditingPayment] = useState<RecurringPayment | null>(null);
   const [lastAppliedExpenseIds, setLastAppliedExpenseIds] = useState<string[]>([]);
+  const [showNewCategory, setShowNewCategory] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState('');
   const [formData, setFormData] = useState({
     name: '',
     defaultAmount: '',
@@ -63,6 +68,8 @@ const RecurringPaymentsPanel = () => {
       endDate: null,
     });
     setEditingPayment(null);
+    setShowNewCategory(false);
+    setNewCategoryName('');
   };
 
   const handleOpenEdit = (payment: RecurringPayment) => {
@@ -256,21 +263,74 @@ const RecurringPaymentsPanel = () => {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Category</Label>
-                  <Select
-                    value={formData.category}
-                    onValueChange={(value) => setFormData({ ...formData, category: value })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="room">Room/Rent</SelectItem>
-                      <SelectItem value="psychologist">Psychologist</SelectItem>
-                      <SelectItem value="college">Education</SelectItem>
-                      <SelectItem value="vacation">Vacation</SelectItem>
-                      <SelectItem value="other">Other</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  {showNewCategory ? (
+                    <div className="flex gap-2">
+                      <Input
+                        value={newCategoryName}
+                        onChange={(e) => setNewCategoryName(e.target.value)}
+                        placeholder="Category name"
+                        className="flex-1"
+                      />
+                      <Button
+                        type="button"
+                        size="sm"
+                        disabled={!newCategoryName.trim() || isAddingCategory}
+                        onClick={() => {
+                          const categoryKey = newCategoryName.toLowerCase().replace(/\s+/g, '_');
+                          addCategory({
+                            name: categoryKey,
+                            color: 'hsl(var(--chart-1))',
+                            icon: 'tag',
+                            is_default: false,
+                          });
+                          setFormData({ ...formData, category: categoryKey });
+                          setShowNewCategory(false);
+                          setNewCategoryName('');
+                        }}
+                      >
+                        Add
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => {
+                          setShowNewCategory(false);
+                          setNewCategoryName('');
+                        }}
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  ) : (
+                    <Select
+                      value={formData.category}
+                      onValueChange={(value) => {
+                        if (value === '__new__') {
+                          setShowNewCategory(true);
+                        } else {
+                          setFormData({ ...formData, category: value });
+                        }
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {categories.map((cat) => (
+                          <SelectItem key={cat.name} value={cat.name}>
+                            {cat.label}
+                          </SelectItem>
+                        ))}
+                        <SelectItem value="__new__" className="text-primary">
+                          <span className="flex items-center gap-2">
+                            <PlusCircle className="h-3 w-3" />
+                            Add new category
+                          </span>
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label>Payment Method</Label>
