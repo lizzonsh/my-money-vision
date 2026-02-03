@@ -52,33 +52,29 @@ const BankBalanceCard = () => {
     .filter(i => i.month === currentMonth && (!shouldFilterByDate || isDateUpToToday(i.income_date || '')))
     .reduce((sum, i) => sum + Number(i.amount), 0);
 
-  // Calculate previous month for credit card debit (debited on 3rd of current month)
-  const [year, month] = currentMonth.split('-').map(Number);
-  const prevMonth = month === 1 
-    ? `${year - 1}-12` 
-    : `${year}-${String(month - 1).padStart(2, '0')}`;
-
-  // Credit card expenses from LAST month (debited on 3rd of current month)
-  const lastMonthCreditCardExpenses = expenses
+  // Credit card debit = expenses with category 'debit_from_credit_card' in current month
+  // (User records this on the 3rd when the debit happens)
+  const creditCardDebit = expenses
     .filter(e => 
-      e.month === prevMonth && 
-      e.kind === 'payed' && 
-      e.payment_method === 'credit_card'
+      e.month === currentMonth && 
+      e.category === 'debit_from_credit_card' &&
+      (!shouldFilterByDate || isDateUpToToday(e.expense_date))
     )
     .reduce((sum, e) => sum + Number(e.amount), 0);
 
-  // Bank transfer expenses from CURRENT month (immediate)
+  // Bank transfer expenses from CURRENT month (immediate, excluding credit card debits)
   const currentMonthBankTransfers = expenses
     .filter(e => 
       e.month === currentMonth && 
       e.kind === 'payed' && 
       e.payment_method === 'bank_transfer' &&
+      e.category !== 'debit_from_credit_card' &&
       (!shouldFilterByDate || isDateUpToToday(e.expense_date))
     )
     .reduce((sum, e) => sum + Number(e.amount), 0);
 
-  // Total bank payments = last month's credit cards + current month's bank transfers
-  const monthlyExpensesPaid = lastMonthCreditCardExpenses + currentMonthBankTransfers;
+  // Total bank payments = credit card debits + bank transfers
+  const monthlyExpensesPaid = creditCardDebit + currentMonthBankTransfers;
 
   // Calculate savings deposits and withdrawals (bank account transfers)
   const monthlySavings = savings.filter(s => 
@@ -319,7 +315,7 @@ const BankBalanceCard = () => {
             <span className="text-success font-medium">+{formatCurrency(monthlyIncomes)}</span>
           </div>
           
-          {/* Credit Card Debit (last month) */}
+          {/* Credit Card Debit */}
           <div className="flex items-center justify-between text-sm py-1">
             <div className="flex items-center gap-2">
               <div className="p-1 rounded bg-destructive/20">
@@ -327,10 +323,10 @@ const BankBalanceCard = () => {
               </div>
               <div>
                 <span>Credit Card Debit</span>
-                <p className="text-[10px] text-muted-foreground">from previous month</p>
+                <p className="text-[10px] text-muted-foreground">recorded on the 3rd</p>
               </div>
             </div>
-            <span className="text-destructive font-medium">-{formatCurrency(lastMonthCreditCardExpenses)}</span>
+            <span className="text-destructive font-medium">-{formatCurrency(creditCardDebit)}</span>
           </div>
           
           {/* Bank Transfers (current month) */}
