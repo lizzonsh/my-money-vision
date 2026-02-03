@@ -36,10 +36,9 @@ const SavingsList = () => {
   });
 
   // Filter savings for current month only
-  // Also exclude closed accounts
+  // Exclude closed accounts entirely
   const monthlySavings = savings.filter(s => 
-    s.month === currentMonth && 
-    (!s.closed_at || new Date(s.closed_at) > new Date(currentMonth + '-01'))
+    s.month === currentMonth && !s.closed_at
   );
   
   // For current month, only count items up to today's date
