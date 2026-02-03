@@ -119,10 +119,8 @@ export const FinanceProvider = ({ children }: { children: ReactNode }) => {
     recurringIncomesHook.isLoading ||
     bankAccountsHook.isLoading;
 
-  // Calculate budget based on Python logic:
-  // spent_budget = credit_card_expenses - planned_paid_expenses
-  // left_budget = total_budget - spent_budget
-  // daily_limit = left_budget / days_remaining
+  // Calculate budget based on user's logic:
+  // left_budget = debit_from_credit_card - planned_expenses
   const calculatedBudget = useMemo(() => {
     const budget = budgetsHook.getBudgetForMonth(currentMonth);
     const totalBudget = budget ? Number(budget.total_budget) : 0;
@@ -132,18 +130,19 @@ export const FinanceProvider = ({ children }: { children: ReactNode }) => {
       e.month === currentMonth && isDateUpToToday(e.expense_date)
     );
     
-    // Credit card total expenses (debit_from_credit_card category)
-    const creditCardExpenses = monthExpenses
+    // Credit card total expenses (debit_from_credit_card category) - this is the available budget from credit card
+    const debitFromCreditCard = monthExpenses
       .filter(e => e.category === 'debit_from_credit_card')
       .reduce((sum, e) => sum + Number(e.amount), 0);
     
-    // Planned expenses that were already paid
-    const plannedPaidExpenses = monthExpenses
-      .filter(e => e.payment_method === 'credit_card' && (e.kind === 'payed' || e.kind === 'planned'))
+    // Planned expenses (committed spending)
+    const plannedExpenses = monthExpenses
+      .filter(e => e.kind === 'planned')
       .reduce((sum, e) => sum + Number(e.amount), 0);
     
-    const spentBudget = creditCardExpenses - plannedPaidExpenses;
-    const leftBudget = totalBudget - spentBudget;
+    // Left budget = debit from credit card - planned expenses
+    const leftBudget = debitFromCreditCard - plannedExpenses;
+    const spentBudget = plannedExpenses;
     
     const today = new Date();
     const [year, month] = currentMonth.split('-').map(Number);

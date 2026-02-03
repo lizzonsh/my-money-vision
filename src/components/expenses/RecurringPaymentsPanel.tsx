@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useFinance, RecurringPayment } from '@/contexts/FinanceContext';
 import { formatCurrency } from '@/lib/formatters';
 import { getCurrentMonth } from '@/lib/dateUtils';
-import { Plus, Trash2, Pencil, Repeat, Play, Pause } from 'lucide-react';
+import { Plus, Trash2, Pencil, Repeat, Play, Pause, Undo2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -29,11 +29,14 @@ const RecurringPaymentsPanel = () => {
     updateRecurringPayment, 
     deleteRecurringPayment,
     addExpense,
+    deleteExpense,
+    expenses,
     currentMonth,
   } = useFinance();
   
   const [isOpen, setIsOpen] = useState(false);
   const [editingPayment, setEditingPayment] = useState<RecurringPayment | null>(null);
+  const [lastAppliedExpenseIds, setLastAppliedExpenseIds] = useState<string[]>([]);
   const [formData, setFormData] = useState({
     name: '',
     defaultAmount: '',
@@ -135,6 +138,10 @@ const RecurringPaymentsPanel = () => {
     const activePayments = recurringPayments.filter(p => p.is_active);
     const [year, month] = currentMonth.split('-').map(Number);
     
+    // Track applied payment names for undo
+    const appliedNames = activePayments.map(p => p.name);
+    setLastAppliedExpenseIds(appliedNames);
+    
     activePayments.forEach((payment) => {
       const expenseDate = `${year}-${String(month).padStart(2, '0')}-${String(payment.day_of_month).padStart(2, '0')}`;
       
@@ -155,6 +162,21 @@ const RecurringPaymentsPanel = () => {
     });
   };
 
+  const undoLastApply = () => {
+    // Find expenses that match the last applied recurring payments
+    const expensesToDelete = expenses.filter(
+      (e) => e.month === currentMonth && 
+             e.kind === 'planned' && 
+             lastAppliedExpenseIds.includes(e.description)
+    );
+    
+    expensesToDelete.forEach((expense) => {
+      deleteExpense(expense.id);
+    });
+    
+    setLastAppliedExpenseIds([]);
+  };
+
   return (
     <div className="glass rounded-xl p-5 shadow-card animate-slide-up">
       <div className="flex items-center justify-between mb-4">
@@ -166,6 +188,12 @@ const RecurringPaymentsPanel = () => {
           <p className="text-lg font-bold">{formatCurrency(totalMonthly)}<span className="text-sm font-normal text-muted-foreground">/month</span></p>
         </div>
         <div className="flex gap-2">
+          {lastAppliedExpenseIds.length > 0 && (
+            <Button size="sm" variant="ghost" className="gap-1" onClick={undoLastApply}>
+              <Undo2 className="h-4 w-4" />
+              Undo
+            </Button>
+          )}
           <Button size="sm" variant="outline" className="gap-1" onClick={applyAllRecurringPayments}>
             <Play className="h-4 w-4" />
             Apply All
