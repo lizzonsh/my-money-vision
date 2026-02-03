@@ -40,23 +40,25 @@ const SavingsMonthlyActivity = () => {
 
   return (
     <div className="glass rounded-xl p-5 shadow-card animate-slide-up">
-      <div className="mb-4">
-        <h3 className="font-semibold">Monthly Activity</h3>
-        <p className="text-xs text-muted-foreground">{monthName}</p>
+      <div className="flex items-center justify-between mb-4">
+        <div>
+          <h3 className="font-semibold">Monthly Activity</h3>
+          <p className="text-xs text-muted-foreground">{monthName}</p>
+        </div>
       </div>
 
-      {/* Summary Stats */}
-      <div className="grid grid-cols-3 gap-3 mb-4">
-        <div className="p-3 rounded-lg bg-success/10 border border-success/20 text-center">
-          <div className="flex items-center justify-center gap-1 mb-1">
+      {/* Summary Stats - Full width horizontal layout */}
+      <div className="grid grid-cols-3 md:grid-cols-6 gap-3 mb-4">
+        <div className="p-3 rounded-lg bg-success/10 border border-success/20 text-center md:col-span-2">
+          <div className="flex items-center justify-center gap-2 mb-1">
             <ArrowUpRight className="h-4 w-4 text-success" />
             <span className="text-xs text-muted-foreground">Deposits</span>
           </div>
           <p className="text-lg font-bold text-success">{formatCurrency(monthlyDeposits)}</p>
         </div>
         
-        <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-center">
-          <div className="flex items-center justify-center gap-1 mb-1">
+        <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-center md:col-span-2">
+          <div className="flex items-center justify-center gap-2 mb-1">
             <ArrowDownRight className="h-4 w-4 text-destructive" />
             <span className="text-xs text-muted-foreground">Withdrawals</span>
           </div>
@@ -64,14 +66,14 @@ const SavingsMonthlyActivity = () => {
         </div>
         
         <div className={cn(
-          "p-3 rounded-lg text-center border",
+          "p-3 rounded-lg text-center border md:col-span-2",
           netChange > 0 
             ? "bg-success/10 border-success/20" 
             : netChange < 0 
               ? "bg-destructive/10 border-destructive/20"
               : "bg-muted/50 border-muted"
         )}>
-          <div className="flex items-center justify-center gap-1 mb-1">
+          <div className="flex items-center justify-center gap-2 mb-1">
             {netChange > 0 ? (
               <TrendingUp className="h-4 w-4 text-success" />
             ) : netChange < 0 ? (
@@ -79,7 +81,7 @@ const SavingsMonthlyActivity = () => {
             ) : (
               <Minus className="h-4 w-4 text-muted-foreground" />
             )}
-            <span className="text-xs text-muted-foreground">Net</span>
+            <span className="text-xs text-muted-foreground">Net Change</span>
           </div>
           <p className={cn(
             "text-lg font-bold",
@@ -90,15 +92,15 @@ const SavingsMonthlyActivity = () => {
         </div>
       </div>
 
-      {/* Activity List */}
-      <div className="space-y-2">
-        <p className="text-sm font-medium text-muted-foreground">Transactions</p>
+      {/* Activity List - Grid layout for full width */}
+      <div>
+        <p className="text-sm font-medium text-muted-foreground mb-2">Transactions</p>
         {activityItems.length === 0 ? (
           <p className="text-sm text-muted-foreground text-center py-4">
             No savings activity this month
           </p>
         ) : (
-          <div className="space-y-2 max-h-48 overflow-y-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
             {activityItems.map((item) => (
               <div
                 key={item.id}

@@ -34,29 +34,35 @@ const SavingsActivity = () => {
         <PiggyBank className="h-4 w-4 text-muted-foreground" />
       </div>
 
-      {/* Summary Stats */}
-      <div className="grid grid-cols-3 gap-3 mb-4">
-        <div className="p-3 rounded-lg bg-success/10 text-center">
-          <ArrowUpRight className="h-4 w-4 text-success mx-auto mb-1" />
-          <p className="text-xs text-muted-foreground">Deposits</p>
-          <p className="text-sm font-semibold text-success">+{formatCurrency(totalDeposits)}</p>
+      {/* Summary Stats - Horizontal layout for full width */}
+      <div className="grid grid-cols-3 md:grid-cols-6 gap-3 mb-4">
+        <div className="p-3 rounded-lg bg-success/10 text-center md:col-span-2">
+          <div className="flex items-center justify-center gap-2 mb-1">
+            <ArrowUpRight className="h-4 w-4 text-success" />
+            <p className="text-xs text-muted-foreground">Deposits</p>
+          </div>
+          <p className="text-lg font-bold text-success">+{formatCurrency(totalDeposits)}</p>
         </div>
-        <div className="p-3 rounded-lg bg-destructive/10 text-center">
-          <ArrowDownRight className="h-4 w-4 text-destructive mx-auto mb-1" />
-          <p className="text-xs text-muted-foreground">Withdrawals</p>
-          <p className="text-sm font-semibold text-destructive">-{formatCurrency(totalWithdrawals)}</p>
+        <div className="p-3 rounded-lg bg-destructive/10 text-center md:col-span-2">
+          <div className="flex items-center justify-center gap-2 mb-1">
+            <ArrowDownRight className="h-4 w-4 text-destructive" />
+            <p className="text-xs text-muted-foreground">Withdrawals</p>
+          </div>
+          <p className="text-lg font-bold text-destructive">-{formatCurrency(totalWithdrawals)}</p>
         </div>
         <div className={cn(
-          "p-3 rounded-lg text-center",
+          "p-3 rounded-lg text-center md:col-span-2",
           netSavings >= 0 ? "bg-primary/10" : "bg-warning/10"
         )}>
-          <TrendingUp className={cn(
-            "h-4 w-4 mx-auto mb-1",
-            netSavings >= 0 ? "text-primary" : "text-warning"
-          )} />
-          <p className="text-xs text-muted-foreground">Net</p>
+          <div className="flex items-center justify-center gap-2 mb-1">
+            <TrendingUp className={cn(
+              "h-4 w-4",
+              netSavings >= 0 ? "text-primary" : "text-warning"
+            )} />
+            <p className="text-xs text-muted-foreground">Net Change</p>
+          </div>
           <p className={cn(
-            "text-sm font-semibold",
+            "text-lg font-bold",
             netSavings >= 0 ? "text-primary" : "text-warning"
           )}>
             {netSavings >= 0 ? '+' : ''}{formatCurrency(netSavings)}
@@ -64,17 +70,17 @@ const SavingsActivity = () => {
         </div>
       </div>
 
-      {/* Recent Activity List */}
-      <div className="space-y-2 max-h-48 overflow-y-auto">
+      {/* Recent Activity List - Grid layout for full width */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
         {savingsUpToDate.length === 0 ? (
-          <p className="text-sm text-muted-foreground text-center py-4">
+          <p className="text-sm text-muted-foreground text-center py-4 col-span-full">
             No savings activity this month
           </p>
         ) : (
-          savingsUpToDate.slice(0, 5).map((saving) => (
+          savingsUpToDate.map((saving) => (
             <div
               key={saving.id}
-              className="flex items-center justify-between p-2 rounded-lg bg-secondary/30"
+              className="flex items-center justify-between p-3 rounded-lg bg-secondary/30"
             >
               <div className="flex items-center gap-2">
                 <div className={cn(
@@ -108,14 +114,9 @@ const SavingsActivity = () => {
       </div>
 
       {/* Footer info */}
-      {(savingsUpToDate.length > 5 || futureSavings > 0) && (
-        <div className="flex justify-between text-xs text-muted-foreground pt-3 mt-2 border-t border-border/50">
-          {savingsUpToDate.length > 5 && (
-            <span>+{savingsUpToDate.length - 5} more entries</span>
-          )}
-          {futureSavings > 0 && (
-            <span className="text-warning">+{futureSavings} future</span>
-          )}
+      {futureSavings > 0 && (
+        <div className="text-xs text-muted-foreground pt-3 mt-2 border-t border-border/50">
+          <span className="text-warning">+{futureSavings} future entries pending</span>
         </div>
       )}
     </div>
