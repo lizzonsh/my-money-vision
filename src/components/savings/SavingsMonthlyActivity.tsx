@@ -65,18 +65,21 @@ const SavingsMonthlyActivity = () => {
 
   // Create combined activity list
   const activityItems: ActivityItem[] = [
-    // Actual savings transactions
+    // Actual savings transactions - include entries with action_amount OR monthly_deposit
     ...savingsUpToDate
-      .filter(s => s.action_amount && s.action_amount > 0)
-      .map(s => ({
-        id: s.id,
-        name: s.name,
-        action: (s.action || 'deposit') as 'deposit' | 'withdrawal',
-        amount: Number(s.action_amount),
-        date: s.updated_at,
-        isRecurring: false,
-        originalSaving: s,
-      })),
+      .filter(s => (s.action_amount && s.action_amount > 0) || (s.monthly_deposit && s.monthly_deposit > 0))
+      .map(s => {
+        const hasActionAmount = s.action_amount && s.action_amount > 0;
+        return {
+          id: s.id,
+          name: s.name,
+          action: (s.action || 'deposit') as 'deposit' | 'withdrawal',
+          amount: hasActionAmount ? Number(s.action_amount) : Number(s.monthly_deposit),
+          date: s.updated_at,
+          isRecurring: false,
+          originalSaving: s,
+        };
+      }),
     // Recurring savings as virtual transactions
     ...activeRecurringSavings.map(rs => ({
       id: `recurring-${rs.id}`,
