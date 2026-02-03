@@ -1,4 +1,5 @@
 import ExpensesList from '@/components/expenses/ExpensesList';
+import RecurringPaymentsPanel from '@/components/expenses/RecurringPaymentsPanel';
 import BudgetProgress from '@/components/dashboard/BudgetProgress';
 import MonthNavigation from '@/components/navigation/MonthNavigation';
 import { SpendingByCategoryChart } from '@/components/charts/FinanceCharts';
@@ -15,8 +16,9 @@ const ExpensesPage = () => {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
-        <div className="lg:col-span-2">
+        <div className="lg:col-span-2 space-y-6">
           <ExpensesList />
+          <RecurringPaymentsPanel />
         </div>
         <div className="space-y-6">
           <BudgetProgress />
