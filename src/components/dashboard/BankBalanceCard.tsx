@@ -62,6 +62,16 @@ const BankBalanceCard = () => {
     )
     .reduce((sum, e) => sum + Number(e.amount), 0);
 
+  // Planned credit card expenses (will become debit next month)
+  const plannedCreditCardExpenses = expenses
+    .filter(e => 
+      e.month === currentMonth && 
+      e.payment_method === 'credit_card' && 
+      e.kind === 'planned' &&
+      e.category !== 'debit_from_credit_card'
+    )
+    .reduce((sum, e) => sum + Number(e.amount), 0);
+
   // Bank transfer expenses from CURRENT month (immediate, excluding credit card debits)
   const currentMonthBankTransfers = expenses
     .filter(e => 
@@ -328,6 +338,22 @@ const BankBalanceCard = () => {
             </div>
             <span className="text-destructive font-medium">-{formatCurrency(creditCardDebit)}</span>
           </div>
+          
+          {/* Pending CC Expenses (will become debit next month) */}
+          {plannedCreditCardExpenses > 0 && (
+            <div className="flex items-center justify-between text-sm py-1 pl-6 opacity-70">
+              <div className="flex items-center gap-2">
+                <div className="p-1 rounded bg-warning/20">
+                  <CreditCard className="h-3 w-3 text-warning" />
+                </div>
+                <div>
+                  <span className="text-muted-foreground">Pending CC</span>
+                  <p className="text-[10px] text-muted-foreground">becomes debit next month</p>
+                </div>
+              </div>
+              <span className="text-warning font-medium">({formatCurrency(plannedCreditCardExpenses)})</span>
+            </div>
+          )}
           
           {/* Bank Transfers (current month) */}
           <div className="flex items-center justify-between text-sm py-1">
