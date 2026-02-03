@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useFinance } from '@/contexts/FinanceContext';
+import { useFinance, Income } from '@/contexts/FinanceContext';
 import { formatCurrency, formatDate } from '@/lib/formatters';
 import { isDateUpToToday, isCurrentMonth } from '@/lib/dateUtils';
 import { Plus, Trash2, Briefcase, Gift, Heart, Pencil } from 'lucide-react';
@@ -20,7 +20,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { Income } from '@/types/finance';
 
 const IncomesList = () => {
   const { incomes, currentMonth, addIncome, updateIncome, deleteIncome } = useFinance();
@@ -36,9 +35,9 @@ const IncomesList = () => {
   
   // For current month, only count items up to today's date
   const shouldFilterByDate = isCurrentMonth(currentMonth);
-  const incomesUpToDate = monthlyIncomes.filter(i => !shouldFilterByDate || isDateUpToToday(i.incomeDate));
+  const incomesUpToDate = monthlyIncomes.filter(i => !shouldFilterByDate || isDateUpToToday(i.income_date || ''));
   
-  const totalIncome = incomesUpToDate.reduce((sum, i) => sum + i.amount, 0);
+  const totalIncome = incomesUpToDate.reduce((sum, i) => sum + Number(i.amount), 0);
 
   const resetForm = () => {
     setFormData({ description: '', amount: '', name: 'work' });
@@ -58,15 +57,15 @@ const IncomesList = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const incomeData = {
-      incomeDate: new Date().toISOString().split('T')[0],
+      income_date: new Date().toISOString().split('T')[0],
       month: currentMonth,
       amount: parseFloat(formData.amount),
       name: formData.name,
-      description: formData.description,
+      description: formData.description || null,
     };
 
     if (editingIncome) {
-      updateIncome(editingIncome._id, incomeData);
+      updateIncome({ id: editingIncome.id, ...incomeData });
     } else {
       addIncome(incomeData);
     }
@@ -175,7 +174,7 @@ const IncomesList = () => {
         ) : (
           monthlyIncomes.map((income) => (
             <div
-              key={income._id}
+              key={income.id}
               className="flex items-center justify-between p-3 rounded-lg bg-secondary/30 hover:bg-secondary/50 transition-colors group"
             >
               <div className="flex items-center gap-3">
@@ -192,10 +191,10 @@ const IncomesList = () => {
               <div className="flex items-center gap-2">
                 <div className="text-right">
                   <p className="text-sm font-semibold text-success">
-                    +{formatCurrency(income.amount)}
+                    +{formatCurrency(Number(income.amount))}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    {income.incomeDate ? formatDate(income.incomeDate) : income.updateDate ? formatDate(income.updateDate) : ''}
+                    {income.income_date ? formatDate(income.income_date) : ''}
                   </p>
                 </div>
                 <button
@@ -205,7 +204,7 @@ const IncomesList = () => {
                   <Pencil className="h-4 w-4 text-muted-foreground" />
                 </button>
                 <button
-                  onClick={() => deleteIncome(income._id)}
+                  onClick={() => deleteIncome(income.id)}
                   className="p-1.5 opacity-0 group-hover:opacity-100 hover:bg-destructive/10 rounded transition-all"
                 >
                   <Trash2 className="h-4 w-4 text-destructive" />

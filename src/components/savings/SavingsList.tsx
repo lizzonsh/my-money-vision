@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useFinance } from '@/contexts/FinanceContext';
+import { useFinance, Savings } from '@/contexts/FinanceContext';
 import { formatCurrency } from '@/lib/formatters';
 import { isDateUpToToday, isCurrentMonth } from '@/lib/dateUtils';
 import { Plus, Trash2, PiggyBank, TrendingUp, ArrowDownRight, Pencil } from 'lucide-react';
@@ -21,7 +21,6 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
-import { Savings } from '@/types/finance';
 
 const SavingsList = () => {
   const { savings, currentMonth, addSavings, updateSavings, deleteSavings } = useFinance();
@@ -39,20 +38,20 @@ const SavingsList = () => {
   // For current month, only count items up to today's date
   const shouldFilterByDate = isCurrentMonth(currentMonth);
   const savingsUpToDate = savings.filter(s => 
-    !isCurrentMonth(s.month) || !shouldFilterByDate || isDateUpToToday(s.updateDate)
+    !isCurrentMonth(s.month) || !shouldFilterByDate || isDateUpToToday(s.updated_at)
   );
 
   const totalSavings = savingsUpToDate
     .filter(s => s.action !== 'withdrawal')
-    .reduce((sum, s) => sum + s.amount, 0);
+    .reduce((sum, s) => sum + Number(s.amount), 0);
 
   const totalWithdrawals = savingsUpToDate
     .filter(s => s.action === 'withdrawal')
-    .reduce((sum, s) => sum + (s.actionAmount || 0), 0);
+    .reduce((sum, s) => sum + Number(s.action_amount || 0), 0);
 
   const monthlyDeposits = savingsUpToDate
-    .filter(s => s.recurring?.monthlyDeposit)
-    .reduce((sum, s) => sum + (s.recurring?.monthlyDeposit || 0), 0);
+    .filter(s => s.monthly_deposit)
+    .reduce((sum, s) => sum + Number(s.monthly_deposit || 0), 0);
 
   const resetForm = () => {
     setFormData({
@@ -71,9 +70,9 @@ const SavingsList = () => {
     setFormData({
       name: saving.name,
       amount: saving.amount.toString(),
-      actionAmount: (saving.actionAmount || saving.recurring?.monthlyDeposit || '').toString(),
-      transferMethod: saving.transferMethod,
-      cardId: saving.cardId || '',
+      actionAmount: (saving.action_amount || saving.monthly_deposit || '').toString(),
+      transferMethod: saving.transfer_method,
+      cardId: saving.card_id || '',
       action: saving.action || 'deposit',
     });
     setIsOpen(true);
@@ -87,18 +86,17 @@ const SavingsList = () => {
       name: formData.name,
       amount: parseFloat(formData.amount),
       currency: 'ILS',
-      transferMethod: formData.transferMethod as 'bank_account' | 'credit_card',
-      cardId: formData.cardId || undefined,
+      transfer_method: formData.transferMethod as 'bank_account' | 'credit_card',
+      card_id: formData.cardId || null,
       action: formData.action as 'deposit' | 'withdrawal',
-      actionAmount: formData.actionAmount ? parseFloat(formData.actionAmount) : undefined,
-      updateDate: today.toISOString().split('T')[0],
-      recurring: formData.action === 'deposit' && formData.actionAmount
-        ? { type: 'monthly' as const, dayOfMonth: 15, monthlyDeposit: parseFloat(formData.actionAmount) }
-        : undefined,
+      action_amount: formData.actionAmount ? parseFloat(formData.actionAmount) : null,
+      monthly_deposit: formData.action === 'deposit' && formData.actionAmount ? parseFloat(formData.actionAmount) : null,
+      recurring_type: formData.action === 'deposit' && formData.actionAmount ? 'monthly' as const : null,
+      recurring_day_of_month: formData.action === 'deposit' && formData.actionAmount ? 15 : null,
     };
 
     if (editingSaving) {
-      updateSavings(editingSaving._id, savingData);
+      updateSavings({ id: editingSaving.id, ...savingData });
     } else {
       addSavings(savingData);
     }
@@ -232,7 +230,7 @@ const SavingsList = () => {
         ) : (
           savings.map((saving) => (
             <div
-              key={saving._id}
+              key={saving.id}
               className={cn(
                 'p-4 rounded-lg transition-colors group',
                 saving.action === 'withdrawal'
@@ -265,21 +263,21 @@ const SavingsList = () => {
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="text-right">
-                    <p className="text-lg font-bold">{formatCurrency(saving.amount)}</p>
-                    {saving.recurring && (
+                    <p className="text-lg font-bold">{formatCurrency(Number(saving.amount))}</p>
+                    {saving.monthly_deposit && (
                       <div className="flex items-center gap-1 text-xs text-muted-foreground">
                         <TrendingUp className="h-3 w-3 text-success" />
-                        <span>+{formatCurrency(saving.recurring.monthlyDeposit || 0)}/mo</span>
+                        <span>+{formatCurrency(Number(saving.monthly_deposit))}/mo</span>
                       </div>
                     )}
-                    {saving.action === 'withdrawal' && saving.actionAmount && (
+                    {saving.action === 'withdrawal' && saving.action_amount && (
                       <p className="text-xs text-destructive">
-                        -{formatCurrency(saving.actionAmount)}
+                        -{formatCurrency(Number(saving.action_amount))}
                       </p>
                     )}
-                    {saving.action === 'deposit' && saving.actionAmount && (
+                    {saving.action === 'deposit' && saving.action_amount && (
                       <p className="text-xs text-success">
-                        +{formatCurrency(saving.actionAmount)}
+                        +{formatCurrency(Number(saving.action_amount))}
                       </p>
                     )}
                   </div>
@@ -290,7 +288,7 @@ const SavingsList = () => {
                     <Pencil className="h-4 w-4 text-muted-foreground" />
                   </button>
                   <button
-                    onClick={() => deleteSavings(saving._id)}
+                    onClick={() => deleteSavings(saving.id)}
                     className="p-1.5 opacity-0 group-hover:opacity-100 hover:bg-destructive/10 rounded transition-all"
                   >
                     <Trash2 className="h-4 w-4 text-destructive" />

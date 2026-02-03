@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { useFinance } from '@/contexts/FinanceContext';
+import { useFinance, RecurringSavings } from '@/contexts/FinanceContext';
 import { formatCurrency } from '@/lib/formatters';
-import { Plus, Trash2, Pencil, Repeat, Play, Pause, TrendingUp, ArrowDownRight } from 'lucide-react';
+import { Plus, Trash2, Pencil, Repeat, Pause, TrendingUp, ArrowDownRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -20,7 +20,6 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
-import { RecurringSavingsTemplate } from '@/types/finance';
 
 const RecurringSavingsPanel = () => {
   const { 
@@ -28,11 +27,10 @@ const RecurringSavingsPanel = () => {
     addRecurringSavings, 
     updateRecurringSavings, 
     deleteRecurringSavings,
-    createSavingsFromRecurring 
   } = useFinance();
   
   const [isOpen, setIsOpen] = useState(false);
-  const [editingTemplate, setEditingTemplate] = useState<RecurringSavingsTemplate | null>(null);
+  const [editingTemplate, setEditingTemplate] = useState<RecurringSavings | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     defaultAmount: '',
@@ -56,15 +54,15 @@ const RecurringSavingsPanel = () => {
     setEditingTemplate(null);
   };
 
-  const handleOpenEdit = (template: RecurringSavingsTemplate) => {
+  const handleOpenEdit = (template: RecurringSavings) => {
     setEditingTemplate(template);
     setFormData({
       name: template.name,
-      defaultAmount: template.defaultAmount.toString(),
-      actionType: template.actionType,
-      transferMethod: template.transferMethod,
-      cardId: template.cardId || '',
-      dayOfMonth: template.dayOfMonth.toString(),
+      defaultAmount: template.default_amount.toString(),
+      actionType: template.action_type,
+      transferMethod: template.transfer_method,
+      cardId: template.card_id || '',
+      dayOfMonth: template.day_of_month.toString(),
       notes: template.notes || '',
     });
     setIsOpen(true);
@@ -74,17 +72,17 @@ const RecurringSavingsPanel = () => {
     e.preventDefault();
     const templateData = {
       name: formData.name,
-      defaultAmount: parseFloat(formData.defaultAmount),
-      actionType: formData.actionType as 'deposit' | 'withdrawal',
-      transferMethod: formData.transferMethod as 'bank_account' | 'credit_card',
-      cardId: formData.cardId || undefined,
-      dayOfMonth: parseInt(formData.dayOfMonth) || 1,
-      isActive: true,
-      notes: formData.notes || undefined,
+      default_amount: parseFloat(formData.defaultAmount),
+      action_type: formData.actionType as 'deposit' | 'withdrawal',
+      transfer_method: formData.transferMethod as 'bank_account' | 'credit_card',
+      card_id: formData.cardId || null,
+      day_of_month: parseInt(formData.dayOfMonth) || 1,
+      is_active: true,
+      notes: formData.notes || null,
     };
 
     if (editingTemplate) {
-      updateRecurringSavings(editingTemplate._id, templateData);
+      updateRecurringSavings({ id: editingTemplate.id, ...templateData });
     } else {
       addRecurringSavings(templateData);
     }
@@ -92,11 +90,11 @@ const RecurringSavingsPanel = () => {
     setIsOpen(false);
   };
 
-  const toggleActive = (template: RecurringSavingsTemplate) => {
-    updateRecurringSavings(template._id, { isActive: !template.isActive });
+  const toggleActive = (template: RecurringSavings) => {
+    updateRecurringSavings({ id: template.id, is_active: !template.is_active });
   };
 
-  const formatCardName = (cardId?: string) => {
+  const formatCardName = (cardId?: string | null) => {
     if (!cardId) return '';
     const cardNames: Record<string, string> = {
       'fly-card': 'Fly Card',
@@ -107,12 +105,12 @@ const RecurringSavingsPanel = () => {
   };
 
   const totalMonthlyDeposits = recurringSavings
-    .filter(t => t.isActive && t.actionType === 'deposit')
-    .reduce((sum, t) => sum + t.defaultAmount, 0);
+    .filter(t => t.is_active && t.action_type === 'deposit')
+    .reduce((sum, t) => sum + Number(t.default_amount), 0);
 
   const totalMonthlyWithdrawals = recurringSavings
-    .filter(t => t.isActive && t.actionType === 'withdrawal')
-    .reduce((sum, t) => sum + t.defaultAmount, 0);
+    .filter(t => t.is_active && t.action_type === 'withdrawal')
+    .reduce((sum, t) => sum + Number(t.default_amount), 0);
 
   return (
     <div className="glass rounded-xl p-5 shadow-card animate-slide-up">
@@ -256,12 +254,12 @@ const RecurringSavingsPanel = () => {
         ) : (
           recurringSavings.map((template) => (
             <div
-              key={template._id}
+              key={template.id}
               className={cn(
                 'flex items-center justify-between p-3 rounded-lg transition-colors group',
-                !template.isActive 
+                !template.is_active 
                   ? 'bg-muted/20 opacity-60'
-                  : template.actionType === 'withdrawal'
+                  : template.action_type === 'withdrawal'
                     ? 'bg-destructive/10 hover:bg-destructive/15'
                     : 'bg-secondary/30 hover:bg-secondary/50'
               )}
@@ -271,15 +269,15 @@ const RecurringSavingsPanel = () => {
                   onClick={() => toggleActive(template)}
                   className={cn(
                     'p-2 rounded-lg transition-colors',
-                    !template.isActive 
+                    !template.is_active 
                       ? 'bg-muted text-muted-foreground'
-                      : template.actionType === 'withdrawal'
+                      : template.action_type === 'withdrawal'
                         ? 'bg-destructive/20 text-destructive'
                         : 'bg-success/20 text-success'
                   )}
                 >
-                  {template.isActive ? (
-                    template.actionType === 'withdrawal' ? (
+                  {template.is_active ? (
+                    template.action_type === 'withdrawal' ? (
                       <ArrowDownRight className="h-4 w-4" />
                     ) : (
                       <TrendingUp className="h-4 w-4" />
@@ -291,18 +289,18 @@ const RecurringSavingsPanel = () => {
                 <div>
                   <p className="text-sm font-medium">{template.name}</p>
                   <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <span>Day {template.dayOfMonth}</span>
+                    <span>Day {template.day_of_month}</span>
                     <span className={cn(
                       'px-1.5 py-0.5 rounded',
-                      template.actionType === 'withdrawal' 
+                      template.action_type === 'withdrawal' 
                         ? 'bg-destructive/10 text-destructive'
                         : 'bg-success/10 text-success'
                     )}>
-                      {template.actionType}
+                      {template.action_type}
                     </span>
-                    {template.cardId && (
+                    {template.card_id && (
                       <span className="px-1.5 py-0.5 rounded bg-primary/10 text-primary">
-                        {formatCardName(template.cardId)}
+                        {formatCardName(template.card_id)}
                       </span>
                     )}
                   </div>
@@ -312,18 +310,11 @@ const RecurringSavingsPanel = () => {
                 <div className="text-right">
                   <p className={cn(
                     'text-sm font-semibold',
-                    template.actionType === 'withdrawal' ? 'text-destructive' : 'text-success'
+                    template.action_type === 'withdrawal' ? 'text-destructive' : 'text-success'
                   )}>
-                    {template.actionType === 'withdrawal' ? '-' : '+'}{formatCurrency(template.defaultAmount)}
+                    {template.action_type === 'withdrawal' ? '-' : '+'}{formatCurrency(Number(template.default_amount))}
                   </p>
                 </div>
-                <button
-                  onClick={() => createSavingsFromRecurring(template._id)}
-                  className="p-1.5 opacity-0 group-hover:opacity-100 hover:bg-primary/10 rounded transition-all"
-                  title="Add to this month's savings"
-                >
-                  <Plus className="h-4 w-4 text-primary" />
-                </button>
                 <button
                   onClick={() => handleOpenEdit(template)}
                   className="p-1.5 opacity-0 group-hover:opacity-100 hover:bg-secondary rounded transition-all"
@@ -331,7 +322,7 @@ const RecurringSavingsPanel = () => {
                   <Pencil className="h-4 w-4 text-muted-foreground" />
                 </button>
                 <button
-                  onClick={() => deleteRecurringSavings(template._id)}
+                  onClick={() => deleteRecurringSavings(template.id)}
                   className="p-1.5 opacity-0 group-hover:opacity-100 hover:bg-destructive/10 rounded transition-all"
                 >
                   <Trash2 className="h-4 w-4 text-destructive" />

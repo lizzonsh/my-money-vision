@@ -22,13 +22,13 @@ const SavingsGoals = () => {
 
       <div className="space-y-4">
         {bigPurchases.slice(0, 3).map((goal) => {
-          const progress = getProgressPercentage(goal.currentSaved, goal.targetAmount);
-          const remaining = goal.targetAmount - goal.currentSaved;
-          const monthsToGoal = calculateMonthsToGoal(remaining, goal.monthlyContribution);
+          const progress = getProgressPercentage(Number(goal.current_saved), Number(goal.target_amount));
+          const remaining = Number(goal.target_amount) - Number(goal.current_saved);
+          const monthsToGoal = calculateMonthsToGoal(remaining, Number(goal.monthly_contribution));
 
           return (
             <div
-              key={goal._id}
+              key={goal.id}
               className={cn(
                 'p-3 rounded-lg bg-secondary/30 border-l-4',
                 priorityColors[goal.priority]
@@ -40,9 +40,9 @@ const SavingsGoals = () => {
                   <p className="text-xs text-muted-foreground capitalize">{goal.category}</p>
                 </div>
                 <div className="text-right">
-                  <p className="text-sm font-semibold">{formatCurrency(goal.currentSaved)}</p>
+                  <p className="text-sm font-semibold">{formatCurrency(Number(goal.current_saved))}</p>
                   <p className="text-xs text-muted-foreground">
-                    of {formatCurrency(goal.targetAmount)}
+                    of {formatCurrency(Number(goal.target_amount))}
                   </p>
                 </div>
               </div>

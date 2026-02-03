@@ -11,21 +11,21 @@ const RecentTransactions = () => {
     ...expenses
       .filter(e => e.month === currentMonth)
       .map(e => ({
-        id: e._id,
+        id: e.id,
         type: 'expense' as const,
-        amount: e.amount,
+        amount: Number(e.amount),
         description: e.description,
-        date: e.expenseDate,
+        date: e.expense_date,
         category: e.category,
       })),
     ...incomes
       .filter(i => i.month === currentMonth)
       .map(i => ({
-        id: i._id,
+        id: i.id,
         type: 'income' as const,
-        amount: i.amount,
-        description: i.description,
-        date: i.incomeDate,
+        amount: Number(i.amount),
+        description: i.description || i.name,
+        date: i.income_date || '',
         category: i.name,
       })),
   ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
@@ -84,7 +84,7 @@ const RecentTransactions = () => {
                   {formatCurrency(transaction.amount)}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  {formatDate(transaction.date)}
+                  {transaction.date ? formatDate(transaction.date) : ''}
                 </p>
               </div>
             </div>

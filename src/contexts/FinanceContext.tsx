@@ -1,56 +1,82 @@
 import React, { createContext, useContext, useState, ReactNode, useMemo } from 'react';
-import { Budget, Expense, Income, Savings, BigPurchaseGoal, BankAccount, RecurringPayment, RecurringSavingsTemplate, RecurringIncome } from '@/types/finance';
-import {
-  mockBudget,
-  mockExpenses,
-  mockIncomes,
-  mockSavings,
-  mockBigPurchases,
-  mockBankAccount,
-  mockRecurringPayments,
-  mockRecurringSavings,
-  mockRecurringIncomes
-} from '@/lib/mockData';
-import { isDateUpToToday, isCurrentMonth, getCurrentMonth } from '@/lib/dateUtils';
+import { useBudgets, Budget } from '@/hooks/useBudgets';
+import { useExpenses, Expense } from '@/hooks/useExpenses';
+import { useIncomes, Income } from '@/hooks/useIncomes';
+import { useSavings, Savings } from '@/hooks/useSavings';
+import { useBigPurchases, BigPurchaseGoal } from '@/hooks/useBigPurchases';
+import { useRecurringPayments, RecurringPayment } from '@/hooks/useRecurringPayments';
+import { useRecurringSavings, RecurringSavings } from '@/hooks/useRecurringSavings';
+import { useRecurringIncomes, RecurringIncome } from '@/hooks/useRecurringIncomes';
+import { useBankAccounts, BankAccount } from '@/hooks/useBankAccounts';
+import { isDateUpToToday, getCurrentMonth } from '@/lib/dateUtils';
 
 interface FinanceContextType {
-  budget: Budget;
+  // Data
+  budgets: Budget[];
   expenses: Expense[];
   incomes: Income[];
   savings: Savings[];
   bigPurchases: BigPurchaseGoal[];
   recurringPayments: RecurringPayment[];
-  recurringSavings: RecurringSavingsTemplate[];
+  recurringSavings: RecurringSavings[];
   recurringIncomes: RecurringIncome[];
-  bankAccount: BankAccount;
+  bankAccounts: BankAccount[];
+  
+  // Loading states
+  isLoading: boolean;
+  
+  // Current month navigation
   currentMonth: string;
   setCurrentMonth: (month: string) => void;
-  addExpense: (expense: Omit<Expense, '_id'>) => void;
-  addIncome: (income: Omit<Income, '_id'>) => void;
-  addSavings: (saving: Omit<Savings, '_id'>) => void;
-  addBigPurchase: (goal: Omit<BigPurchaseGoal, '_id'>) => void;
-  addRecurringPayment: (payment: Omit<RecurringPayment, '_id'>) => void;
-  addRecurringSavings: (template: Omit<RecurringSavingsTemplate, '_id'>) => void;
-  addRecurringIncome: (income: Omit<RecurringIncome, '_id'>) => void;
-  updateBudget: (budget: Budget) => void;
-  updateExpense: (id: string, expense: Partial<Expense>) => void;
-  updateIncome: (id: string, income: Partial<Income>) => void;
-  updateSavings: (id: string, saving: Partial<Savings>) => void;
-  updateBigPurchase: (id: string, goal: Partial<BigPurchaseGoal>) => void;
-  updateRecurringPayment: (id: string, payment: Partial<RecurringPayment>) => void;
-  updateRecurringSavings: (id: string, template: Partial<RecurringSavingsTemplate>) => void;
-  updateRecurringIncome: (id: string, income: Partial<RecurringIncome>) => void;
+  
+  // Budget operations
+  addBudget: (budget: Omit<Budget, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => void;
+  updateBudget: (data: { id: string } & Partial<Budget>) => void;
+  deleteBudget: (id: string) => void;
+  getBudgetForMonth: (month: string) => Budget | undefined;
+  
+  // Expense operations
+  addExpense: (expense: Omit<Expense, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => void;
+  updateExpense: (data: { id: string } & Partial<Expense>) => void;
   deleteExpense: (id: string) => void;
+  
+  // Income operations
+  addIncome: (income: Omit<Income, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => void;
+  updateIncome: (data: { id: string } & Partial<Income>) => void;
   deleteIncome: (id: string) => void;
+  
+  // Savings operations
+  addSavings: (saving: Omit<Savings, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => void;
+  updateSavings: (data: { id: string } & Partial<Savings>) => void;
   deleteSavings: (id: string) => void;
+  
+  // Big purchase operations
+  addBigPurchase: (goal: Omit<BigPurchaseGoal, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => void;
+  updateBigPurchase: (data: { id: string } & Partial<BigPurchaseGoal>) => void;
   deleteBigPurchase: (id: string) => void;
+  
+  // Recurring payment operations
+  addRecurringPayment: (payment: Omit<RecurringPayment, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => void;
+  updateRecurringPayment: (data: { id: string } & Partial<RecurringPayment>) => void;
   deleteRecurringPayment: (id: string) => void;
+  
+  // Recurring savings operations
+  addRecurringSavings: (saving: Omit<RecurringSavings, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => void;
+  updateRecurringSavings: (data: { id: string } & Partial<RecurringSavings>) => void;
   deleteRecurringSavings: (id: string) => void;
+  
+  // Recurring income operations
+  addRecurringIncome: (income: Omit<RecurringIncome, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => void;
+  updateRecurringIncome: (data: { id: string } & Partial<RecurringIncome>) => void;
   deleteRecurringIncome: (id: string) => void;
-  createExpenseFromRecurring: (recurringId: string) => void;
-  createSavingsFromRecurring: (recurringId: string) => void;
-  createIncomeFromRecurring: (recurringId: string) => void;
-  // Calculated budget values based on Python logic
+  
+  // Bank account operations
+  addBankAccount: (account: Omit<BankAccount, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => void;
+  updateBankAccount: (data: { id: string } & Partial<BankAccount>) => void;
+  deleteBankAccount: (id: string) => void;
+  totalBankBalance: number;
+  
+  // Calculated budget values
   calculatedBudget: {
     spentBudget: number;
     leftBudget: number;
@@ -69,235 +95,134 @@ export const useFinance = () => {
 };
 
 export const FinanceProvider = ({ children }: { children: ReactNode }) => {
-  const [budget, setBudget] = useState<Budget>(mockBudget);
-  const [expenses, setExpenses] = useState<Expense[]>(mockExpenses);
-  const [incomes, setIncomes] = useState<Income[]>(mockIncomes);
-  const [savings, setSavings] = useState<Savings[]>(mockSavings);
-  const [bigPurchases, setBigPurchases] = useState<BigPurchaseGoal[]>(mockBigPurchases);
-  const [recurringPayments, setRecurringPayments] = useState<RecurringPayment[]>(mockRecurringPayments);
-  const [recurringSavings, setRecurringSavings] = useState<RecurringSavingsTemplate[]>(mockRecurringSavings);
-  const [recurringIncomes, setRecurringIncomes] = useState<RecurringIncome[]>(mockRecurringIncomes);
-  const [bankAccount] = useState<BankAccount>(mockBankAccount);
-  const [currentMonth, setCurrentMonth] = useState('2025-02');
-
-  const generateId = () => Math.random().toString(36).substr(2, 9);
-
-  const addExpense = (expense: Omit<Expense, '_id'>) => {
-    setExpenses(prev => [...prev, { ...expense, _id: generateId() }]);
-  };
-
-  const addIncome = (income: Omit<Income, '_id'>) => {
-    setIncomes(prev => [...prev, { ...income, _id: generateId() }]);
-  };
-
-  const addSavings = (saving: Omit<Savings, '_id'>) => {
-    setSavings(prev => [...prev, { ...saving, _id: generateId() }]);
-  };
-
-  const addBigPurchase = (goal: Omit<BigPurchaseGoal, '_id'>) => {
-    setBigPurchases(prev => [...prev, { ...goal, _id: generateId() }]);
-  };
-
-  const addRecurringPayment = (payment: Omit<RecurringPayment, '_id'>) => {
-    setRecurringPayments(prev => [...prev, { ...payment, _id: generateId() }]);
-  };
-
-  const addRecurringSavings = (template: Omit<RecurringSavingsTemplate, '_id'>) => {
-    setRecurringSavings(prev => [...prev, { ...template, _id: generateId() }]);
-  };
-
-  const addRecurringIncome = (income: Omit<RecurringIncome, '_id'>) => {
-    setRecurringIncomes(prev => [...prev, { ...income, _id: generateId() }]);
-  };
-
-  const updateBudget = (newBudget: Budget) => {
-    setBudget(newBudget);
-  };
-
-  const updateExpense = (id: string, updatedFields: Partial<Expense>) => {
-    setExpenses(prev => prev.map(e => e._id === id ? { ...e, ...updatedFields } : e));
-  };
-
-  const updateIncome = (id: string, updatedFields: Partial<Income>) => {
-    setIncomes(prev => prev.map(i => i._id === id ? { ...i, ...updatedFields } : i));
-  };
-
-  const updateSavings = (id: string, updatedFields: Partial<Savings>) => {
-    setSavings(prev => prev.map(s => s._id === id ? { ...s, ...updatedFields } : s));
-  };
-
-  const updateBigPurchase = (id: string, updatedFields: Partial<BigPurchaseGoal>) => {
-    setBigPurchases(prev => prev.map(b => b._id === id ? { ...b, ...updatedFields } : b));
-  };
-
-  const updateRecurringPayment = (id: string, updatedFields: Partial<RecurringPayment>) => {
-    setRecurringPayments(prev => prev.map(r => r._id === id ? { ...r, ...updatedFields } : r));
-  };
-
-  const updateRecurringSavings = (id: string, updatedFields: Partial<RecurringSavingsTemplate>) => {
-    setRecurringSavings(prev => prev.map(r => r._id === id ? { ...r, ...updatedFields } : r));
-  };
-
-  const updateRecurringIncome = (id: string, updatedFields: Partial<RecurringIncome>) => {
-    setRecurringIncomes(prev => prev.map(r => r._id === id ? { ...r, ...updatedFields } : r));
-  };
-
-  const deleteExpense = (id: string) => {
-    setExpenses(prev => prev.filter(e => e._id !== id));
-  };
-
-  const deleteIncome = (id: string) => {
-    setIncomes(prev => prev.filter(i => i._id !== id));
-  };
-
-  const deleteSavings = (id: string) => {
-    setSavings(prev => prev.filter(s => s._id !== id));
-  };
-
-  const deleteBigPurchase = (id: string) => {
-    setBigPurchases(prev => prev.filter(b => b._id !== id));
-  };
-
-  const deleteRecurringPayment = (id: string) => {
-    setRecurringPayments(prev => prev.filter(r => r._id !== id));
-  };
-
-  const deleteRecurringSavings = (id: string) => {
-    setRecurringSavings(prev => prev.filter(r => r._id !== id));
-  };
-
-  const deleteRecurringIncome = (id: string) => {
-    setRecurringIncomes(prev => prev.filter(r => r._id !== id));
-  };
-
-  const createExpenseFromRecurring = (recurringId: string) => {
-    const recurring = recurringPayments.find(r => r._id === recurringId);
-    if (!recurring || !recurring.isActive) return;
-    
-    addExpense({
-      expenseDate: new Date().toISOString().split('T')[0],
-      month: currentMonth,
-      amount: recurring.defaultAmount,
-      category: recurring.category,
-      kind: 'planned',
-      paymentMethod: recurring.paymentMethod,
-      cardId: recurring.cardId,
-      description: recurring.name,
-      recurring: { type: 'monthly', dayOfMonth: recurring.dayOfMonth },
-    });
-  };
-
-  const createSavingsFromRecurring = (recurringId: string) => {
-    const template = recurringSavings.find(r => r._id === recurringId);
-    if (!template || !template.isActive) return;
-    
-    addSavings({
-      month: currentMonth,
-      name: template.name,
-      amount: 0, // Will be updated when they edit
-      currency: 'ILS',
-      transferMethod: template.transferMethod,
-      cardId: template.cardId,
-      action: template.actionType,
-      actionAmount: template.defaultAmount,
-      updateDate: new Date().toISOString().split('T')[0],
-      recurring: template.actionType === 'deposit' ? {
-        type: 'monthly',
-        dayOfMonth: template.dayOfMonth,
-        monthlyDeposit: template.defaultAmount
-      } : undefined,
-    });
-  };
-
-  const createIncomeFromRecurring = (recurringId: string) => {
-    const recurring = recurringIncomes.find(r => r._id === recurringId);
-    if (!recurring || !recurring.isActive) return;
-    
-    addIncome({
-      incomeDate: new Date().toISOString().split('T')[0],
-      month: currentMonth,
-      amount: recurring.defaultAmount,
-      name: recurring.source,
-      description: recurring.name,
-      recurring: { type: 'monthly', dayOfMonth: recurring.dayOfMonth },
-    });
-  };
+  const [currentMonth, setCurrentMonth] = useState(getCurrentMonth());
+  
+  // Use database hooks
+  const budgetsHook = useBudgets();
+  const expensesHook = useExpenses();
+  const incomesHook = useIncomes();
+  const savingsHook = useSavings();
+  const bigPurchasesHook = useBigPurchases();
+  const recurringPaymentsHook = useRecurringPayments();
+  const recurringSavingsHook = useRecurringSavings();
+  const recurringIncomesHook = useRecurringIncomes();
+  const bankAccountsHook = useBankAccounts();
+  
+  const isLoading = 
+    budgetsHook.isLoading || 
+    expensesHook.isLoading || 
+    incomesHook.isLoading || 
+    savingsHook.isLoading ||
+    bigPurchasesHook.isLoading ||
+    recurringPaymentsHook.isLoading ||
+    recurringSavingsHook.isLoading ||
+    recurringIncomesHook.isLoading ||
+    bankAccountsHook.isLoading;
 
   // Calculate budget based on Python logic:
   // spent_budget = credit_card_expenses - planned_paid_expenses
   // left_budget = total_budget - spent_budget
   // daily_limit = left_budget / days_remaining
-  // IMPORTANT: Only count expenses up to today's date
   const calculatedBudget = useMemo(() => {
-    const totalBudget = typeof budget.totalBudget === 'string' 
-      ? parseFloat(budget.totalBudget) 
-      : budget.totalBudget;
+    const budget = budgetsHook.getBudgetForMonth(currentMonth);
+    const totalBudget = budget ? Number(budget.total_budget) : 0;
 
     // Only include expenses from the current month AND up to today's date
-    const monthExpenses = expenses.filter(e => 
-      e.month === currentMonth && isDateUpToToday(e.expenseDate)
+    const monthExpenses = expensesHook.expenses.filter(e => 
+      e.month === currentMonth && isDateUpToToday(e.expense_date)
     );
     
     // Credit card total expenses (debit_from_credit_card category)
     const creditCardExpenses = monthExpenses
       .filter(e => e.category === 'debit_from_credit_card')
-      .reduce((sum, e) => sum + e.amount, 0);
+      .reduce((sum, e) => sum + Number(e.amount), 0);
     
-    // Planned expenses that were already paid (kind = 'payed' or 'planned')
+    // Planned expenses that were already paid
     const plannedPaidExpenses = monthExpenses
-      .filter(e => e.paymentMethod === 'credit_card' && (e.kind === 'payed' || e.kind === 'planned'))
-      .reduce((sum, e) => sum + e.amount, 0);
+      .filter(e => e.payment_method === 'credit_card' && (e.kind === 'payed' || e.kind === 'planned'))
+      .reduce((sum, e) => sum + Number(e.amount), 0);
     
     const spentBudget = creditCardExpenses - plannedPaidExpenses;
     const leftBudget = totalBudget - spentBudget;
     
     const today = new Date();
-    const daysInMonth = budget.daysInMonth || new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
+    const [year, month] = currentMonth.split('-').map(Number);
+    const daysInMonth = budget?.days_in_month || new Date(year, month, 0).getDate();
     const daysRemaining = Math.max(1, daysInMonth - today.getDate() + 1);
     const dailyLimit = leftBudget / daysRemaining;
 
     return { spentBudget, leftBudget, dailyLimit };
-  }, [budget, expenses, currentMonth]);
+  }, [budgetsHook.budgets, expensesHook.expenses, currentMonth]);
 
   return (
     <FinanceContext.Provider
       value={{
-        budget,
-        expenses,
-        incomes,
-        savings,
-        bigPurchases,
-        recurringPayments,
-        recurringSavings,
-        recurringIncomes,
-        bankAccount,
+        // Data
+        budgets: budgetsHook.budgets,
+        expenses: expensesHook.expenses,
+        incomes: incomesHook.incomes,
+        savings: savingsHook.savings,
+        bigPurchases: bigPurchasesHook.bigPurchases,
+        recurringPayments: recurringPaymentsHook.recurringPayments,
+        recurringSavings: recurringSavingsHook.recurringSavings,
+        recurringIncomes: recurringIncomesHook.recurringIncomes,
+        bankAccounts: bankAccountsHook.bankAccounts,
+        
+        // Loading
+        isLoading,
+        
+        // Current month
         currentMonth,
         setCurrentMonth,
-        addExpense,
-        addIncome,
-        addSavings,
-        addBigPurchase,
-        addRecurringPayment,
-        addRecurringSavings,
-        addRecurringIncome,
-        updateBudget,
-        updateExpense,
-        updateIncome,
-        updateSavings,
-        updateBigPurchase,
-        updateRecurringPayment,
-        updateRecurringSavings,
-        updateRecurringIncome,
-        deleteExpense,
-        deleteIncome,
-        deleteSavings,
-        deleteBigPurchase,
-        deleteRecurringPayment,
-        deleteRecurringSavings,
-        deleteRecurringIncome,
-        createExpenseFromRecurring,
-        createSavingsFromRecurring,
-        createIncomeFromRecurring,
+        
+        // Budget operations
+        addBudget: budgetsHook.addBudget,
+        updateBudget: budgetsHook.updateBudget,
+        deleteBudget: budgetsHook.deleteBudget,
+        getBudgetForMonth: budgetsHook.getBudgetForMonth,
+        
+        // Expense operations
+        addExpense: expensesHook.addExpense,
+        updateExpense: expensesHook.updateExpense,
+        deleteExpense: expensesHook.deleteExpense,
+        
+        // Income operations
+        addIncome: incomesHook.addIncome,
+        updateIncome: incomesHook.updateIncome,
+        deleteIncome: incomesHook.deleteIncome,
+        
+        // Savings operations
+        addSavings: savingsHook.addSavings,
+        updateSavings: savingsHook.updateSavings,
+        deleteSavings: savingsHook.deleteSavings,
+        
+        // Big purchase operations
+        addBigPurchase: bigPurchasesHook.addBigPurchase,
+        updateBigPurchase: bigPurchasesHook.updateBigPurchase,
+        deleteBigPurchase: bigPurchasesHook.deleteBigPurchase,
+        
+        // Recurring payment operations
+        addRecurringPayment: recurringPaymentsHook.addRecurringPayment,
+        updateRecurringPayment: recurringPaymentsHook.updateRecurringPayment,
+        deleteRecurringPayment: recurringPaymentsHook.deleteRecurringPayment,
+        
+        // Recurring savings operations
+        addRecurringSavings: recurringSavingsHook.addRecurringSavings,
+        updateRecurringSavings: recurringSavingsHook.updateRecurringSavings,
+        deleteRecurringSavings: recurringSavingsHook.deleteRecurringSavings,
+        
+        // Recurring income operations
+        addRecurringIncome: recurringIncomesHook.addRecurringIncome,
+        updateRecurringIncome: recurringIncomesHook.updateRecurringIncome,
+        deleteRecurringIncome: recurringIncomesHook.deleteRecurringIncome,
+        
+        // Bank account operations
+        addBankAccount: bankAccountsHook.addBankAccount,
+        updateBankAccount: bankAccountsHook.updateBankAccount,
+        deleteBankAccount: bankAccountsHook.deleteBankAccount,
+        totalBankBalance: bankAccountsHook.totalBalance,
+        
+        // Calculated values
         calculatedBudget,
       }}
     >
@@ -305,3 +230,14 @@ export const FinanceProvider = ({ children }: { children: ReactNode }) => {
     </FinanceContext.Provider>
   );
 };
+
+// Re-export types for convenience
+export type { Budget } from '@/hooks/useBudgets';
+export type { Expense } from '@/hooks/useExpenses';
+export type { Income } from '@/hooks/useIncomes';
+export type { Savings } from '@/hooks/useSavings';
+export type { BigPurchaseGoal } from '@/hooks/useBigPurchases';
+export type { RecurringPayment } from '@/hooks/useRecurringPayments';
+export type { RecurringSavings } from '@/hooks/useRecurringSavings';
+export type { RecurringIncome } from '@/hooks/useRecurringIncomes';
+export type { BankAccount } from '@/hooks/useBankAccounts';

@@ -40,7 +40,7 @@ const calcPercentChange = (current: number, previous: number): { value: number; 
 };
 
 const Dashboard = () => {
-  const { incomes, expenses, savings, bankAccount, currentMonth } = useFinance();
+  const { incomes, expenses, savings, totalBankBalance, currentMonth, isLoading } = useFinance();
 
   const stats = useMemo(() => {
     // For current month, only count items up to today's date
@@ -50,43 +50,43 @@ const Dashboard = () => {
     // Current month income (filtered by date for current month)
     const monthlyIncome = incomes
       .filter((i) => i.month === currentMonth)
-      .filter((i) => !shouldFilterByDate || isDateUpToToday(i.incomeDate))
-      .reduce((sum, i) => sum + i.amount, 0);
+      .filter((i) => !shouldFilterByDate || isDateUpToToday(i.income_date || ''))
+      .reduce((sum, i) => sum + Number(i.amount), 0);
 
     // Previous month income (full month)
     const prevMonthIncome = incomes
       .filter((i) => i.month === prevMonth)
-      .reduce((sum, i) => sum + i.amount, 0);
+      .reduce((sum, i) => sum + Number(i.amount), 0);
 
     // Current month expenses (filtered by date for current month)
     const monthlyExpenses = expenses
       .filter((e) => e.month === currentMonth)
-      .filter((e) => !shouldFilterByDate || isDateUpToToday(e.expenseDate))
-      .reduce((sum, e) => sum + e.amount, 0);
+      .filter((e) => !shouldFilterByDate || isDateUpToToday(e.expense_date))
+      .reduce((sum, e) => sum + Number(e.amount), 0);
 
     // Previous month expenses (full month)
     const prevMonthExpenses = expenses
       .filter((e) => e.month === prevMonth)
-      .reduce((sum, e) => sum + e.amount, 0);
+      .reduce((sum, e) => sum + Number(e.amount), 0);
 
     // Current month savings deposits (filtered by date for current month)
     const monthlySavingsDeposits = savings
       .filter((s) => s.month === currentMonth && s.action === 'deposit')
-      .filter((s) => !shouldFilterByDate || isDateUpToToday(s.updateDate))
-      .reduce((sum, s) => sum + (s.actionAmount || s.recurring?.monthlyDeposit || 0), 0);
+      .filter((s) => !shouldFilterByDate || isDateUpToToday(s.updated_at))
+      .reduce((sum, s) => sum + Number(s.action_amount || s.monthly_deposit || 0), 0);
 
     // Previous month savings deposits
     const prevMonthSavingsDeposits = savings
       .filter((s) => s.month === prevMonth && s.action === 'deposit')
-      .reduce((sum, s) => sum + (s.actionAmount || s.recurring?.monthlyDeposit || 0), 0);
+      .reduce((sum, s) => sum + Number(s.action_amount || s.monthly_deposit || 0), 0);
 
     // Total savings balance (current amounts, filtered by date for current month entries)
     const totalSavings = savings
       .filter((s) => s.action !== 'withdrawal')
-      .filter((s) => !isCurrentMonth(s.month) || !shouldFilterByDate || isDateUpToToday(s.updateDate))
-      .reduce((sum, s) => sum + s.amount, 0);
+      .filter((s) => !isCurrentMonth(s.month) || !shouldFilterByDate || isDateUpToToday(s.updated_at))
+      .reduce((sum, s) => sum + Number(s.amount), 0);
 
-    const netWorth = bankAccount.currentBalance + totalSavings;
+    const netWorth = totalBankBalance + totalSavings;
     const netFlow = monthlyIncome - monthlyExpenses;
 
     // Calculate trends
@@ -105,7 +105,15 @@ const Dashboard = () => {
       expenseTrend,
       savingsTrend,
     };
-  }, [incomes, expenses, savings, bankAccount.currentBalance, currentMonth]);
+  }, [incomes, expenses, savings, totalBankBalance, currentMonth]);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[50vh]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -123,7 +131,7 @@ const Dashboard = () => {
             <Building2 className="h-5 w-5 text-primary" />
             <div>
               <p className="text-xs text-muted-foreground">Bank Balance</p>
-              <p className="font-semibold">{formatCurrency(bankAccount.currentBalance)}</p>
+              <p className="font-semibold">{formatCurrency(totalBankBalance)}</p>
             </div>
           </div>
         </div>

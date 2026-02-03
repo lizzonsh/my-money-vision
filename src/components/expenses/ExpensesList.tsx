@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useFinance } from '@/contexts/FinanceContext';
+import { useFinance, Expense } from '@/contexts/FinanceContext';
 import { formatCurrency, formatDate } from '@/lib/formatters';
 import { isDateUpToToday, isCurrentMonth } from '@/lib/dateUtils';
 import { Plus, Trash2, CreditCard, Building2, Repeat, Pencil } from 'lucide-react';
@@ -21,7 +21,6 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
-import { Expense } from '@/types/finance';
 
 const ExpensesList = () => {
   const { expenses, currentMonth, addExpense, updateExpense, deleteExpense } = useFinance();
@@ -42,14 +41,14 @@ const ExpensesList = () => {
   
   // For current month, only count items up to today's date
   const shouldFilterByDate = isCurrentMonth(currentMonth);
-  const expensesUpToDate = monthlyExpenses.filter(e => !shouldFilterByDate || isDateUpToToday(e.expenseDate));
+  const expensesUpToDate = monthlyExpenses.filter(e => !shouldFilterByDate || isDateUpToToday(e.expense_date));
   
-  const totalExpenses = expensesUpToDate.reduce((sum, e) => sum + e.amount, 0);
-  const paidExpenses = expensesUpToDate.filter(e => e.kind === 'payed').reduce((sum, e) => sum + e.amount, 0);
-  const plannedExpenses = expensesUpToDate.filter(e => e.kind === 'planned').reduce((sum, e) => sum + e.amount, 0);
-  const predictedExpenses = monthlyExpenses.filter(e => e.kind === 'predicted').reduce((sum, e) => sum + e.amount, 0);
+  const totalExpenses = expensesUpToDate.reduce((sum, e) => sum + Number(e.amount), 0);
+  const paidExpenses = expensesUpToDate.filter(e => e.kind === 'payed').reduce((sum, e) => sum + Number(e.amount), 0);
+  const plannedExpenses = expensesUpToDate.filter(e => e.kind === 'planned').reduce((sum, e) => sum + Number(e.amount), 0);
+  const predictedExpenses = monthlyExpenses.filter(e => e.kind === 'predicted').reduce((sum, e) => sum + Number(e.amount), 0);
 
-  const formatCardName = (cardId?: string) => {
+  const formatCardName = (cardId?: string | null) => {
     if (!cardId) return '';
     const cardNames: Record<string, string> = {
       'fly-card': 'Fly Card',
@@ -79,11 +78,11 @@ const ExpensesList = () => {
       description: expense.description,
       amount: expense.amount.toString(),
       category: expense.category,
-      paymentMethod: expense.paymentMethod,
-      cardId: expense.cardId || '',
+      paymentMethod: expense.payment_method,
+      cardId: expense.card_id || '',
       kind: expense.kind,
-      isRecurring: !!expense.recurring,
-      dayOfMonth: expense.recurring?.dayOfMonth?.toString() || '',
+      isRecurring: !!expense.recurring_type,
+      dayOfMonth: expense.recurring_day_of_month?.toString() || '',
     });
     setIsOpen(true);
   };
@@ -91,21 +90,20 @@ const ExpensesList = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const expenseData = {
-      expenseDate: new Date().toISOString().split('T')[0],
+      expense_date: new Date().toISOString().split('T')[0],
       month: currentMonth,
       amount: parseFloat(formData.amount),
       category: formData.category,
       kind: formData.kind as 'planned' | 'payed' | 'predicted',
-      paymentMethod: formData.paymentMethod as 'bank_transfer' | 'credit_card',
-      cardId: formData.cardId || undefined,
+      payment_method: formData.paymentMethod as 'bank_transfer' | 'credit_card',
+      card_id: formData.cardId || null,
       description: formData.description,
-      recurring: formData.isRecurring
-        ? { type: 'monthly' as const, dayOfMonth: parseInt(formData.dayOfMonth) || 1 }
-        : undefined,
+      recurring_type: formData.isRecurring ? 'monthly' as const : null,
+      recurring_day_of_month: formData.isRecurring ? parseInt(formData.dayOfMonth) || 1 : null,
     };
 
     if (editingExpense) {
-      updateExpense(editingExpense._id, expenseData);
+      updateExpense({ id: editingExpense.id, ...expenseData });
     } else {
       addExpense(expenseData);
     }
@@ -259,12 +257,12 @@ const ExpensesList = () => {
         ) : (
           monthlyExpenses.map((expense) => (
             <div
-              key={expense._id}
+              key={expense.id}
               className="flex items-center justify-between p-3 rounded-lg bg-secondary/30 hover:bg-secondary/50 transition-colors group"
             >
               <div className="flex items-center gap-3">
                 <div className="p-2 rounded-lg bg-secondary">
-                  {expense.paymentMethod === 'credit_card' ? (
+                  {expense.payment_method === 'credit_card' ? (
                     <CreditCard className="h-4 w-4 text-muted-foreground" />
                   ) : (
                     <Building2 className="h-4 w-4 text-muted-foreground" />
@@ -273,7 +271,7 @@ const ExpensesList = () => {
                 <div>
                   <div className="flex items-center gap-2">
                     <p className="text-sm font-medium">{expense.description}</p>
-                    {expense.recurring && (
+                    {expense.recurring_type && (
                       <Repeat className="h-3 w-3 text-muted-foreground" />
                     )}
                   </div>
@@ -286,9 +284,9 @@ const ExpensesList = () => {
                     >
                       {expense.category.replace(/_/g, ' ')}
                     </span>
-                    {expense.category === 'debit_from_credit_card' && expense.cardId && (
+                    {expense.category === 'debit_from_credit_card' && expense.card_id && (
                       <span className="text-xs px-2 py-0.5 rounded-full bg-primary/20 text-primary">
-                        {formatCardName(expense.cardId)}
+                        {formatCardName(expense.card_id)}
                       </span>
                     )}
                     <span className="text-xs text-muted-foreground capitalize">
@@ -299,9 +297,9 @@ const ExpensesList = () => {
               </div>
               <div className="flex items-center gap-2">
                 <div className="text-right">
-                  <p className="text-sm font-semibold">{formatCurrency(expense.amount)}</p>
+                  <p className="text-sm font-semibold">{formatCurrency(Number(expense.amount))}</p>
                   <p className="text-xs text-muted-foreground">
-                    {formatDate(expense.expenseDate)}
+                    {formatDate(expense.expense_date)}
                   </p>
                 </div>
                 <button
@@ -311,7 +309,7 @@ const ExpensesList = () => {
                   <Pencil className="h-4 w-4 text-muted-foreground" />
                 </button>
                 <button
-                  onClick={() => deleteExpense(expense._id)}
+                  onClick={() => deleteExpense(expense.id)}
                   className="p-1.5 opacity-0 group-hover:opacity-100 hover:bg-destructive/10 rounded transition-all"
                 >
                   <Trash2 className="h-4 w-4 text-destructive" />

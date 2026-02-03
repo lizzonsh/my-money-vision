@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useFinance } from '@/contexts/FinanceContext';
+import { useFinance, RecurringIncome } from '@/contexts/FinanceContext';
 import { formatCurrency } from '@/lib/formatters';
 import { Plus, Trash2, Pencil, Repeat, Play, Pause, Briefcase, Gift, Heart, HelpCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -20,7 +20,6 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
-import { RecurringIncome } from '@/types/finance';
 
 const RecurringIncomesPanel = () => {
   const { 
@@ -28,7 +27,6 @@ const RecurringIncomesPanel = () => {
     addRecurringIncome, 
     updateRecurringIncome, 
     deleteRecurringIncome,
-    createIncomeFromRecurring 
   } = useFinance();
   
   const [isOpen, setIsOpen] = useState(false);
@@ -56,9 +54,9 @@ const RecurringIncomesPanel = () => {
     setEditingIncome(income);
     setFormData({
       name: income.name,
-      defaultAmount: income.defaultAmount.toString(),
+      defaultAmount: income.default_amount.toString(),
       source: income.source,
-      dayOfMonth: income.dayOfMonth.toString(),
+      dayOfMonth: income.day_of_month.toString(),
       notes: income.notes || '',
     });
     setIsOpen(true);
@@ -68,15 +66,15 @@ const RecurringIncomesPanel = () => {
     e.preventDefault();
     const incomeData = {
       name: formData.name,
-      defaultAmount: parseFloat(formData.defaultAmount),
+      default_amount: parseFloat(formData.defaultAmount),
       source: formData.source,
-      dayOfMonth: parseInt(formData.dayOfMonth) || 1,
-      isActive: true,
-      notes: formData.notes || undefined,
+      day_of_month: parseInt(formData.dayOfMonth) || 1,
+      is_active: true,
+      notes: formData.notes || null,
     };
 
     if (editingIncome) {
-      updateRecurringIncome(editingIncome._id, incomeData);
+      updateRecurringIncome({ id: editingIncome.id, ...incomeData });
     } else {
       addRecurringIncome(incomeData);
     }
@@ -85,7 +83,7 @@ const RecurringIncomesPanel = () => {
   };
 
   const toggleActive = (income: RecurringIncome) => {
-    updateRecurringIncome(income._id, { isActive: !income.isActive });
+    updateRecurringIncome({ id: income.id, is_active: !income.is_active });
   };
 
   const getSourceIcon = (source: string) => {
@@ -111,8 +109,8 @@ const RecurringIncomesPanel = () => {
   };
 
   const totalMonthly = recurringIncomes
-    .filter(i => i.isActive)
-    .reduce((sum, i) => sum + i.defaultAmount, 0);
+    .filter(i => i.is_active)
+    .reduce((sum, i) => sum + Number(i.default_amount), 0);
 
   return (
     <div className="glass rounded-xl p-5 shadow-card animate-slide-up">
@@ -214,10 +212,10 @@ const RecurringIncomesPanel = () => {
         ) : (
           recurringIncomes.map((income) => (
             <div
-              key={income._id}
+              key={income.id}
               className={cn(
                 'flex items-center justify-between p-3 rounded-lg transition-colors group',
-                income.isActive 
+                income.is_active 
                   ? 'bg-secondary/30 hover:bg-secondary/50' 
                   : 'bg-muted/20 opacity-60'
               )}
@@ -227,17 +225,17 @@ const RecurringIncomesPanel = () => {
                   onClick={() => toggleActive(income)}
                   className={cn(
                     'p-2 rounded-lg transition-colors',
-                    income.isActive 
+                    income.is_active 
                       ? 'bg-success/20 text-success' 
                       : 'bg-muted text-muted-foreground'
                   )}
                 >
-                  {income.isActive ? <Play className="h-4 w-4" /> : <Pause className="h-4 w-4" />}
+                  {income.is_active ? <Play className="h-4 w-4" /> : <Pause className="h-4 w-4" />}
                 </button>
                 <div>
                   <p className="text-sm font-medium">{income.name}</p>
                   <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <span>Day {income.dayOfMonth}</span>
+                    <span>Day {income.day_of_month}</span>
                     <span className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-success/10 text-success">
                       {getSourceIcon(income.source)}
                       {getSourceLabel(income.source)}
@@ -247,15 +245,8 @@ const RecurringIncomesPanel = () => {
               </div>
               <div className="flex items-center gap-2">
                 <div className="text-right">
-                  <p className="text-sm font-semibold text-success">+{formatCurrency(income.defaultAmount)}</p>
+                  <p className="text-sm font-semibold text-success">+{formatCurrency(Number(income.default_amount))}</p>
                 </div>
-                <button
-                  onClick={() => createIncomeFromRecurring(income._id)}
-                  className="p-1.5 opacity-0 group-hover:opacity-100 hover:bg-success/10 rounded transition-all"
-                  title="Add to this month's income"
-                >
-                  <Plus className="h-4 w-4 text-success" />
-                </button>
                 <button
                   onClick={() => handleOpenEdit(income)}
                   className="p-1.5 opacity-0 group-hover:opacity-100 hover:bg-secondary rounded transition-all"
@@ -263,7 +254,7 @@ const RecurringIncomesPanel = () => {
                   <Pencil className="h-4 w-4 text-muted-foreground" />
                 </button>
                 <button
-                  onClick={() => deleteRecurringIncome(income._id)}
+                  onClick={() => deleteRecurringIncome(income.id)}
                   className="p-1.5 opacity-0 group-hover:opacity-100 hover:bg-destructive/10 rounded transition-all"
                 >
                   <Trash2 className="h-4 w-4 text-destructive" />
