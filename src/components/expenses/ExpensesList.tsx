@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { format } from 'date-fns';
 import { useFinance, Expense } from '@/contexts/FinanceContext';
+import { useExpenseCategories } from '@/hooks/useExpenseCategories';
 import { formatCurrency, formatDate } from '@/lib/formatters';
 import { isDateUpToToday, isCurrentMonth } from '@/lib/dateUtils';
-import { Plus, Trash2, CreditCard, Building2, Repeat, Pencil, CalendarIcon } from 'lucide-react';
+import { Plus, Trash2, CreditCard, Building2, Repeat, Pencil, CalendarIcon, Tag } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -27,8 +28,11 @@ import { cn } from '@/lib/utils';
 
 const ExpensesList = () => {
   const { expenses, currentMonth, addExpense, updateExpense, deleteExpense } = useFinance();
+  const { categories, addCategory, isAddingCategory } = useExpenseCategories();
   const [isOpen, setIsOpen] = useState(false);
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
+  const [showNewCategory, setShowNewCategory] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState('');
   const [formData, setFormData] = useState({
     description: '',
     amount: '',
@@ -75,6 +79,8 @@ const ExpensesList = () => {
       expenseDate: new Date(),
     });
     setEditingExpense(null);
+    setShowNewCategory(false);
+    setNewCategoryName('');
   };
 
   const handleOpenEdit = (expense: Expense) => {
@@ -91,6 +97,21 @@ const ExpensesList = () => {
       expenseDate: expense.expense_date ? new Date(expense.expense_date) : new Date(),
     });
     setIsOpen(true);
+  };
+
+  const handleAddCategory = () => {
+    if (!newCategoryName.trim()) return;
+    
+    const categoryKey = newCategoryName.toLowerCase().replace(/\s+/g, '_');
+    addCategory({
+      name: categoryKey,
+      color: 'hsl(var(--muted))',
+      icon: 'tag',
+      is_default: false,
+    });
+    setFormData({ ...formData, category: categoryKey });
+    setShowNewCategory(false);
+    setNewCategoryName('');
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -122,6 +143,7 @@ const ExpensesList = () => {
     setIsOpen(false);
   };
 
+  // Build category colors from categories list
   const categoryColors: Record<string, string> = {
     room: 'bg-chart-1/20 text-chart-1',
     gifts: 'bg-chart-2/20 text-chart-2',
@@ -132,6 +154,13 @@ const ExpensesList = () => {
     budget: 'bg-accent/20 text-accent-foreground',
     other: 'bg-muted text-muted-foreground',
   };
+
+  // Add custom category colors
+  categories.forEach(cat => {
+    if (!categoryColors[cat.name]) {
+      categoryColors[cat.name] = 'bg-primary/20 text-primary';
+    }
+  });
 
   return (
     <div className="glass rounded-xl p-5 shadow-card animate-slide-up">
@@ -152,7 +181,7 @@ const ExpensesList = () => {
               Add
             </Button>
           </DialogTrigger>
-          <DialogContent className="glass">
+          <DialogContent className="glass max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>{editingExpense ? 'Edit Expense' : 'Add Expense'}</DialogTitle>
             </DialogHeader>
@@ -181,24 +210,60 @@ const ExpensesList = () => {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Category</Label>
-                  <Select
-                    value={formData.category}
-                    onValueChange={(value) => setFormData({ ...formData, category: value })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="room">Room/Rent</SelectItem>
-                      <SelectItem value="gifts">Gifts</SelectItem>
-                      <SelectItem value="psychologist">Psychologist</SelectItem>
-                      <SelectItem value="college">College</SelectItem>
-                      <SelectItem value="vacation">Vacation</SelectItem>
-                      <SelectItem value="debit_from_credit_card">Debit from Credit Card</SelectItem>
-                      <SelectItem value="budget">Budget</SelectItem>
-                      <SelectItem value="other">Other</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  {showNewCategory ? (
+                    <div className="flex gap-2">
+                      <Input
+                        value={newCategoryName}
+                        onChange={(e) => setNewCategoryName(e.target.value)}
+                        placeholder="New category name"
+                        className="flex-1"
+                      />
+                      <Button 
+                        type="button" 
+                        size="sm" 
+                        onClick={handleAddCategory}
+                        disabled={isAddingCategory || !newCategoryName.trim()}
+                      >
+                        Add
+                      </Button>
+                      <Button 
+                        type="button" 
+                        size="sm" 
+                        variant="ghost"
+                        onClick={() => setShowNewCategory(false)}
+                      >
+                        ✕
+                      </Button>
+                    </div>
+                  ) : (
+                    <Select
+                      value={formData.category}
+                      onValueChange={(value) => {
+                        if (value === '__new__') {
+                          setShowNewCategory(true);
+                        } else {
+                          setFormData({ ...formData, category: value });
+                        }
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {categories.map((cat) => (
+                          <SelectItem key={cat.name} value={cat.name}>
+                            {cat.label}
+                          </SelectItem>
+                        ))}
+                        <SelectItem value="__new__" className="text-primary">
+                          <span className="flex items-center gap-2">
+                            <Plus className="h-3 w-3" />
+                            Add New Category
+                          </span>
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label>Status</Label>
