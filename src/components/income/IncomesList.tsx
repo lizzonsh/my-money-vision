@@ -62,6 +62,8 @@ const IncomesList = () => {
       amount: parseFloat(formData.amount),
       name: formData.name,
       description: formData.description || null,
+      recurring_day_of_month: null,
+      recurring_type: null,
     };
 
     if (editingIncome) {

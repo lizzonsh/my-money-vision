@@ -100,6 +100,8 @@ const ExpensesList = () => {
       description: formData.description,
       recurring_type: formData.isRecurring ? 'monthly' as const : null,
       recurring_day_of_month: formData.isRecurring ? parseInt(formData.dayOfMonth) || 1 : null,
+      expense_month: null,
+      month_of_expense: null,
     };
 
     if (editingExpense) {
