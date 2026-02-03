@@ -1,5 +1,6 @@
 import { useFinance } from '@/contexts/FinanceContext';
 import { formatCurrency, formatMonth } from '@/lib/formatters';
+import { isDateUpToToday, isCurrentMonth } from '@/lib/dateUtils';
 import StatCard from '@/components/dashboard/StatCard';
 import BudgetProgress from '@/components/dashboard/BudgetProgress';
 import RecentTransactions from '@/components/dashboard/RecentTransactions';
@@ -22,12 +23,17 @@ import {
 const Dashboard = () => {
   const { incomes, expenses, savings, bankAccount, currentMonth } = useFinance();
 
+  // For current month, only count items up to today's date
+  const shouldFilterByDate = isCurrentMonth(currentMonth);
+
   const monthlyIncome = incomes
     .filter((i) => i.month === currentMonth)
+    .filter((i) => !shouldFilterByDate || isDateUpToToday(i.incomeDate))
     .reduce((sum, i) => sum + i.amount, 0);
 
   const monthlyExpenses = expenses
     .filter((e) => e.month === currentMonth)
+    .filter((e) => !shouldFilterByDate || isDateUpToToday(e.expenseDate))
     .reduce((sum, e) => sum + e.amount, 0);
 
   const totalSavings = savings

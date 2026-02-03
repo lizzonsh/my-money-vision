@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useFinance } from '@/contexts/FinanceContext';
 import { formatCurrency, formatDate } from '@/lib/formatters';
+import { isDateUpToToday, isCurrentMonth } from '@/lib/dateUtils';
 import { Plus, Trash2, CreditCard, Building2, Repeat, Pencil } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -38,9 +39,14 @@ const ExpensesList = () => {
   });
 
   const monthlyExpenses = expenses.filter((e) => e.month === currentMonth);
-  const totalExpenses = monthlyExpenses.reduce((sum, e) => sum + e.amount, 0);
-  const paidExpenses = monthlyExpenses.filter(e => e.kind === 'payed').reduce((sum, e) => sum + e.amount, 0);
-  const plannedExpenses = monthlyExpenses.filter(e => e.kind === 'planned').reduce((sum, e) => sum + e.amount, 0);
+  
+  // For current month, only count items up to today's date
+  const shouldFilterByDate = isCurrentMonth(currentMonth);
+  const expensesUpToDate = monthlyExpenses.filter(e => !shouldFilterByDate || isDateUpToToday(e.expenseDate));
+  
+  const totalExpenses = expensesUpToDate.reduce((sum, e) => sum + e.amount, 0);
+  const paidExpenses = expensesUpToDate.filter(e => e.kind === 'payed').reduce((sum, e) => sum + e.amount, 0);
+  const plannedExpenses = expensesUpToDate.filter(e => e.kind === 'planned').reduce((sum, e) => sum + e.amount, 0);
   const predictedExpenses = monthlyExpenses.filter(e => e.kind === 'predicted').reduce((sum, e) => sum + e.amount, 0);
 
   const formatCardName = (cardId?: string) => {
