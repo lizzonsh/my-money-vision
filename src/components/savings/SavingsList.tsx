@@ -23,7 +23,7 @@ import {
 import { cn } from '@/lib/utils';
 
 const SavingsList = () => {
-  const { savings, currentMonth, addSavings, updateSavings, deleteSavings } = useFinance();
+  const { savings, currentMonth, addSavings, updateSavings, closeSavingsAccount } = useFinance();
   const [isOpen, setIsOpen] = useState(false);
   const [editingSaving, setEditingSaving] = useState<Savings | null>(null);
   const [formData, setFormData] = useState({
@@ -36,7 +36,11 @@ const SavingsList = () => {
   });
 
   // Filter savings for current month only
-  const monthlySavings = savings.filter(s => s.month === currentMonth);
+  // Also exclude closed accounts
+  const monthlySavings = savings.filter(s => 
+    s.month === currentMonth && 
+    (!s.closed_at || new Date(s.closed_at) > new Date(currentMonth + '-01'))
+  );
   
   // For current month, only count items up to today's date
   const shouldFilterByDate = isCurrentMonth(currentMonth);
@@ -107,6 +111,7 @@ const SavingsList = () => {
       monthly_deposit: formData.action === 'deposit' && formData.actionAmount ? parseFloat(formData.actionAmount) : null,
       recurring_type: formData.action === 'deposit' && formData.actionAmount ? 'monthly' as const : null,
       recurring_day_of_month: formData.action === 'deposit' && formData.actionAmount ? 15 : null,
+      closed_at: null,
     };
 
     if (editingSaving) {
@@ -302,8 +307,9 @@ const SavingsList = () => {
                     <Pencil className="h-4 w-4 text-muted-foreground" />
                   </button>
                   <button
-                    onClick={() => deleteSavings(saving.id)}
+                    onClick={() => closeSavingsAccount(saving.name)}
                     className="p-1.5 opacity-0 group-hover:opacity-100 hover:bg-destructive/10 rounded transition-all"
+                    title="Close account (preserves history)"
                   >
                     <Trash2 className="h-4 w-4 text-destructive" />
                   </button>

@@ -22,7 +22,7 @@ import {
 import { cn } from '@/lib/utils';
 
 const SavingsCurrentStatus = () => {
-  const { savings, addSavings, updateSavings, deleteSavings, currentMonth } = useFinance();
+  const { savings, addSavings, updateSavings, closeSavingsAccount, currentMonth } = useFinance();
   const [isOpen, setIsOpen] = useState(false);
   const [editingSaving, setEditingSaving] = useState<Savings | null>(null);
   const [formData, setFormData] = useState({
@@ -35,8 +35,10 @@ const SavingsCurrentStatus = () => {
   });
 
   // Get the latest record per savings account name UP TO the selected month
+  // Filter out closed accounts (where closed_at is before or equal to selected month)
   const latestSavingsPerName = savings
     .filter(s => s.month <= currentMonth) // Only include entries up to selected month
+    .filter(s => !s.closed_at || new Date(s.closed_at) > new Date(currentMonth + '-01')) // Exclude if closed before this month
     .reduce((acc, saving) => {
       const existing = acc.get(saving.name);
       if (!existing || new Date(saving.updated_at) > new Date(existing.updated_at)) {
@@ -95,6 +97,7 @@ const SavingsCurrentStatus = () => {
       monthly_deposit: formData.action === 'deposit' && formData.actionAmount ? parseFloat(formData.actionAmount) : null,
       recurring_type: formData.action === 'deposit' && formData.actionAmount ? 'monthly' as const : null,
       recurring_day_of_month: formData.action === 'deposit' && formData.actionAmount ? 15 : null,
+      closed_at: null,
     };
 
     if (editingSaving) {
@@ -264,8 +267,9 @@ const SavingsCurrentStatus = () => {
                     <Pencil className="h-4 w-4 text-muted-foreground" />
                   </button>
                   <button
-                    onClick={() => deleteSavings(saving.id)}
+                    onClick={() => closeSavingsAccount(saving.name)}
                     className="p-1.5 opacity-0 group-hover:opacity-100 hover:bg-destructive/10 rounded transition-all"
+                    title="Close account (preserves history)"
                   >
                     <Trash2 className="h-4 w-4 text-destructive" />
                   </button>

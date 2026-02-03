@@ -416,6 +416,7 @@ export type Database = {
           action_amount: number | null
           amount: number
           card_id: string | null
+          closed_at: string | null
           created_at: string
           currency: string | null
           id: string
@@ -433,6 +434,7 @@ export type Database = {
           action_amount?: number | null
           amount: number
           card_id?: string | null
+          closed_at?: string | null
           created_at?: string
           currency?: string | null
           id?: string
@@ -450,6 +452,7 @@ export type Database = {
           action_amount?: number | null
           amount?: number
           card_id?: string | null
+          closed_at?: string | null
           created_at?: string
           currency?: string | null
           id?: string
