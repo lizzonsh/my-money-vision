@@ -35,13 +35,16 @@ const SavingsList = () => {
     action: 'deposit',
   });
 
+  // Filter savings for current month only
+  const monthlySavings = savings.filter(s => s.month === currentMonth);
+  
   // For current month, only count items up to today's date
   const shouldFilterByDate = isCurrentMonth(currentMonth);
-  const savingsUpToDate = savings.filter(s => 
-    !isCurrentMonth(s.month) || !shouldFilterByDate || isDateUpToToday(s.updated_at)
+  const savingsUpToDate = monthlySavings.filter(s => 
+    !shouldFilterByDate || isDateUpToToday(s.updated_at)
   );
 
-  // Get only the latest record per savings account name
+  // Get only the latest record per savings account name for the current month
   const latestSavingsPerName = savingsUpToDate.reduce((acc, saving) => {
     const existing = acc.get(saving.name);
     if (!existing || new Date(saving.updated_at) > new Date(existing.updated_at)) {

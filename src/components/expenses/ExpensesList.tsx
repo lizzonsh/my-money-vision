@@ -1,11 +1,14 @@
 import { useState } from 'react';
+import { format } from 'date-fns';
 import { useFinance, Expense } from '@/contexts/FinanceContext';
 import { formatCurrency, formatDate } from '@/lib/formatters';
 import { isDateUpToToday, isCurrentMonth } from '@/lib/dateUtils';
-import { Plus, Trash2, CreditCard, Building2, Repeat, Pencil } from 'lucide-react';
+import { Plus, Trash2, CreditCard, Building2, Repeat, Pencil, CalendarIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import {
   Select,
   SelectContent,
@@ -35,6 +38,7 @@ const ExpensesList = () => {
     kind: 'payed',
     isRecurring: false,
     dayOfMonth: '',
+    expenseDate: new Date(),
   });
 
   const monthlyExpenses = expenses.filter((e) => e.month === currentMonth);
@@ -68,6 +72,7 @@ const ExpensesList = () => {
       kind: 'payed',
       isRecurring: false,
       dayOfMonth: '',
+      expenseDate: new Date(),
     });
     setEditingExpense(null);
   };
@@ -83,15 +88,19 @@ const ExpensesList = () => {
       kind: expense.kind,
       isRecurring: !!expense.recurring_type,
       dayOfMonth: expense.recurring_day_of_month?.toString() || '',
+      expenseDate: expense.expense_date ? new Date(expense.expense_date) : new Date(),
     });
     setIsOpen(true);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    const selectedDate = formData.expenseDate;
+    const monthFromDate = `${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, '0')}`;
+    
     const expenseData = {
-      expense_date: new Date().toISOString().split('T')[0],
-      month: currentMonth,
+      expense_date: format(selectedDate, 'yyyy-MM-dd'),
+      month: monthFromDate,
       amount: parseFloat(formData.amount),
       category: formData.category,
       kind: formData.kind as 'planned' | 'payed' | 'predicted',
@@ -242,6 +251,32 @@ const ExpensesList = () => {
                     </Select>
                   </div>
                 )}
+              </div>
+              <div className="space-y-2">
+                <Label>Date</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full justify-start text-left font-normal",
+                        !formData.expenseDate && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {formData.expenseDate ? format(formData.expenseDate, "PPP") : <span>Pick a date</span>}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={formData.expenseDate}
+                      onSelect={(date) => date && setFormData({ ...formData, expenseDate: date })}
+                      initialFocus
+                      className="p-3 pointer-events-auto"
+                    />
+                  </PopoverContent>
+                </Popover>
               </div>
               <Button type="submit" className="w-full">
                 {editingExpense ? 'Save Changes' : 'Add Expense'}
