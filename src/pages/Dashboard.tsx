@@ -80,10 +80,16 @@ const Dashboard = () => {
       .filter((s) => s.month === prevMonth && s.action === 'deposit')
       .reduce((sum, s) => sum + Number(s.action_amount || s.monthly_deposit || 0), 0);
 
-    // Total savings balance (current amounts, filtered by date for current month entries)
-    const totalSavings = savings
-      .filter((s) => s.action !== 'withdrawal')
-      .filter((s) => !isCurrentMonth(s.month) || !shouldFilterByDate || isDateUpToToday(s.updated_at))
+    // Total savings portfolio - get latest record per account name (across ALL time)
+    const latestSavingsPerName = savings.reduce((acc, saving) => {
+      const existing = acc.get(saving.name);
+      if (!existing || new Date(saving.updated_at) > new Date(existing.updated_at)) {
+        acc.set(saving.name, saving);
+      }
+      return acc;
+    }, new Map<string, typeof savings[0]>());
+    
+    const totalSavings = Array.from(latestSavingsPerName.values())
       .reduce((sum, s) => sum + Number(s.amount), 0);
 
     const netWorth = totalBankBalance + totalSavings;
