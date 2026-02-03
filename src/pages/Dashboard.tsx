@@ -8,6 +8,7 @@ import RecentTransactions from '@/components/dashboard/RecentTransactions';
 import SavingsGoals from '@/components/dashboard/SavingsGoals';
 import SavingsActivity from '@/components/dashboard/SavingsActivity';
 import MonthNavigation from '@/components/navigation/MonthNavigation';
+import BankBalanceCard from '@/components/dashboard/BankBalanceCard';
 import {
   IncomeExpenseChart,
   SpendingByCategoryChart,
@@ -19,7 +20,6 @@ import {
   Wallet,
   PiggyBank,
   CreditCard,
-  Building2,
 } from 'lucide-react';
 
 // Helper to get previous month string
@@ -92,7 +92,8 @@ const Dashboard = () => {
     const totalSavings = Array.from(latestSavingsPerName.values())
       .reduce((sum, s) => sum + Number(s.amount), 0);
 
-    const netWorth = totalBankBalance + totalSavings;
+    // Net worth = savings + incomes + bank balance - monthly expenses
+    const netWorth = totalSavings + monthlyIncome + totalBankBalance - monthlyExpenses;
     const netFlow = monthlyIncome - monthlyExpenses;
 
     // Calculate trends
@@ -133,13 +134,7 @@ const Dashboard = () => {
         </div>
         <div className="flex items-center gap-4">
           <MonthNavigation />
-          <div className="glass rounded-lg px-4 py-2 flex items-center gap-3">
-            <Building2 className="h-5 w-5 text-primary" />
-            <div>
-              <p className="text-xs text-muted-foreground">Bank Balance</p>
-              <p className="font-semibold">{formatCurrency(totalBankBalance)}</p>
-            </div>
-          </div>
+          <BankBalanceCard />
         </div>
       </div>
 
