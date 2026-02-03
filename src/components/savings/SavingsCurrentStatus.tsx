@@ -32,7 +32,15 @@ const SavingsCurrentStatus = () => {
     transferMethod: 'bank_account',
     cardId: '',
     action: 'deposit',
+    currency: 'ILS',
   });
+
+  const currencies = [
+    { code: 'ILS', symbol: '₪', name: 'Israeli Shekel' },
+    { code: 'USD', symbol: '$', name: 'US Dollar' },
+    { code: 'EUR', symbol: '€', name: 'Euro' },
+    { code: 'GBP', symbol: '£', name: 'British Pound' },
+  ];
 
   // Get the latest record per savings account name UP TO the selected month
   // For closed accounts: show them if they were closed AFTER the selected month (history preserved)
@@ -101,6 +109,7 @@ const SavingsCurrentStatus = () => {
       transferMethod: 'bank_account',
       cardId: '',
       action: 'deposit',
+      currency: 'ILS',
     });
     setEditingSaving(null);
   };
@@ -114,18 +123,18 @@ const SavingsCurrentStatus = () => {
       transferMethod: saving.transfer_method,
       cardId: saving.card_id || '',
       action: saving.action || 'deposit',
+      currency: saving.currency || 'ILS',
     });
     setIsOpen(true);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Use the selected month from context instead of today's date
     const savingData = {
       month: currentMonth,
       name: formData.name,
       amount: parseFloat(formData.amount),
-      currency: 'ILS',
+      currency: formData.currency,
       transfer_method: formData.transferMethod as 'bank_account' | 'credit_card',
       card_id: formData.cardId || null,
       action: formData.action as 'deposit' | 'withdrawal',
@@ -182,16 +191,36 @@ const SavingsCurrentStatus = () => {
                   required
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="amount">Current Amount (₪)</Label>
-                <Input
-                  id="amount"
-                  type="number"
-                  value={formData.amount}
-                  onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-                  placeholder="0"
-                  required
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="amount">Current Amount</Label>
+                  <Input
+                    id="amount"
+                    type="number"
+                    value={formData.amount}
+                    onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+                    placeholder="0"
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Currency</Label>
+                  <Select
+                    value={formData.currency}
+                    onValueChange={(value) => setFormData({ ...formData, currency: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {currencies.map((c) => (
+                        <SelectItem key={c.code} value={c.code}>
+                          {c.symbol} {c.code}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -290,13 +319,13 @@ const SavingsCurrentStatus = () => {
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="text-right">
-                    <p className="text-lg font-bold">{formatCurrency(Number(saving.amount))}</p>
+                    <p className="text-lg font-bold">{formatCurrency(Number(saving.amount), saving.currency || 'ILS')}</p>
                     {(saving.recurringContribution !== 0 || saving.monthly_deposit) && (
                       <div className="flex items-center gap-1 text-xs">
                         <TrendingUp className={cn("h-3 w-3", (saving.recurringContribution || Number(saving.monthly_deposit) || 0) > 0 ? "text-success" : "text-destructive")} />
                         <span className={(saving.recurringContribution || Number(saving.monthly_deposit) || 0) > 0 ? "text-success" : "text-destructive"}>
                           {(saving.recurringContribution || Number(saving.monthly_deposit) || 0) > 0 ? '+' : ''}
-                          {formatCurrency(saving.recurringContribution || Number(saving.monthly_deposit) || 0)}/mo
+                          {formatCurrency(saving.recurringContribution || Number(saving.monthly_deposit) || 0, saving.currency || 'ILS')}/mo
                         </span>
                         {saving.recurringContribution !== 0 && (
                           <span className="text-muted-foreground">(recurring)</span>
