@@ -41,7 +41,18 @@ const SavingsList = () => {
     !isCurrentMonth(s.month) || !shouldFilterByDate || isDateUpToToday(s.updated_at)
   );
 
-  const totalSavings = savingsUpToDate
+  // Get only the latest record per savings account name
+  const latestSavingsPerName = savingsUpToDate.reduce((acc, saving) => {
+    const existing = acc.get(saving.name);
+    if (!existing || new Date(saving.updated_at) > new Date(existing.updated_at)) {
+      acc.set(saving.name, saving);
+    }
+    return acc;
+  }, new Map<string, Savings>());
+
+  const uniqueSavings = Array.from(latestSavingsPerName.values());
+
+  const totalSavings = uniqueSavings
     .filter(s => s.action !== 'withdrawal')
     .reduce((sum, s) => sum + Number(s.amount), 0);
 
@@ -49,7 +60,7 @@ const SavingsList = () => {
     .filter(s => s.action === 'withdrawal')
     .reduce((sum, s) => sum + Number(s.action_amount || 0), 0);
 
-  const monthlyDeposits = savingsUpToDate
+  const monthlyDeposits = uniqueSavings
     .filter(s => s.monthly_deposit)
     .reduce((sum, s) => sum + Number(s.monthly_deposit || 0), 0);
 
@@ -223,12 +234,12 @@ const SavingsList = () => {
       </div>
 
       <div className="space-y-3">
-        {savings.length === 0 ? (
+        {uniqueSavings.length === 0 ? (
           <p className="text-sm text-muted-foreground text-center py-4">
             No savings accounts
           </p>
         ) : (
-          savings.map((saving) => (
+          uniqueSavings.map((saving) => (
             <div
               key={saving.id}
               className={cn(

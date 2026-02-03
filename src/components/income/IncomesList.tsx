@@ -36,6 +36,17 @@ const IncomesList = () => {
   // For current month, only count items up to today's date
   const shouldFilterByDate = isCurrentMonth(currentMonth);
   const incomesUpToDate = monthlyIncomes.filter(i => !shouldFilterByDate || isDateUpToToday(i.income_date || ''));
+
+  // Get only the latest record per income name/source for display
+  const latestIncomesPerName = incomesUpToDate.reduce((acc, income) => {
+    const existing = acc.get(income.name);
+    if (!existing || new Date(income.updated_at) > new Date(existing.updated_at)) {
+      acc.set(income.name, income);
+    }
+    return acc;
+  }, new Map<string, Income>());
+
+  const uniqueIncomes = Array.from(latestIncomesPerName.values());
   
   const totalIncome = incomesUpToDate.reduce((sum, i) => sum + Number(i.amount), 0);
 
@@ -102,10 +113,10 @@ const IncomesList = () => {
           <h3 className="font-semibold">Income</h3>
           <p className="text-lg font-bold text-success">{formatCurrency(totalIncome)}</p>
           <p className="text-xs text-muted-foreground mt-1">
-            {incomesUpToDate.length} source{incomesUpToDate.length !== 1 ? 's' : ''} this month
-            {monthlyIncomes.length > incomesUpToDate.length && (
-              <span className="text-warning ml-1">
-                (+{monthlyIncomes.length - incomesUpToDate.length} future)
+            {uniqueIncomes.length} source{uniqueIncomes.length !== 1 ? 's' : ''} this month
+            {monthlyIncomes.length > uniqueIncomes.length && (
+              <span className="text-muted-foreground/70 ml-1">
+                ({monthlyIncomes.length} total entries)
               </span>
             )}
           </p>
@@ -169,12 +180,12 @@ const IncomesList = () => {
       </div>
 
       <div className="space-y-2 max-h-80 overflow-y-auto">
-        {monthlyIncomes.length === 0 ? (
+        {uniqueIncomes.length === 0 ? (
           <p className="text-sm text-muted-foreground text-center py-4">
             No income this month
           </p>
         ) : (
-          monthlyIncomes.map((income) => (
+          uniqueIncomes.map((income) => (
             <div
               key={income.id}
               className="flex items-center justify-between p-3 rounded-lg bg-secondary/30 hover:bg-secondary/50 transition-colors group"
