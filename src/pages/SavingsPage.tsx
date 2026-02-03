@@ -1,4 +1,5 @@
-import SavingsList from '@/components/savings/SavingsList';
+import SavingsCurrentStatus from '@/components/savings/SavingsCurrentStatus';
+import SavingsMonthlyActivity from '@/components/savings/SavingsMonthlyActivity';
 import RecurringSavingsPanel from '@/components/savings/RecurringSavingsPanel';
 import MonthNavigation from '@/components/navigation/MonthNavigation';
 import { SavingsGrowthChart } from '@/components/charts/FinanceCharts';
@@ -23,9 +24,10 @@ const SavingsPage = () => {
 
         <TabsContent value="overview" className="space-y-6">
           <div className="grid gap-6 lg:grid-cols-2">
-            <SavingsList />
-            <SavingsGrowthChart />
+            <SavingsCurrentStatus />
+            <SavingsMonthlyActivity />
           </div>
+          <SavingsGrowthChart />
         </TabsContent>
 
         <TabsContent value="recurring">
