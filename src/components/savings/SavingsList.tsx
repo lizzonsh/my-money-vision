@@ -34,8 +34,16 @@ const SavingsList = () => {
   });
 
   const totalSavings = savings
-    .filter(s => s.type === 'savings')
+    .filter(s => s.action !== 'withdrawal')
     .reduce((sum, s) => sum + s.amount, 0);
+
+  const totalWithdrawals = savings
+    .filter(s => s.action === 'withdrawal')
+    .reduce((sum, s) => sum + (s.actionAmount || 0), 0);
+
+  const monthlyDeposits = savings
+    .filter(s => s.recurring?.monthlyDeposit)
+    .reduce((sum, s) => sum + (s.recurring?.monthlyDeposit || 0), 0);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -69,9 +77,13 @@ const SavingsList = () => {
       <div className="flex items-center justify-between mb-4">
         <div>
           <h3 className="font-semibold">Savings Accounts</h3>
-          <p className="text-sm text-muted-foreground">
-            Total: {formatCurrency(totalSavings)}
-          </p>
+          <p className="text-lg font-bold">{formatCurrency(totalSavings)}</p>
+          <div className="flex gap-3 text-xs text-muted-foreground mt-1">
+            <span className="text-success">+{formatCurrency(monthlyDeposits)}/mo</span>
+            {totalWithdrawals > 0 && (
+              <span className="text-destructive">Withdrawn: {formatCurrency(totalWithdrawals)}</span>
+            )}
+          </div>
         </div>
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
           <DialogTrigger asChild>
@@ -158,7 +170,7 @@ const SavingsList = () => {
               key={saving._id}
               className={cn(
                 'p-4 rounded-lg transition-colors group',
-                saving.type === 'withdrawal'
+                saving.action === 'withdrawal'
                   ? 'bg-destructive/10 border border-destructive/20'
                   : 'bg-secondary/30 hover:bg-secondary/50'
               )}
@@ -168,12 +180,12 @@ const SavingsList = () => {
                   <div
                     className={cn(
                       'p-2.5 rounded-lg',
-                      saving.type === 'withdrawal'
+                      saving.action === 'withdrawal'
                         ? 'bg-destructive/20 text-destructive'
                         : 'bg-primary/10 text-primary'
                     )}
                   >
-                    {saving.type === 'withdrawal' ? (
+                    {saving.action === 'withdrawal' ? (
                       <ArrowDownRight className="h-5 w-5" />
                     ) : (
                       <PiggyBank className="h-5 w-5" />
@@ -195,9 +207,14 @@ const SavingsList = () => {
                         <span>+{formatCurrency(saving.recurring.monthlyDeposit)}/mo</span>
                       </div>
                     )}
-                    {saving.type === 'withdrawal' && saving.withdrawalAmount && (
+                    {saving.action === 'withdrawal' && saving.actionAmount && (
                       <p className="text-xs text-destructive">
-                        -{formatCurrency(saving.withdrawalAmount)}
+                        -{formatCurrency(saving.actionAmount)}
+                      </p>
+                    )}
+                    {saving.action === 'deposit' && saving.actionAmount && (
+                      <p className="text-xs text-success">
+                        +{formatCurrency(saving.actionAmount)}
                       </p>
                     )}
                   </div>
