@@ -1,11 +1,10 @@
 import { useState } from 'react';
-import { useFinance } from '@/contexts/FinanceContext';
+import { useFinance, RecurringPayment } from '@/contexts/FinanceContext';
 import { formatCurrency } from '@/lib/formatters';
 import { Plus, Trash2, Pencil, Repeat, Play, Pause } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
 import {
   Select,
   SelectContent,
@@ -21,7 +20,6 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
-import { RecurringPayment } from '@/types/finance';
 
 const RecurringPaymentsPanel = () => {
   const { 
@@ -29,7 +27,6 @@ const RecurringPaymentsPanel = () => {
     addRecurringPayment, 
     updateRecurringPayment, 
     deleteRecurringPayment,
-    createExpenseFromRecurring 
   } = useFinance();
   
   const [isOpen, setIsOpen] = useState(false);
@@ -61,11 +58,11 @@ const RecurringPaymentsPanel = () => {
     setEditingPayment(payment);
     setFormData({
       name: payment.name,
-      defaultAmount: payment.defaultAmount.toString(),
+      defaultAmount: payment.default_amount.toString(),
       category: payment.category,
-      paymentMethod: payment.paymentMethod,
-      cardId: payment.cardId || '',
-      dayOfMonth: payment.dayOfMonth.toString(),
+      paymentMethod: payment.payment_method,
+      cardId: payment.card_id || '',
+      dayOfMonth: payment.day_of_month.toString(),
       notes: payment.notes || '',
     });
     setIsOpen(true);
@@ -75,17 +72,17 @@ const RecurringPaymentsPanel = () => {
     e.preventDefault();
     const paymentData = {
       name: formData.name,
-      defaultAmount: parseFloat(formData.defaultAmount),
+      default_amount: parseFloat(formData.defaultAmount),
       category: formData.category,
-      paymentMethod: formData.paymentMethod as 'bank_transfer' | 'credit_card',
-      cardId: formData.cardId || undefined,
-      dayOfMonth: parseInt(formData.dayOfMonth) || 1,
-      isActive: true,
-      notes: formData.notes || undefined,
+      payment_method: formData.paymentMethod as 'bank_transfer' | 'credit_card',
+      card_id: formData.cardId || null,
+      day_of_month: parseInt(formData.dayOfMonth) || 1,
+      is_active: true,
+      notes: formData.notes || null,
     };
 
     if (editingPayment) {
-      updateRecurringPayment(editingPayment._id, paymentData);
+      updateRecurringPayment({ id: editingPayment.id, ...paymentData });
     } else {
       addRecurringPayment(paymentData);
     }
@@ -94,10 +91,10 @@ const RecurringPaymentsPanel = () => {
   };
 
   const toggleActive = (payment: RecurringPayment) => {
-    updateRecurringPayment(payment._id, { isActive: !payment.isActive });
+    updateRecurringPayment({ id: payment.id, is_active: !payment.is_active });
   };
 
-  const formatCardName = (cardId?: string) => {
+  const formatCardName = (cardId?: string | null) => {
     if (!cardId) return '';
     const cardNames: Record<string, string> = {
       'fly-card': 'Fly Card',
@@ -108,8 +105,8 @@ const RecurringPaymentsPanel = () => {
   };
 
   const totalMonthly = recurringPayments
-    .filter(p => p.isActive)
-    .reduce((sum, p) => sum + p.defaultAmount, 0);
+    .filter(p => p.is_active)
+    .reduce((sum, p) => sum + Number(p.default_amount), 0);
 
   return (
     <div className="glass rounded-xl p-5 shadow-card animate-slide-up">
@@ -247,10 +244,10 @@ const RecurringPaymentsPanel = () => {
         ) : (
           recurringPayments.map((payment) => (
             <div
-              key={payment._id}
+              key={payment.id}
               className={cn(
                 'flex items-center justify-between p-3 rounded-lg transition-colors group',
-                payment.isActive 
+                payment.is_active 
                   ? 'bg-secondary/30 hover:bg-secondary/50' 
                   : 'bg-muted/20 opacity-60'
               )}
@@ -260,20 +257,20 @@ const RecurringPaymentsPanel = () => {
                   onClick={() => toggleActive(payment)}
                   className={cn(
                     'p-2 rounded-lg transition-colors',
-                    payment.isActive 
+                    payment.is_active 
                       ? 'bg-success/20 text-success' 
                       : 'bg-muted text-muted-foreground'
                   )}
                 >
-                  {payment.isActive ? <Play className="h-4 w-4" /> : <Pause className="h-4 w-4" />}
+                  {payment.is_active ? <Play className="h-4 w-4" /> : <Pause className="h-4 w-4" />}
                 </button>
                 <div>
                   <p className="text-sm font-medium">{payment.name}</p>
                   <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <span>Day {payment.dayOfMonth}</span>
-                    {payment.cardId && (
+                    <span>Day {payment.day_of_month}</span>
+                    {payment.card_id && (
                       <span className="px-1.5 py-0.5 rounded bg-primary/10 text-primary">
-                        {formatCardName(payment.cardId)}
+                        {formatCardName(payment.card_id)}
                       </span>
                     )}
                   </div>
@@ -281,15 +278,8 @@ const RecurringPaymentsPanel = () => {
               </div>
               <div className="flex items-center gap-2">
                 <div className="text-right">
-                  <p className="text-sm font-semibold">{formatCurrency(payment.defaultAmount)}</p>
+                  <p className="text-sm font-semibold">{formatCurrency(Number(payment.default_amount))}</p>
                 </div>
-                <button
-                  onClick={() => createExpenseFromRecurring(payment._id)}
-                  className="p-1.5 opacity-0 group-hover:opacity-100 hover:bg-primary/10 rounded transition-all"
-                  title="Add to this month's expenses"
-                >
-                  <Plus className="h-4 w-4 text-primary" />
-                </button>
                 <button
                   onClick={() => handleOpenEdit(payment)}
                   className="p-1.5 opacity-0 group-hover:opacity-100 hover:bg-secondary rounded transition-all"
@@ -297,7 +287,7 @@ const RecurringPaymentsPanel = () => {
                   <Pencil className="h-4 w-4 text-muted-foreground" />
                 </button>
                 <button
-                  onClick={() => deleteRecurringPayment(payment._id)}
+                  onClick={() => deleteRecurringPayment(payment.id)}
                   className="p-1.5 opacity-0 group-hover:opacity-100 hover:bg-destructive/10 rounded transition-all"
                 >
                   <Trash2 className="h-4 w-4 text-destructive" />

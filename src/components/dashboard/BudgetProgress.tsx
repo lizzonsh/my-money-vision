@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/dialog';
 
 const BudgetProgress = () => {
-  const { budget, updateBudget, calculatedBudget, currentMonth } = useFinance();
+  const { budgets, addBudget, updateBudget, calculatedBudget, currentMonth, getBudgetForMonth } = useFinance();
   const [isOpen, setIsOpen] = useState(false);
   const [editBudget, setEditBudget] = useState({
     totalBudget: '',
@@ -23,35 +23,41 @@ const BudgetProgress = () => {
     notes: '',
   });
 
-  const totalBudget = typeof budget.totalBudget === 'string' 
-    ? parseFloat(budget.totalBudget) 
-    : budget.totalBudget;
+  const budget = getBudgetForMonth(currentMonth);
+  const totalBudget = budget ? Number(budget.total_budget) : 0;
 
   const { spentBudget, leftBudget, dailyLimit } = calculatedBudget;
-  const percentage = Math.min((spentBudget / totalBudget) * 100, 100);
+  const percentage = totalBudget > 0 ? Math.min((spentBudget / totalBudget) * 100, 100) : 0;
   const isOverBudget = leftBudget < 0;
 
   const today = new Date();
-  const daysInMonth = budget.daysInMonth || new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
+  const [year, month] = currentMonth.split('-').map(Number);
+  const daysInMonth = budget?.days_in_month || new Date(year, month, 0).getDate();
   const daysRemaining = Math.max(1, daysInMonth - today.getDate() + 1);
 
   const handleOpenEdit = () => {
     setEditBudget({
       totalBudget: totalBudget.toString(),
-      daysInMonth: (budget.daysInMonth || daysInMonth).toString(),
-      notes: budget.notes || '',
+      daysInMonth: (budget?.days_in_month || daysInMonth).toString(),
+      notes: budget?.notes || '',
     });
     setIsOpen(true);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    updateBudget({
-      ...budget,
-      totalBudget: parseFloat(editBudget.totalBudget),
-      daysInMonth: parseInt(editBudget.daysInMonth),
-      notes: editBudget.notes || undefined,
-    });
+    const budgetData = {
+      month: currentMonth,
+      total_budget: parseFloat(editBudget.totalBudget),
+      days_in_month: parseInt(editBudget.daysInMonth),
+      notes: editBudget.notes || null,
+    };
+
+    if (budget) {
+      updateBudget({ id: budget.id, ...budgetData });
+    } else {
+      addBudget(budgetData);
+    }
     setIsOpen(false);
   };
 
@@ -60,7 +66,7 @@ const BudgetProgress = () => {
       <div className="flex items-center justify-between mb-4">
         <h3 className="font-semibold">Monthly Budget</h3>
         <div className="flex items-center gap-2">
-          <span className="text-sm text-muted-foreground">{budget.month || currentMonth}</span>
+          <span className="text-sm text-muted-foreground">{budget?.month || currentMonth}</span>
           <Dialog open={isOpen} onOpenChange={setIsOpen}>
             <DialogTrigger asChild>
               <button 
@@ -72,7 +78,7 @@ const BudgetProgress = () => {
             </DialogTrigger>
             <DialogContent className="glass">
               <DialogHeader>
-                <DialogTitle>Edit Budget</DialogTitle>
+                <DialogTitle>{budget ? 'Edit Budget' : 'Create Budget'}</DialogTitle>
               </DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">

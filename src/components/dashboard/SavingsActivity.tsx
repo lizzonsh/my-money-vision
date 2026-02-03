@@ -13,15 +13,15 @@ const SavingsActivity = () => {
   // For current month, only count items up to today's date
   const shouldFilterByDate = isCurrentMonth(currentMonth);
   const savingsUpToDate = monthlySavings.filter(s => 
-    !shouldFilterByDate || isDateUpToToday(s.updateDate)
+    !shouldFilterByDate || isDateUpToToday(s.updated_at)
   );
 
   // Calculate totals
   const deposits = savingsUpToDate.filter(s => s.action === 'deposit');
   const withdrawals = savingsUpToDate.filter(s => s.action === 'withdrawal');
   
-  const totalDeposits = deposits.reduce((sum, s) => sum + (s.actionAmount || s.recurring?.monthlyDeposit || 0), 0);
-  const totalWithdrawals = withdrawals.reduce((sum, s) => sum + (s.actionAmount || 0), 0);
+  const totalDeposits = deposits.reduce((sum, s) => sum + Number(s.action_amount || s.monthly_deposit || 0), 0);
+  const totalWithdrawals = withdrawals.reduce((sum, s) => sum + Number(s.action_amount || 0), 0);
   const netSavings = totalDeposits - totalWithdrawals;
 
   // Future savings not yet counted
@@ -73,7 +73,7 @@ const SavingsActivity = () => {
         ) : (
           savingsUpToDate.slice(0, 5).map((saving) => (
             <div
-              key={saving._id}
+              key={saving.id}
               className="flex items-center justify-between p-2 rounded-lg bg-secondary/30"
             >
               <div className="flex items-center gap-2">
@@ -91,7 +91,7 @@ const SavingsActivity = () => {
                 <div>
                   <p className="text-sm font-medium">{saving.name}</p>
                   <p className="text-xs text-muted-foreground">
-                    {saving.updateDate ? formatDate(saving.updateDate) : ''}
+                    {saving.updated_at ? formatDate(saving.updated_at.split('T')[0]) : ''}
                   </p>
                 </div>
               </div>
@@ -100,7 +100,7 @@ const SavingsActivity = () => {
                 saving.action === 'withdrawal' ? "text-destructive" : "text-success"
               )}>
                 {saving.action === 'withdrawal' ? '-' : '+'}
-                {formatCurrency(saving.actionAmount || saving.recurring?.monthlyDeposit || 0)}
+                {formatCurrency(Number(saving.action_amount || saving.monthly_deposit || 0))}
               </p>
             </div>
           ))
