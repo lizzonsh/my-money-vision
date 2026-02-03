@@ -1,5 +1,6 @@
 import { ReactNode } from 'react';
-import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { TrendingUp, TrendingDown, Minus, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface StatCardProps {
@@ -11,6 +12,7 @@ interface StatCardProps {
   trendValue?: string;
   variant?: 'default' | 'success' | 'warning' | 'danger';
   className?: string;
+  href?: string;
 }
 
 const StatCard = ({
@@ -22,6 +24,7 @@ const StatCard = ({
   trendValue,
   variant = 'default',
   className,
+  href,
 }: StatCardProps) => {
   const variantStyles = {
     default: 'border-border/50',
@@ -33,6 +36,49 @@ const StatCard = ({
   const TrendIcon = trend === 'up' ? TrendingUp : trend === 'down' ? TrendingDown : Minus;
   const trendColor = trend === 'up' ? 'text-success' : trend === 'down' ? 'text-destructive' : 'text-muted-foreground';
 
+  const cardContent = (
+    <div className="flex items-start justify-between">
+      <div className="flex-1">
+        <p className="text-sm font-medium text-muted-foreground mb-1">{title}</p>
+        <p className="text-2xl font-bold tracking-tight">{value}</p>
+        {subtitle && (
+          <p className="text-sm text-muted-foreground mt-1">{subtitle}</p>
+        )}
+        {trend && trendValue && (
+          <div className={cn('flex items-center gap-1 mt-2', trendColor)}>
+            <TrendIcon className="h-4 w-4" />
+            <span className="text-sm font-medium">{trendValue}</span>
+          </div>
+        )}
+      </div>
+      <div className="flex items-center gap-2">
+        {icon && (
+          <div className="p-2.5 rounded-lg bg-primary/10 text-primary">
+            {icon}
+          </div>
+        )}
+        {href && (
+          <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
+        )}
+      </div>
+    </div>
+  );
+
+  if (href) {
+    return (
+      <Link
+        to={href}
+        className={cn(
+          'block glass rounded-xl p-5 shadow-card transition-all duration-300 hover:shadow-glow hover:scale-[1.02] animate-slide-up cursor-pointer group',
+          variantStyles[variant],
+          className
+        )}
+      >
+        {cardContent}
+      </Link>
+    );
+  }
+
   return (
     <div
       className={cn(
@@ -41,26 +87,7 @@ const StatCard = ({
         className
       )}
     >
-      <div className="flex items-start justify-between">
-        <div className="flex-1">
-          <p className="text-sm font-medium text-muted-foreground mb-1">{title}</p>
-          <p className="text-2xl font-bold tracking-tight">{value}</p>
-          {subtitle && (
-            <p className="text-sm text-muted-foreground mt-1">{subtitle}</p>
-          )}
-          {trend && trendValue && (
-            <div className={cn('flex items-center gap-1 mt-2', trendColor)}>
-              <TrendIcon className="h-4 w-4" />
-              <span className="text-sm font-medium">{trendValue}</span>
-            </div>
-          )}
-        </div>
-        {icon && (
-          <div className="p-2.5 rounded-lg bg-primary/10 text-primary">
-            {icon}
-          </div>
-        )}
-      </div>
+      {cardContent}
     </div>
   );
 };

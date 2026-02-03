@@ -148,6 +148,7 @@ const Dashboard = () => {
             ? `${stats.incomeTrend.trend === 'up' ? '+' : '-'}${stats.incomeTrend.value.toFixed(1)}% vs last month` 
             : 'No change'}
           variant="success"
+          href="/income"
         />
         <StatCard
           title="Monthly Expenses"
@@ -157,6 +158,7 @@ const Dashboard = () => {
           trendValue={stats.expenseTrend.value > 0 
             ? `${stats.expenseTrend.trend === 'up' ? '+' : '-'}${stats.expenseTrend.value.toFixed(1)}% vs last month` 
             : 'No change'}
+          href="/expenses"
         />
         <StatCard
           title="Total Savings"
@@ -166,6 +168,7 @@ const Dashboard = () => {
           trendValue={stats.monthlySavingsDeposits > 0 
             ? `+${formatCurrency(stats.monthlySavingsDeposits)} this month` 
             : 'No deposits yet'}
+          href="/savings"
         />
         <StatCard
           title="Net Worth"
@@ -173,6 +176,7 @@ const Dashboard = () => {
           icon={stats.netFlow >= 0 ? <TrendingUp className="h-5 w-5" /> : <TrendingDown className="h-5 w-5" />}
           subtitle={`Net flow: ${stats.netFlow >= 0 ? '+' : ''}${formatCurrency(stats.netFlow)}`}
           variant={stats.netFlow >= 0 ? 'success' : 'danger'}
+          href="/analytics"
         />
       </div>
 
