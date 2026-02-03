@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useFinance, Savings } from '@/contexts/FinanceContext';
 import { formatCurrency } from '@/lib/formatters';
 import { isDateUpToToday, isCurrentMonth } from '@/lib/dateUtils';
-import { ArrowUpRight, ArrowDownRight, TrendingUp, TrendingDown, Minus, Plus, Pencil, Trash2 } from 'lucide-react';
+import { ArrowUpRight, ArrowDownRight, TrendingUp, TrendingDown, Minus, Plus, Pencil, Trash2, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -22,6 +22,18 @@ import {
 } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
 
+// Combined activity item type
+interface ActivityItem {
+  id: string;
+  name: string;
+  action: 'deposit' | 'withdrawal';
+  amount: number;
+  date: string;
+  isRecurring: boolean;
+  dayOfMonth?: number;
+  originalSaving?: Savings;
+}
+
 const SavingsMonthlyActivity = () => {
   const { savings, recurringSavings, currentMonth, addSavings, updateSavings, deleteSavings } = useFinance();
   const [isOpen, setIsOpen] = useState(false);
@@ -35,7 +47,6 @@ const SavingsMonthlyActivity = () => {
   });
 
   // Filter savings for current month only
-  // Show closed accounts if they were closed after the selected month (history visible)
   const currentMonthDate = new Date(currentMonth + '-01');
   const monthlySavings = savings.filter(s => {
     if (s.month !== currentMonth) return false;
@@ -49,36 +60,45 @@ const SavingsMonthlyActivity = () => {
     !shouldFilterByDate || isDateUpToToday(s.updated_at)
   );
 
-  // Calculate deposits for this month (action_amount where action is deposit)
-  const actualDeposits = savingsUpToDate
-    .filter(s => s.action === 'deposit' && s.action_amount)
-    .reduce((sum, s) => sum + Number(s.action_amount || 0), 0);
-
-  // Calculate withdrawals for this month
-  const actualWithdrawals = savingsUpToDate
-    .filter(s => s.action === 'withdrawal' && s.action_amount)
-    .reduce((sum, s) => sum + Number(s.action_amount || 0), 0);
-
-  // Add recurring savings (active templates)
+  // Get active recurring savings
   const activeRecurringSavings = recurringSavings.filter(rs => rs.is_active);
-  const recurringDeposits = activeRecurringSavings
-    .filter(rs => rs.action_type === 'deposit')
-    .reduce((sum, rs) => sum + Number(rs.default_amount), 0);
-  const recurringWithdrawals = activeRecurringSavings
-    .filter(rs => rs.action_type === 'withdrawal')
-    .reduce((sum, rs) => sum + Number(rs.default_amount), 0);
 
-  // Total including recurring
-  const monthlyDeposits = actualDeposits + recurringDeposits;
-  const monthlyWithdrawals = actualWithdrawals + recurringWithdrawals;
+  // Create combined activity list
+  const activityItems: ActivityItem[] = [
+    // Actual savings transactions
+    ...savingsUpToDate
+      .filter(s => s.action_amount && s.action_amount > 0)
+      .map(s => ({
+        id: s.id,
+        name: s.name,
+        action: (s.action || 'deposit') as 'deposit' | 'withdrawal',
+        amount: Number(s.action_amount),
+        date: s.updated_at,
+        isRecurring: false,
+        originalSaving: s,
+      })),
+    // Recurring savings as virtual transactions
+    ...activeRecurringSavings.map(rs => ({
+      id: `recurring-${rs.id}`,
+      name: rs.name,
+      action: rs.action_type as 'deposit' | 'withdrawal',
+      amount: Number(rs.default_amount),
+      date: `${currentMonth}-${String(rs.day_of_month).padStart(2, '0')}`,
+      isRecurring: true,
+      dayOfMonth: rs.day_of_month,
+    })),
+  ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
-  // Net change
+  // Calculate totals
+  const monthlyDeposits = activityItems
+    .filter(item => item.action === 'deposit')
+    .reduce((sum, item) => sum + item.amount, 0);
+
+  const monthlyWithdrawals = activityItems
+    .filter(item => item.action === 'withdrawal')
+    .reduce((sum, item) => sum + item.amount, 0);
+
   const netChange = monthlyDeposits - monthlyWithdrawals;
-
-  // Get activity items for display
-  const activityItems = savingsUpToDate
-    .filter(s => s.action_amount && s.action_amount > 0)
-    .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
 
   // Get unique account names for the dropdown
   const accountNames = [...new Set(savings.filter(s => !s.closed_at).map(s => s.name))];
@@ -332,7 +352,15 @@ const SavingsMonthlyActivity = () => {
                     )}
                   </div>
                   <div>
-                    <p className="text-sm font-medium">{item.name}</p>
+                    <div className="flex items-center gap-1.5">
+                      <p className="text-sm font-medium">{item.name}</p>
+                      {item.isRecurring && (
+                        <span className="inline-flex items-center gap-0.5 text-[10px] text-primary bg-primary/10 px-1.5 py-0.5 rounded">
+                          <RotateCcw className="h-2.5 w-2.5" />
+                          recurring
+                        </span>
+                      )}
+                    </div>
                     <p className="text-xs text-muted-foreground capitalize">
                       {item.action}
                     </p>
@@ -344,24 +372,28 @@ const SavingsMonthlyActivity = () => {
                       "text-sm font-semibold",
                       item.action === 'withdrawal' ? "text-destructive" : "text-success"
                     )}>
-                      {item.action === 'withdrawal' ? '-' : '+'}{formatCurrency(Number(item.action_amount))}
+                      {item.action === 'withdrawal' ? '-' : '+'}{formatCurrency(item.amount)}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      {new Date(item.updated_at).toLocaleDateString()}
+                      {item.isRecurring ? `Day ${item.dayOfMonth}` : new Date(item.date).toLocaleDateString()}
                     </p>
                   </div>
-                  <button
-                    onClick={() => handleOpenEdit(item)}
-                    className="p-1.5 opacity-0 group-hover:opacity-100 hover:bg-secondary rounded transition-all"
-                  >
-                    <Pencil className="h-3 w-3 text-muted-foreground" />
-                  </button>
-                  <button
-                    onClick={() => deleteSavings(item.id)}
-                    className="p-1.5 opacity-0 group-hover:opacity-100 hover:bg-destructive/10 rounded transition-all"
-                  >
-                    <Trash2 className="h-3 w-3 text-destructive" />
-                  </button>
+                  {!item.isRecurring && item.originalSaving && (
+                    <>
+                      <button
+                        onClick={() => handleOpenEdit(item.originalSaving!)}
+                        className="p-1.5 opacity-0 group-hover:opacity-100 hover:bg-secondary rounded transition-all"
+                      >
+                        <Pencil className="h-3 w-3 text-muted-foreground" />
+                      </button>
+                      <button
+                        onClick={() => deleteSavings(item.id)}
+                        className="p-1.5 opacity-0 group-hover:opacity-100 hover:bg-destructive/10 rounded transition-all"
+                      >
+                        <Trash2 className="h-3 w-3 text-destructive" />
+                      </button>
+                    </>
+                  )}
                 </div>
               </div>
             ))}
