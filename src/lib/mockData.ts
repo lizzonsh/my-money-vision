@@ -17,10 +17,58 @@ export const mockBudget: Budget = {
   notes: 'February budget'
 };
 
-// Generate realistic historical data
-export const mockExpenses: Expense[] = generateHistoricalExpenses();
-export const mockIncomes: Income[] = generateHistoricalIncomes();
-export const mockSavings: Savings[] = generateHistoricalSavings();
+// Generate realistic historical data with fallbacks
+let generatedExpenses: Expense[] = [];
+let generatedIncomes: Income[] = [];
+let generatedSavings: Savings[] = [];
+
+try {
+  generatedExpenses = generateHistoricalExpenses();
+  generatedIncomes = generateHistoricalIncomes();
+  generatedSavings = generateHistoricalSavings();
+} catch (error) {
+  console.error('Error generating mock data:', error);
+  // Fallback to minimal data
+  generatedExpenses = [
+    {
+      _id: '1',
+      expenseDate: '2025-02-01',
+      month: '2025-02',
+      amount: 1520,
+      category: 'psychologist',
+      kind: 'payed',
+      paymentMethod: 'bank_transfer',
+      description: 'Monthly psychologist session'
+    }
+  ];
+  generatedIncomes = [
+    {
+      _id: '1',
+      month: '2025-02',
+      incomeDate: '2025-02-01',
+      amount: 12500,
+      name: 'work',
+      description: 'Monthly salary'
+    }
+  ];
+  generatedSavings = [
+    {
+      _id: '1',
+      month: '2025-02',
+      name: 'Altshuler Investment',
+      amount: 45000,
+      currency: 'ILS',
+      transferMethod: 'bank_account',
+      type: 'savings',
+      updateDate: '2025-02-01',
+      recurring: { type: 'monthly', dayOfMonth: 21, monthlyDeposit: 2000 }
+    }
+  ];
+}
+
+export const mockExpenses: Expense[] = generatedExpenses;
+export const mockIncomes: Income[] = generatedIncomes;
+export const mockSavings: Savings[] = generatedSavings;
 
 export const mockBigPurchases: BigPurchaseGoal[] = [
   {
@@ -77,10 +125,18 @@ export const mockBankAccount: BankAccount = {
   lastUpdated: '2025-02-03'
 };
 
-// Generate chart data from historical data
-export const mockMonthlyData = generateMonthlyChartData(mockExpenses, mockIncomes, mockSavings);
-export const mockSavingsGrowth = generateSavingsGrowthData(mockSavings);
-export const mockCategoryData = generateCategoryData(mockExpenses, '2025-02');
+// Generate chart data from historical data with fallbacks
+export const mockMonthlyData = mockExpenses.length > 0 
+  ? generateMonthlyChartData(mockExpenses, mockIncomes, mockSavings)
+  : [{ month: 'Feb', monthKey: '2025-02', income: 12500, expenses: 1520, savings: 2000 }];
+
+export const mockSavingsGrowth = mockSavings.length > 0 
+  ? generateSavingsGrowthData(mockSavings)
+  : [{ month: 'Feb', monthKey: '2025-02', total: 45000 }];
+
+export const mockCategoryData = mockExpenses.length > 0 
+  ? generateCategoryData(mockExpenses, '2025-02')
+  : [{ name: 'Psychologist', value: 1520, color: 'hsl(var(--chart-1))' }];
 
 export const mockRecurringPayments: RecurringPayment[] = [
   {
