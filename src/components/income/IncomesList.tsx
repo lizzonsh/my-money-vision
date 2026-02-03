@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useFinance } from '@/contexts/FinanceContext';
 import { formatCurrency, formatDate } from '@/lib/formatters';
-import { Plus, Trash2, Briefcase, Gift, Heart } from 'lucide-react';
+import { Plus, Trash2, Briefcase, Gift, Heart, Pencil } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -19,11 +19,13 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import { Income } from '@/types/finance';
 
 const IncomesList = () => {
-  const { incomes, currentMonth, addIncome, deleteIncome } = useFinance();
+  const { incomes, currentMonth, addIncome, updateIncome, deleteIncome } = useFinance();
   const [isOpen, setIsOpen] = useState(false);
-  const [newIncome, setNewIncome] = useState({
+  const [editingIncome, setEditingIncome] = useState<Income | null>(null);
+  const [formData, setFormData] = useState({
     description: '',
     amount: '',
     name: 'work',
@@ -32,16 +34,37 @@ const IncomesList = () => {
   const monthlyIncomes = incomes.filter((i) => i.month === currentMonth);
   const totalIncome = monthlyIncomes.reduce((sum, i) => sum + i.amount, 0);
 
+  const resetForm = () => {
+    setFormData({ description: '', amount: '', name: 'work' });
+    setEditingIncome(null);
+  };
+
+  const handleOpenEdit = (income: Income) => {
+    setEditingIncome(income);
+    setFormData({
+      description: income.description || '',
+      amount: income.amount.toString(),
+      name: income.name,
+    });
+    setIsOpen(true);
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    addIncome({
+    const incomeData = {
       incomeDate: new Date().toISOString().split('T')[0],
       month: currentMonth,
-      amount: parseFloat(newIncome.amount),
-      name: newIncome.name as any,
-      description: newIncome.description,
-    });
-    setNewIncome({ description: '', amount: '', name: 'work' });
+      amount: parseFloat(formData.amount),
+      name: formData.name,
+      description: formData.description,
+    };
+
+    if (editingIncome) {
+      updateIncome(editingIncome._id, incomeData);
+    } else {
+      addIncome(incomeData);
+    }
+    resetForm();
     setIsOpen(false);
   };
 
@@ -75,7 +98,7 @@ const IncomesList = () => {
             {monthlyIncomes.length} source{monthlyIncomes.length !== 1 ? 's' : ''} this month
           </p>
         </div>
-        <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <Dialog open={isOpen} onOpenChange={(open) => { setIsOpen(open); if (!open) resetForm(); }}>
           <DialogTrigger asChild>
             <Button size="sm" className="gap-1">
               <Plus className="h-4 w-4" />
@@ -84,17 +107,15 @@ const IncomesList = () => {
           </DialogTrigger>
           <DialogContent className="glass">
             <DialogHeader>
-              <DialogTitle>Add Income</DialogTitle>
+              <DialogTitle>{editingIncome ? 'Edit Income' : 'Add Income'}</DialogTitle>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="description">Description</Label>
                 <Input
                   id="description"
-                  value={newIncome.description}
-                  onChange={(e) =>
-                    setNewIncome({ ...newIncome, description: e.target.value })
-                  }
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   placeholder="Income description"
                   required
                 />
@@ -104,10 +125,8 @@ const IncomesList = () => {
                 <Input
                   id="amount"
                   type="number"
-                  value={newIncome.amount}
-                  onChange={(e) =>
-                    setNewIncome({ ...newIncome, amount: e.target.value })
-                  }
+                  value={formData.amount}
+                  onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
                   placeholder="0"
                   required
                 />
@@ -115,10 +134,8 @@ const IncomesList = () => {
               <div className="space-y-2">
                 <Label>Source</Label>
                 <Select
-                  value={newIncome.name}
-                  onValueChange={(value) =>
-                    setNewIncome({ ...newIncome, name: value })
-                  }
+                  value={formData.name}
+                  onValueChange={(value) => setFormData({ ...formData, name: value })}
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -132,7 +149,7 @@ const IncomesList = () => {
                 </Select>
               </div>
               <Button type="submit" className="w-full">
-                Add Income
+                {editingIncome ? 'Save Changes' : 'Add Income'}
               </Button>
             </form>
           </DialogContent>
@@ -155,7 +172,7 @@ const IncomesList = () => {
                   {getIncomeIcon(income.name)}
                 </div>
                 <div>
-                  <p className="text-sm font-medium">{income.description}</p>
+                  <p className="text-sm font-medium">{income.description || income.name}</p>
                   <p className="text-xs text-muted-foreground capitalize">
                     {income.name === 'bit' ? 'Freelance' : income.name}
                   </p>
@@ -167,9 +184,15 @@ const IncomesList = () => {
                     +{formatCurrency(income.amount)}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    {formatDate(income.incomeDate)}
+                    {income.incomeDate ? formatDate(income.incomeDate) : income.updateDate ? formatDate(income.updateDate) : ''}
                   </p>
                 </div>
+                <button
+                  onClick={() => handleOpenEdit(income)}
+                  className="p-1.5 opacity-0 group-hover:opacity-100 hover:bg-secondary rounded transition-all"
+                >
+                  <Pencil className="h-4 w-4 text-muted-foreground" />
+                </button>
                 <button
                   onClick={() => deleteIncome(income._id)}
                   className="p-1.5 opacity-0 group-hover:opacity-100 hover:bg-destructive/10 rounded transition-all"

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useFinance } from '@/contexts/FinanceContext';
 import { formatCurrency, formatDate } from '@/lib/formatters';
-import { Plus, Trash2, CreditCard, Building2, Repeat } from 'lucide-react';
+import { Plus, Trash2, CreditCard, Building2, Repeat, Pencil } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -20,11 +20,13 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
+import { Expense } from '@/types/finance';
 
 const ExpensesList = () => {
-  const { expenses, currentMonth, addExpense, deleteExpense } = useFinance();
+  const { expenses, currentMonth, addExpense, updateExpense, deleteExpense } = useFinance();
   const [isOpen, setIsOpen] = useState(false);
-  const [newExpense, setNewExpense] = useState({
+  const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
+  const [formData, setFormData] = useState({
     description: '',
     amount: '',
     category: 'other',
@@ -51,22 +53,8 @@ const ExpensesList = () => {
     return cardNames[cardId] || cardId;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    addExpense({
-      expenseDate: new Date().toISOString().split('T')[0],
-      month: currentMonth,
-      amount: parseFloat(newExpense.amount),
-      category: newExpense.category as any,
-      kind: newExpense.kind as any,
-      paymentMethod: newExpense.paymentMethod as any,
-      cardId: newExpense.cardId as any || undefined,
-      description: newExpense.description,
-      recurring: newExpense.isRecurring
-        ? { type: 'monthly', dayOfMonth: parseInt(newExpense.dayOfMonth) || 1 }
-        : undefined,
-    });
-    setNewExpense({
+  const resetForm = () => {
+    setFormData({
       description: '',
       amount: '',
       category: 'other',
@@ -76,6 +64,46 @@ const ExpensesList = () => {
       isRecurring: false,
       dayOfMonth: '',
     });
+    setEditingExpense(null);
+  };
+
+  const handleOpenEdit = (expense: Expense) => {
+    setEditingExpense(expense);
+    setFormData({
+      description: expense.description,
+      amount: expense.amount.toString(),
+      category: expense.category,
+      paymentMethod: expense.paymentMethod,
+      cardId: expense.cardId || '',
+      kind: expense.kind,
+      isRecurring: !!expense.recurring,
+      dayOfMonth: expense.recurring?.dayOfMonth?.toString() || '',
+    });
+    setIsOpen(true);
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const expenseData = {
+      expenseDate: new Date().toISOString().split('T')[0],
+      month: currentMonth,
+      amount: parseFloat(formData.amount),
+      category: formData.category,
+      kind: formData.kind as 'planned' | 'payed' | 'predicted',
+      paymentMethod: formData.paymentMethod as 'bank_transfer' | 'credit_card',
+      cardId: formData.cardId || undefined,
+      description: formData.description,
+      recurring: formData.isRecurring
+        ? { type: 'monthly' as const, dayOfMonth: parseInt(formData.dayOfMonth) || 1 }
+        : undefined,
+    };
+
+    if (editingExpense) {
+      updateExpense(editingExpense._id, expenseData);
+    } else {
+      addExpense(expenseData);
+    }
+    resetForm();
     setIsOpen(false);
   };
 
@@ -102,7 +130,7 @@ const ExpensesList = () => {
             <span className="text-muted-foreground">Predicted: {formatCurrency(predictedExpenses)}</span>
           </div>
         </div>
-        <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <Dialog open={isOpen} onOpenChange={(open) => { setIsOpen(open); if (!open) resetForm(); }}>
           <DialogTrigger asChild>
             <Button size="sm" className="gap-1">
               <Plus className="h-4 w-4" />
@@ -111,17 +139,15 @@ const ExpensesList = () => {
           </DialogTrigger>
           <DialogContent className="glass">
             <DialogHeader>
-              <DialogTitle>Add Expense</DialogTitle>
+              <DialogTitle>{editingExpense ? 'Edit Expense' : 'Add Expense'}</DialogTitle>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="description">Description</Label>
                 <Input
                   id="description"
-                  value={newExpense.description}
-                  onChange={(e) =>
-                    setNewExpense({ ...newExpense, description: e.target.value })
-                  }
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   placeholder="What was this for?"
                   required
                 />
@@ -131,10 +157,8 @@ const ExpensesList = () => {
                 <Input
                   id="amount"
                   type="number"
-                  value={newExpense.amount}
-                  onChange={(e) =>
-                    setNewExpense({ ...newExpense, amount: e.target.value })
-                  }
+                  value={formData.amount}
+                  onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
                   placeholder="0"
                   required
                 />
@@ -143,10 +167,8 @@ const ExpensesList = () => {
                 <div className="space-y-2">
                   <Label>Category</Label>
                   <Select
-                    value={newExpense.category}
-                    onValueChange={(value) =>
-                      setNewExpense({ ...newExpense, category: value })
-                    }
+                    value={formData.category}
+                    onValueChange={(value) => setFormData({ ...formData, category: value })}
                   >
                     <SelectTrigger>
                       <SelectValue />
@@ -166,10 +188,8 @@ const ExpensesList = () => {
                 <div className="space-y-2">
                   <Label>Status</Label>
                   <Select
-                    value={newExpense.kind}
-                    onValueChange={(value) =>
-                      setNewExpense({ ...newExpense, kind: value })
-                    }
+                    value={formData.kind}
+                    onValueChange={(value) => setFormData({ ...formData, kind: value })}
                   >
                     <SelectTrigger>
                       <SelectValue />
@@ -186,10 +206,8 @@ const ExpensesList = () => {
                 <div className="space-y-2">
                   <Label>Payment Method</Label>
                   <Select
-                    value={newExpense.paymentMethod}
-                    onValueChange={(value) =>
-                      setNewExpense({ ...newExpense, paymentMethod: value })
-                    }
+                    value={formData.paymentMethod}
+                    onValueChange={(value) => setFormData({ ...formData, paymentMethod: value })}
                   >
                     <SelectTrigger>
                       <SelectValue />
@@ -200,14 +218,12 @@ const ExpensesList = () => {
                     </SelectContent>
                   </Select>
                 </div>
-                {newExpense.paymentMethod === 'credit_card' && (
+                {(formData.paymentMethod === 'credit_card' || formData.category === 'debit_from_credit_card') && (
                   <div className="space-y-2">
                     <Label>Card</Label>
                     <Select
-                      value={newExpense.cardId}
-                      onValueChange={(value) =>
-                        setNewExpense({ ...newExpense, cardId: value })
-                      }
+                      value={formData.cardId}
+                      onValueChange={(value) => setFormData({ ...formData, cardId: value })}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Select card" />
@@ -222,7 +238,7 @@ const ExpensesList = () => {
                 )}
               </div>
               <Button type="submit" className="w-full">
-                Add Expense
+                {editingExpense ? 'Save Changes' : 'Add Expense'}
               </Button>
             </form>
           </DialogContent>
@@ -282,6 +298,12 @@ const ExpensesList = () => {
                     {formatDate(expense.expenseDate)}
                   </p>
                 </div>
+                <button
+                  onClick={() => handleOpenEdit(expense)}
+                  className="p-1.5 opacity-0 group-hover:opacity-100 hover:bg-secondary rounded transition-all"
+                >
+                  <Pencil className="h-4 w-4 text-muted-foreground" />
+                </button>
                 <button
                   onClick={() => deleteExpense(expense._id)}
                   className="p-1.5 opacity-0 group-hover:opacity-100 hover:bg-destructive/10 rounded transition-all"
