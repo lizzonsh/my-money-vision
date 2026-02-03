@@ -1,12 +1,13 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
-import { Budget, Expense, Income, Savings, BigPurchaseGoal, BankAccount } from '@/types/finance';
+import { Budget, Expense, Income, Savings, BigPurchaseGoal, BankAccount, RecurringPayment } from '@/types/finance';
 import {
   mockBudget,
   mockExpenses,
   mockIncomes,
   mockSavings,
   mockBigPurchases,
-  mockBankAccount
+  mockBankAccount,
+  mockRecurringPayments
 } from '@/lib/mockData';
 
 interface FinanceContextType {
@@ -15,6 +16,7 @@ interface FinanceContextType {
   incomes: Income[];
   savings: Savings[];
   bigPurchases: BigPurchaseGoal[];
+  recurringPayments: RecurringPayment[];
   bankAccount: BankAccount;
   currentMonth: string;
   setCurrentMonth: (month: string) => void;
@@ -22,15 +24,19 @@ interface FinanceContextType {
   addIncome: (income: Omit<Income, '_id'>) => void;
   addSavings: (saving: Omit<Savings, '_id'>) => void;
   addBigPurchase: (goal: Omit<BigPurchaseGoal, '_id'>) => void;
+  addRecurringPayment: (payment: Omit<RecurringPayment, '_id'>) => void;
   updateBudget: (budget: Budget) => void;
   updateExpense: (id: string, expense: Partial<Expense>) => void;
   updateIncome: (id: string, income: Partial<Income>) => void;
   updateSavings: (id: string, saving: Partial<Savings>) => void;
   updateBigPurchase: (id: string, goal: Partial<BigPurchaseGoal>) => void;
+  updateRecurringPayment: (id: string, payment: Partial<RecurringPayment>) => void;
   deleteExpense: (id: string) => void;
   deleteIncome: (id: string) => void;
   deleteSavings: (id: string) => void;
   deleteBigPurchase: (id: string) => void;
+  deleteRecurringPayment: (id: string) => void;
+  createExpenseFromRecurring: (recurringId: string) => void;
   // Calculated budget values based on Python logic
   calculatedBudget: {
     spentBudget: number;
@@ -55,6 +61,7 @@ export const FinanceProvider = ({ children }: { children: ReactNode }) => {
   const [incomes, setIncomes] = useState<Income[]>(mockIncomes);
   const [savings, setSavings] = useState<Savings[]>(mockSavings);
   const [bigPurchases, setBigPurchases] = useState<BigPurchaseGoal[]>(mockBigPurchases);
+  const [recurringPayments, setRecurringPayments] = useState<RecurringPayment[]>(mockRecurringPayments);
   const [bankAccount] = useState<BankAccount>(mockBankAccount);
   const [currentMonth, setCurrentMonth] = useState('2025-02');
 
@@ -74,6 +81,10 @@ export const FinanceProvider = ({ children }: { children: ReactNode }) => {
 
   const addBigPurchase = (goal: Omit<BigPurchaseGoal, '_id'>) => {
     setBigPurchases(prev => [...prev, { ...goal, _id: generateId() }]);
+  };
+
+  const addRecurringPayment = (payment: Omit<RecurringPayment, '_id'>) => {
+    setRecurringPayments(prev => [...prev, { ...payment, _id: generateId() }]);
   };
 
   const updateBudget = (newBudget: Budget) => {
@@ -96,6 +107,10 @@ export const FinanceProvider = ({ children }: { children: ReactNode }) => {
     setBigPurchases(prev => prev.map(b => b._id === id ? { ...b, ...updatedFields } : b));
   };
 
+  const updateRecurringPayment = (id: string, updatedFields: Partial<RecurringPayment>) => {
+    setRecurringPayments(prev => prev.map(r => r._id === id ? { ...r, ...updatedFields } : r));
+  };
+
   const deleteExpense = (id: string) => {
     setExpenses(prev => prev.filter(e => e._id !== id));
   };
@@ -110,6 +125,27 @@ export const FinanceProvider = ({ children }: { children: ReactNode }) => {
 
   const deleteBigPurchase = (id: string) => {
     setBigPurchases(prev => prev.filter(b => b._id !== id));
+  };
+
+  const deleteRecurringPayment = (id: string) => {
+    setRecurringPayments(prev => prev.filter(r => r._id !== id));
+  };
+
+  const createExpenseFromRecurring = (recurringId: string) => {
+    const recurring = recurringPayments.find(r => r._id === recurringId);
+    if (!recurring || !recurring.isActive) return;
+    
+    addExpense({
+      expenseDate: new Date().toISOString().split('T')[0],
+      month: currentMonth,
+      amount: recurring.defaultAmount,
+      category: recurring.category,
+      kind: 'planned',
+      paymentMethod: recurring.paymentMethod,
+      cardId: recurring.cardId,
+      description: recurring.name,
+      recurring: { type: 'monthly', dayOfMonth: recurring.dayOfMonth },
+    });
   };
 
   // Calculate budget based on Python logic:
@@ -152,6 +188,7 @@ export const FinanceProvider = ({ children }: { children: ReactNode }) => {
         incomes,
         savings,
         bigPurchases,
+        recurringPayments,
         bankAccount,
         currentMonth,
         setCurrentMonth,
@@ -159,15 +196,19 @@ export const FinanceProvider = ({ children }: { children: ReactNode }) => {
         addIncome,
         addSavings,
         addBigPurchase,
+        addRecurringPayment,
         updateBudget,
         updateExpense,
         updateIncome,
         updateSavings,
         updateBigPurchase,
+        updateRecurringPayment,
         deleteExpense,
         deleteIncome,
         deleteSavings,
         deleteBigPurchase,
+        deleteRecurringPayment,
+        createExpenseFromRecurring,
         calculatedBudget,
       }}
     >

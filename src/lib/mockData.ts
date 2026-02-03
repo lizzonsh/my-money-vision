@@ -1,4 +1,4 @@
-import { Budget, Expense, Income, Savings, BigPurchaseGoal, BankAccount } from '@/types/finance';
+import { Budget, Expense, Income, Savings, BigPurchaseGoal, BankAccount, RecurringPayment } from '@/types/finance';
 
 export const mockBudget: Budget = {
   _id: '1',
@@ -211,4 +211,61 @@ export const mockSavingsGrowth = [
   { month: 'Dec', total: 84800 },
   { month: 'Jan', total: 88000 },
   { month: 'Feb', total: 88000 },
+];
+
+export const mockRecurringPayments: RecurringPayment[] = [
+  {
+    _id: 'rec1',
+    name: 'Pilates',
+    defaultAmount: 350,
+    category: 'room',
+    paymentMethod: 'credit_card',
+    cardId: 'fly-card',
+    dayOfMonth: 5,
+    isActive: true,
+    notes: 'Monthly pilates membership'
+  },
+  {
+    _id: 'rec2',
+    name: 'Psychology',
+    defaultAmount: 1520,
+    category: 'psychologist',
+    paymentMethod: 'bank_transfer',
+    dayOfMonth: 1,
+    isActive: true,
+    notes: 'Monthly therapy session'
+  },
+  {
+    _id: 'rec3',
+    name: 'Saxophone Lessons',
+    defaultAmount: 400,
+    category: 'college',
+    paymentMethod: 'credit_card',
+    cardId: 'visa',
+    dayOfMonth: 10,
+    isActive: true,
+    notes: 'Weekly saxophone lessons'
+  },
+  {
+    _id: 'rec4',
+    name: 'Spotify',
+    defaultAmount: 35,
+    category: 'other',
+    paymentMethod: 'credit_card',
+    cardId: 'fly-card',
+    dayOfMonth: 15,
+    isActive: true,
+    notes: 'Premium subscription'
+  },
+  {
+    _id: 'rec5',
+    name: 'Apple Account',
+    defaultAmount: 50,
+    category: 'other',
+    paymentMethod: 'credit_card',
+    cardId: 'visa',
+    dayOfMonth: 20,
+    isActive: true,
+    notes: 'iCloud + Apple Music'
+  }
 ];

@@ -107,3 +107,15 @@ export interface MonthlyOverview {
   remainingBudget: number;
   dailyLimit: number;
 }
+
+export interface RecurringPayment {
+  _id: string;
+  name: string;
+  defaultAmount: number;
+  category: string;
+  paymentMethod: 'bank_transfer' | 'credit_card';
+  cardId?: string;
+  dayOfMonth: number;
+  isActive: boolean;
+  notes?: string;
+}
