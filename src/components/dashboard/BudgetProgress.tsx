@@ -5,17 +5,23 @@ import { Progress } from '@/components/ui/progress';
 const BudgetProgress = () => {
   const { budget, expenses, currentMonth } = useFinance();
   
+  // Parse totalBudget as number (MongoDB may store as string)
+  const totalBudget = typeof budget.totalBudget === 'string' 
+    ? parseFloat(budget.totalBudget) 
+    : budget.totalBudget;
+  
   const monthlyExpenses = expenses
     .filter(e => e.month === currentMonth && e.kind !== 'predicted')
     .reduce((sum, e) => sum + e.amount, 0);
   
-  const remaining = budget.totalBudget - monthlyExpenses;
-  const percentage = Math.min((monthlyExpenses / budget.totalBudget) * 100, 100);
+  const remaining = totalBudget - monthlyExpenses;
+  const percentage = Math.min((monthlyExpenses / totalBudget) * 100, 100);
   const isOverBudget = remaining < 0;
   
   // Calculate daily budget based on remaining days
   const today = new Date();
-  const daysRemaining = budget.daysInMonth - today.getDate() + 1;
+  const daysInMonth = budget.daysInMonth || new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
+  const daysRemaining = daysInMonth - today.getDate() + 1;
   const dailyLimit = remaining > 0 ? remaining / daysRemaining : 0;
 
   return (
@@ -30,7 +36,7 @@ const BudgetProgress = () => {
           <div className="flex justify-between text-sm mb-2">
             <span className="text-muted-foreground">Spent</span>
             <span className={isOverBudget ? 'text-destructive' : ''}>
-              {formatCurrency(monthlyExpenses)} / {formatCurrency(budget.totalBudget)}
+              {formatCurrency(monthlyExpenses)} / {formatCurrency(totalBudget)}
             </span>
           </div>
           <Progress 
