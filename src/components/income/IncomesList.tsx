@@ -1,11 +1,14 @@
 import { useState } from 'react';
+import { format } from 'date-fns';
 import { useFinance, Income } from '@/contexts/FinanceContext';
 import { formatCurrency, formatDate } from '@/lib/formatters';
 import { isDateUpToToday, isCurrentMonth } from '@/lib/dateUtils';
-import { Plus, Trash2, Briefcase, Gift, Heart, Pencil } from 'lucide-react';
+import { Plus, Trash2, Briefcase, Gift, Heart, Pencil, CalendarIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import {
   Select,
   SelectContent,
@@ -20,6 +23,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import { cn } from '@/lib/utils';
 
 const IncomesList = () => {
   const { incomes, currentMonth, addIncome, updateIncome, deleteIncome } = useFinance();
@@ -29,6 +33,7 @@ const IncomesList = () => {
     description: '',
     amount: '',
     name: 'work',
+    incomeDate: new Date(),
   });
 
   const monthlyIncomes = incomes.filter((i) => i.month === currentMonth);
@@ -51,7 +56,7 @@ const IncomesList = () => {
   const totalIncome = incomesUpToDate.reduce((sum, i) => sum + Number(i.amount), 0);
 
   const resetForm = () => {
-    setFormData({ description: '', amount: '', name: 'work' });
+    setFormData({ description: '', amount: '', name: 'work', incomeDate: new Date() });
     setEditingIncome(null);
   };
 
@@ -61,15 +66,19 @@ const IncomesList = () => {
       description: income.description || '',
       amount: income.amount.toString(),
       name: income.name,
+      incomeDate: income.income_date ? new Date(income.income_date) : new Date(),
     });
     setIsOpen(true);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    const selectedDate = formData.incomeDate;
+    const monthFromDate = `${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, '0')}`;
+    
     const incomeData = {
-      income_date: new Date().toISOString().split('T')[0],
-      month: currentMonth,
+      income_date: format(selectedDate, 'yyyy-MM-dd'),
+      month: monthFromDate,
       amount: parseFloat(formData.amount),
       name: formData.name,
       description: formData.description || null,
@@ -154,22 +163,50 @@ const IncomesList = () => {
                   required
                 />
               </div>
-              <div className="space-y-2">
-                <Label>Source</Label>
-                <Select
-                  value={formData.name}
-                  onValueChange={(value) => setFormData({ ...formData, name: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="work">Work</SelectItem>
-                    <SelectItem value="bit">Freelance/Bit</SelectItem>
-                    <SelectItem value="mom">Family Support</SelectItem>
-                    <SelectItem value="other">Other</SelectItem>
-                  </SelectContent>
-                </Select>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Source</Label>
+                  <Select
+                    value={formData.name}
+                    onValueChange={(value) => setFormData({ ...formData, name: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="work">Work</SelectItem>
+                      <SelectItem value="bit">Freelance/Bit</SelectItem>
+                      <SelectItem value="mom">Family Support</SelectItem>
+                      <SelectItem value="other">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Date</Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          "w-full justify-start text-left font-normal",
+                          !formData.incomeDate && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {formData.incomeDate ? format(formData.incomeDate, "PPP") : <span>Pick a date</span>}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={formData.incomeDate}
+                        onSelect={(date) => date && setFormData({ ...formData, incomeDate: date })}
+                        initialFocus
+                        className="p-3 pointer-events-auto"
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
               </div>
               <Button type="submit" className="w-full">
                 {editingIncome ? 'Save Changes' : 'Add Income'}
