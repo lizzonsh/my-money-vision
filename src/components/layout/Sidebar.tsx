@@ -11,6 +11,7 @@ import {
   X,
   ChevronLeft,
   CircleDollarSign,
+  Settings,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -21,6 +22,7 @@ const navigation = [
   { name: 'Savings', href: '/savings', icon: PiggyBank },
   { name: 'Goals', href: '/goals', icon: Target },
   { name: 'Analytics', href: '/analytics', icon: BarChart3 },
+  { name: 'Settings', href: '/settings', icon: Settings },
 ];
 
 interface SidebarProps {
