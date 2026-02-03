@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useFinance, RecurringPayment } from '@/contexts/FinanceContext';
 import { formatCurrency } from '@/lib/formatters';
+import { getCurrentMonth } from '@/lib/dateUtils';
 import { Plus, Trash2, Pencil, Repeat, Play, Pause } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -27,6 +28,8 @@ const RecurringPaymentsPanel = () => {
     addRecurringPayment, 
     updateRecurringPayment, 
     deleteRecurringPayment,
+    addExpense,
+    currentMonth,
   } = useFinance();
   
   const [isOpen, setIsOpen] = useState(false);
@@ -70,13 +73,14 @@ const RecurringPaymentsPanel = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    const dayOfMonth = parseInt(formData.dayOfMonth) || 1;
     const paymentData = {
       name: formData.name,
       default_amount: parseFloat(formData.defaultAmount),
       category: formData.category,
       payment_method: formData.paymentMethod as 'bank_transfer' | 'credit_card',
       card_id: formData.cardId || null,
-      day_of_month: parseInt(formData.dayOfMonth) || 1,
+      day_of_month: dayOfMonth,
       is_active: true,
       notes: formData.notes || null,
     };
@@ -85,6 +89,25 @@ const RecurringPaymentsPanel = () => {
       updateRecurringPayment({ id: editingPayment.id, ...paymentData });
     } else {
       addRecurringPayment(paymentData);
+      
+      // Automatically add an expense for the current month
+      const [year, month] = currentMonth.split('-').map(Number);
+      const expenseDate = `${year}-${String(month).padStart(2, '0')}-${String(dayOfMonth).padStart(2, '0')}`;
+      
+      addExpense({
+        description: formData.name,
+        amount: parseFloat(formData.defaultAmount),
+        category: formData.category,
+        payment_method: formData.paymentMethod as 'bank_transfer' | 'credit_card',
+        card_id: formData.cardId || null,
+        expense_date: expenseDate,
+        month: currentMonth,
+        kind: 'planned',
+        expense_month: null,
+        month_of_expense: null,
+        recurring_day_of_month: dayOfMonth,
+        recurring_type: 'monthly',
+      });
     }
     resetForm();
     setIsOpen(false);
