@@ -131,6 +131,30 @@ const RecurringPaymentsPanel = () => {
     .filter(p => p.is_active)
     .reduce((sum, p) => sum + Number(p.default_amount), 0);
 
+  const applyAllRecurringPayments = () => {
+    const activePayments = recurringPayments.filter(p => p.is_active);
+    const [year, month] = currentMonth.split('-').map(Number);
+    
+    activePayments.forEach((payment) => {
+      const expenseDate = `${year}-${String(month).padStart(2, '0')}-${String(payment.day_of_month).padStart(2, '0')}`;
+      
+      addExpense({
+        description: payment.name,
+        amount: Number(payment.default_amount),
+        category: payment.category,
+        payment_method: payment.payment_method,
+        card_id: payment.card_id || null,
+        expense_date: expenseDate,
+        month: currentMonth,
+        kind: 'planned',
+        expense_month: null,
+        month_of_expense: null,
+        recurring_day_of_month: payment.day_of_month,
+        recurring_type: 'monthly',
+      });
+    });
+  };
+
   return (
     <div className="glass rounded-xl p-5 shadow-card animate-slide-up">
       <div className="flex items-center justify-between mb-4">
@@ -141,13 +165,18 @@ const RecurringPaymentsPanel = () => {
           </h3>
           <p className="text-lg font-bold">{formatCurrency(totalMonthly)}<span className="text-sm font-normal text-muted-foreground">/month</span></p>
         </div>
-        <Dialog open={isOpen} onOpenChange={(open) => { setIsOpen(open); if (!open) resetForm(); }}>
-          <DialogTrigger asChild>
-            <Button size="sm" className="gap-1">
-              <Plus className="h-4 w-4" />
-              Add
-            </Button>
-          </DialogTrigger>
+        <div className="flex gap-2">
+          <Button size="sm" variant="outline" className="gap-1" onClick={applyAllRecurringPayments}>
+            <Play className="h-4 w-4" />
+            Apply All
+          </Button>
+          <Dialog open={isOpen} onOpenChange={(open) => { setIsOpen(open); if (!open) resetForm(); }}>
+            <DialogTrigger asChild>
+              <Button size="sm" className="gap-1">
+                <Plus className="h-4 w-4" />
+                Add
+              </Button>
+            </DialogTrigger>
           <DialogContent className="glass">
             <DialogHeader>
               <DialogTitle>{editingPayment ? 'Edit Recurring Payment' : 'Add Recurring Payment'}</DialogTitle>
@@ -256,7 +285,8 @@ const RecurringPaymentsPanel = () => {
               </Button>
             </form>
           </DialogContent>
-        </Dialog>
+          </Dialog>
+        </div>
       </div>
 
       <div className="space-y-2 max-h-80 overflow-y-auto">
