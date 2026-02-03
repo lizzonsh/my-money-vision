@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
-import { Budget, Expense, Income, Savings, BigPurchaseGoal, BankAccount, RecurringPayment } from '@/types/finance';
+import { Budget, Expense, Income, Savings, BigPurchaseGoal, BankAccount, RecurringPayment, RecurringSavingsTemplate } from '@/types/finance';
 import {
   mockBudget,
   mockExpenses,
@@ -7,7 +7,8 @@ import {
   mockSavings,
   mockBigPurchases,
   mockBankAccount,
-  mockRecurringPayments
+  mockRecurringPayments,
+  mockRecurringSavings
 } from '@/lib/mockData';
 
 interface FinanceContextType {
@@ -17,6 +18,7 @@ interface FinanceContextType {
   savings: Savings[];
   bigPurchases: BigPurchaseGoal[];
   recurringPayments: RecurringPayment[];
+  recurringSavings: RecurringSavingsTemplate[];
   bankAccount: BankAccount;
   currentMonth: string;
   setCurrentMonth: (month: string) => void;
@@ -25,18 +27,22 @@ interface FinanceContextType {
   addSavings: (saving: Omit<Savings, '_id'>) => void;
   addBigPurchase: (goal: Omit<BigPurchaseGoal, '_id'>) => void;
   addRecurringPayment: (payment: Omit<RecurringPayment, '_id'>) => void;
+  addRecurringSavings: (template: Omit<RecurringSavingsTemplate, '_id'>) => void;
   updateBudget: (budget: Budget) => void;
   updateExpense: (id: string, expense: Partial<Expense>) => void;
   updateIncome: (id: string, income: Partial<Income>) => void;
   updateSavings: (id: string, saving: Partial<Savings>) => void;
   updateBigPurchase: (id: string, goal: Partial<BigPurchaseGoal>) => void;
   updateRecurringPayment: (id: string, payment: Partial<RecurringPayment>) => void;
+  updateRecurringSavings: (id: string, template: Partial<RecurringSavingsTemplate>) => void;
   deleteExpense: (id: string) => void;
   deleteIncome: (id: string) => void;
   deleteSavings: (id: string) => void;
   deleteBigPurchase: (id: string) => void;
   deleteRecurringPayment: (id: string) => void;
+  deleteRecurringSavings: (id: string) => void;
   createExpenseFromRecurring: (recurringId: string) => void;
+  createSavingsFromRecurring: (recurringId: string) => void;
   // Calculated budget values based on Python logic
   calculatedBudget: {
     spentBudget: number;
@@ -62,6 +68,7 @@ export const FinanceProvider = ({ children }: { children: ReactNode }) => {
   const [savings, setSavings] = useState<Savings[]>(mockSavings);
   const [bigPurchases, setBigPurchases] = useState<BigPurchaseGoal[]>(mockBigPurchases);
   const [recurringPayments, setRecurringPayments] = useState<RecurringPayment[]>(mockRecurringPayments);
+  const [recurringSavings, setRecurringSavings] = useState<RecurringSavingsTemplate[]>(mockRecurringSavings);
   const [bankAccount] = useState<BankAccount>(mockBankAccount);
   const [currentMonth, setCurrentMonth] = useState('2025-02');
 
@@ -85,6 +92,10 @@ export const FinanceProvider = ({ children }: { children: ReactNode }) => {
 
   const addRecurringPayment = (payment: Omit<RecurringPayment, '_id'>) => {
     setRecurringPayments(prev => [...prev, { ...payment, _id: generateId() }]);
+  };
+
+  const addRecurringSavings = (template: Omit<RecurringSavingsTemplate, '_id'>) => {
+    setRecurringSavings(prev => [...prev, { ...template, _id: generateId() }]);
   };
 
   const updateBudget = (newBudget: Budget) => {
@@ -111,6 +122,10 @@ export const FinanceProvider = ({ children }: { children: ReactNode }) => {
     setRecurringPayments(prev => prev.map(r => r._id === id ? { ...r, ...updatedFields } : r));
   };
 
+  const updateRecurringSavings = (id: string, updatedFields: Partial<RecurringSavingsTemplate>) => {
+    setRecurringSavings(prev => prev.map(r => r._id === id ? { ...r, ...updatedFields } : r));
+  };
+
   const deleteExpense = (id: string) => {
     setExpenses(prev => prev.filter(e => e._id !== id));
   };
@@ -131,6 +146,10 @@ export const FinanceProvider = ({ children }: { children: ReactNode }) => {
     setRecurringPayments(prev => prev.filter(r => r._id !== id));
   };
 
+  const deleteRecurringSavings = (id: string) => {
+    setRecurringSavings(prev => prev.filter(r => r._id !== id));
+  };
+
   const createExpenseFromRecurring = (recurringId: string) => {
     const recurring = recurringPayments.find(r => r._id === recurringId);
     if (!recurring || !recurring.isActive) return;
@@ -145,6 +164,28 @@ export const FinanceProvider = ({ children }: { children: ReactNode }) => {
       cardId: recurring.cardId,
       description: recurring.name,
       recurring: { type: 'monthly', dayOfMonth: recurring.dayOfMonth },
+    });
+  };
+
+  const createSavingsFromRecurring = (recurringId: string) => {
+    const template = recurringSavings.find(r => r._id === recurringId);
+    if (!template || !template.isActive) return;
+    
+    addSavings({
+      month: currentMonth,
+      name: template.name,
+      amount: 0, // Will be updated when they edit
+      currency: 'ILS',
+      transferMethod: template.transferMethod,
+      cardId: template.cardId,
+      action: template.actionType,
+      actionAmount: template.defaultAmount,
+      updateDate: new Date().toISOString().split('T')[0],
+      recurring: template.actionType === 'deposit' ? {
+        type: 'monthly',
+        dayOfMonth: template.dayOfMonth,
+        monthlyDeposit: template.defaultAmount
+      } : undefined,
     });
   };
 
@@ -189,6 +230,7 @@ export const FinanceProvider = ({ children }: { children: ReactNode }) => {
         savings,
         bigPurchases,
         recurringPayments,
+        recurringSavings,
         bankAccount,
         currentMonth,
         setCurrentMonth,
@@ -197,18 +239,22 @@ export const FinanceProvider = ({ children }: { children: ReactNode }) => {
         addSavings,
         addBigPurchase,
         addRecurringPayment,
+        addRecurringSavings,
         updateBudget,
         updateExpense,
         updateIncome,
         updateSavings,
         updateBigPurchase,
         updateRecurringPayment,
+        updateRecurringSavings,
         deleteExpense,
         deleteIncome,
         deleteSavings,
         deleteBigPurchase,
         deleteRecurringPayment,
+        deleteRecurringSavings,
         createExpenseFromRecurring,
+        createSavingsFromRecurring,
         calculatedBudget,
       }}
     >

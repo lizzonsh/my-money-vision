@@ -1,4 +1,5 @@
 import SavingsList from '@/components/savings/SavingsList';
+import RecurringSavingsPanel from '@/components/savings/RecurringSavingsPanel';
 import MonthNavigation from '@/components/navigation/MonthNavigation';
 import { SavingsGrowthChart } from '@/components/charts/FinanceCharts';
 
@@ -14,8 +15,13 @@ const SavingsPage = () => {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <SavingsList />
-        <SavingsGrowthChart />
+        <div className="space-y-6">
+          <SavingsList />
+        </div>
+        <div className="space-y-6">
+          <RecurringSavingsPanel />
+          <SavingsGrowthChart />
+        </div>
       </div>
     </div>
   );

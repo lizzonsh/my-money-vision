@@ -1,4 +1,4 @@
-import { Budget, Expense, Income, Savings, BigPurchaseGoal, BankAccount, RecurringPayment } from '@/types/finance';
+import { Budget, Expense, Income, Savings, BigPurchaseGoal, BankAccount, RecurringPayment, RecurringSavingsTemplate } from '@/types/finance';
 
 export const mockBudget: Budget = {
   _id: '1',
@@ -267,5 +267,49 @@ export const mockRecurringPayments: RecurringPayment[] = [
     dayOfMonth: 20,
     isActive: true,
     notes: 'iCloud + Apple Music'
+  }
+];
+
+export const mockRecurringSavings: RecurringSavingsTemplate[] = [
+  {
+    _id: 'rsav1',
+    name: 'Altshuler Investment',
+    defaultAmount: 2000,
+    actionType: 'deposit',
+    transferMethod: 'bank_account',
+    dayOfMonth: 21,
+    isActive: true,
+    notes: 'Monthly investment deposit'
+  },
+  {
+    _id: 'rsav2',
+    name: 'Bank Savings',
+    defaultAmount: 1000,
+    actionType: 'deposit',
+    transferMethod: 'bank_account',
+    dayOfMonth: 15,
+    isActive: true,
+    notes: 'Monthly bank savings'
+  },
+  {
+    _id: 'rsav3',
+    name: 'Blink Emergency Fund',
+    defaultAmount: 500,
+    actionType: 'deposit',
+    transferMethod: 'credit_card',
+    cardId: 'visa',
+    dayOfMonth: 10,
+    isActive: true,
+    notes: 'Emergency fund contribution'
+  },
+  {
+    _id: 'rsav4',
+    name: 'Emergency Withdrawal',
+    defaultAmount: 1000,
+    actionType: 'withdrawal',
+    transferMethod: 'bank_account',
+    dayOfMonth: 1,
+    isActive: false,
+    notes: 'For unexpected expenses'
   }
 ];

@@ -119,3 +119,15 @@ export interface RecurringPayment {
   isActive: boolean;
   notes?: string;
 }
+
+export interface RecurringSavingsTemplate {
+  _id: string;
+  name: string;
+  defaultAmount: number;
+  actionType: 'deposit' | 'withdrawal';
+  transferMethod: 'bank_account' | 'credit_card';
+  cardId?: string;
+  dayOfMonth: number;
+  isActive: boolean;
+  notes?: string;
+}
