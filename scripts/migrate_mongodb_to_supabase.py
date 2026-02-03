@@ -17,8 +17,8 @@ from supabase import create_client, Client
 # ============== CONFIGURATION ==============
 # Get these from Lovable Cloud → Secrets
 SUPABASE_URL = "https://qxrctijucnwbxkxgulan.supabase.co"
-SUPABASE_SERVICE_ROLE_KEY = "YOUR_SERVICE_ROLE_KEY_HERE"  # Required to bypass RLS
-USER_ID = "YOUR_USER_ID_HERE"  # The UUID of your authenticated user
+SUPABASE_SERVICE_ROLE_KEY = "YOUR_SERVICE_ROLE_KEY_HERE"  # Get from Cloud → Secrets
+USER_ID = "a1b2c3d4-e5f6-7890-abcd-ef1234567890"  # Test user created for migration
 
 # File paths (update if needed)
 BUDGET_FILE = "networth.budget.json"
