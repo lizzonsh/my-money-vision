@@ -131,3 +131,22 @@ export interface RecurringSavingsTemplate {
   isActive: boolean;
   notes?: string;
 }
+
+export interface RecurringIncome {
+  _id: string;
+  name: string;
+  defaultAmount: number;
+  source: string; // work, bit, mom, other
+  dayOfMonth: number;
+  isActive: boolean;
+  notes?: string;
+}
+
+export interface MonthlyProjection {
+  month: string;
+  projectedIncome: number;
+  projectedExpenses: number;
+  projectedSavingsDeposits: number;
+  netCashFlow: number;
+  projectedNetWorth: number;
+}
