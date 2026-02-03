@@ -1,10 +1,10 @@
+import { useMemo } from 'react';
 import IncomesList from '@/components/income/IncomesList';
 import RecurringIncomesPanel from '@/components/income/RecurringIncomesPanel';
 import NetWorthProjection from '@/components/predictions/NetWorthProjection';
 import MonthNavigation from '@/components/navigation/MonthNavigation';
 import { useFinance } from '@/contexts/FinanceContext';
 import { formatCurrency } from '@/lib/formatters';
-import { mockMonthlyData } from '@/lib/mockData';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   AreaChart,
@@ -22,6 +22,26 @@ const IncomePage = () => {
   const monthlyIncome = incomes
     .filter((i) => i.month === currentMonth)
     .reduce((sum, i) => sum + i.amount, 0);
+
+  // Generate income trend data from actual incomes (last 6 months)
+  const incomeTrendData = useMemo(() => {
+    const [currentYear, currentMonthNum] = currentMonth.split('-').map(Number);
+    const months: { month: string; monthKey: string; income: number }[] = [];
+    
+    for (let i = 5; i >= 0; i--) {
+      const date = new Date(currentYear, currentMonthNum - 1 - i, 1);
+      const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+      const monthLabel = date.toLocaleDateString('en-US', { month: 'short' });
+      
+      const monthIncome = incomes
+        .filter((inc) => inc.month === monthKey)
+        .reduce((sum, inc) => sum + Number(inc.amount), 0);
+      
+      months.push({ month: monthLabel, monthKey, income: monthIncome });
+    }
+    
+    return months;
+  }, [incomes, currentMonth]);
 
   return (
     <div className="space-y-6">
@@ -48,7 +68,7 @@ const IncomePage = () => {
               <h3 className="font-semibold mb-4">Income Trend</h3>
               <div className="h-64">
                 <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={mockMonthlyData}>
+                  <AreaChart data={incomeTrendData}>
                     <defs>
                       <linearGradient id="incomeGradient" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="5%" stopColor="hsl(var(--success))" stopOpacity={0.3} />
