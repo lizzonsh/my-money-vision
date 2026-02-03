@@ -4,6 +4,7 @@ import StatCard from '@/components/dashboard/StatCard';
 import BudgetProgress from '@/components/dashboard/BudgetProgress';
 import RecentTransactions from '@/components/dashboard/RecentTransactions';
 import SavingsGoals from '@/components/dashboard/SavingsGoals';
+import MonthNavigation from '@/components/navigation/MonthNavigation';
 import {
   IncomeExpenseChart,
   SpendingByCategoryChart,
@@ -47,11 +48,14 @@ const Dashboard = () => {
             {formatMonth(currentMonth)} Overview
           </p>
         </div>
-        <div className="glass rounded-lg px-4 py-2 flex items-center gap-3">
-          <Building2 className="h-5 w-5 text-primary" />
-          <div>
-            <p className="text-xs text-muted-foreground">Bank Balance</p>
-            <p className="font-semibold">{formatCurrency(bankAccount.currentBalance)}</p>
+        <div className="flex items-center gap-4">
+          <MonthNavigation />
+          <div className="glass rounded-lg px-4 py-2 flex items-center gap-3">
+            <Building2 className="h-5 w-5 text-primary" />
+            <div>
+              <p className="text-xs text-muted-foreground">Bank Balance</p>
+              <p className="font-semibold">{formatCurrency(bankAccount.currentBalance)}</p>
+            </div>
           </div>
         </div>
       </div>
