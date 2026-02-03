@@ -8,6 +8,7 @@ import { useRecurringPayments, RecurringPayment } from '@/hooks/useRecurringPaym
 import { useRecurringSavings, RecurringSavings } from '@/hooks/useRecurringSavings';
 import { useRecurringIncomes, RecurringIncome } from '@/hooks/useRecurringIncomes';
 import { useBankAccounts, BankAccount } from '@/hooks/useBankAccounts';
+import { useBankBalanceHistory, BankBalanceHistory, BankBalanceHistoryInsert } from '@/hooks/useBankBalanceHistory';
 import { isDateUpToToday, getCurrentMonth } from '@/lib/dateUtils';
 
 interface FinanceContextType {
@@ -77,6 +78,12 @@ interface FinanceContextType {
   deleteBankAccount: (id: string) => void;
   totalBankBalance: number;
   
+  // Bank balance history operations
+  bankBalanceHistory: BankBalanceHistory[];
+  upsertBalanceHistory: (entry: BankBalanceHistoryInsert) => void;
+  getBalanceForMonth: (bankAccountId: string, month: string) => BankBalanceHistory | undefined;
+  getTotalBalanceForMonth: (month: string) => number;
+  
   // Calculated budget values
   calculatedBudget: {
     spentBudget: number;
@@ -108,7 +115,7 @@ export const FinanceProvider = ({ children }: { children: ReactNode }) => {
   const recurringSavingsHook = useRecurringSavings();
   const recurringIncomesHook = useRecurringIncomes();
   const bankAccountsHook = useBankAccounts();
-  
+  const bankBalanceHistoryHook = useBankBalanceHistory();
   const isLoading = 
     budgetsHook.isLoading || 
     expensesHook.isLoading || 
@@ -118,7 +125,8 @@ export const FinanceProvider = ({ children }: { children: ReactNode }) => {
     recurringPaymentsHook.isLoading ||
     recurringSavingsHook.isLoading ||
     recurringIncomesHook.isLoading ||
-    bankAccountsHook.isLoading;
+    bankAccountsHook.isLoading ||
+    bankBalanceHistoryHook.isLoading;
 
   // Calculate budget based on user's logic:
   // left_budget = debit_from_credit_card - planned_expenses
@@ -223,6 +231,16 @@ export const FinanceProvider = ({ children }: { children: ReactNode }) => {
         deleteBankAccount: bankAccountsHook.deleteBankAccount,
         totalBankBalance: bankAccountsHook.totalBalance,
         
+        // Bank balance history
+        bankBalanceHistory: bankBalanceHistoryHook.balanceHistory,
+        upsertBalanceHistory: bankBalanceHistoryHook.upsertBalanceHistory,
+        getBalanceForMonth: bankBalanceHistoryHook.getBalanceForMonth,
+        getTotalBalanceForMonth: (month: string) => 
+          bankBalanceHistoryHook.getTotalBalanceForMonth(
+            bankAccountsHook.bankAccounts.map(a => a.id),
+            month
+          ),
+        
         // Calculated values
         calculatedBudget,
       }}
@@ -242,3 +260,4 @@ export type { RecurringPayment } from '@/hooks/useRecurringPayments';
 export type { RecurringSavings } from '@/hooks/useRecurringSavings';
 export type { RecurringIncome } from '@/hooks/useRecurringIncomes';
 export type { BankAccount } from '@/hooks/useBankAccounts';
+export type { BankBalanceHistory } from '@/hooks/useBankBalanceHistory';
