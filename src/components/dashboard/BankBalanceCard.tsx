@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useFinance } from '@/contexts/FinanceContext';
 import { formatCurrency, formatMonth } from '@/lib/formatters';
 import { isDateUpToToday, isCurrentMonth } from '@/lib/dateUtils';
-import { Building2, Pencil, Plus, Trash2, History, Save, ArrowDownRight, ArrowUpRight, PiggyBank, CreditCard, ChevronDown, ChevronUp } from 'lucide-react';
+import { Building2, Pencil, Plus, Trash2, History, Save, ArrowDownRight, ArrowUpRight, PiggyBank, CreditCard, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -39,7 +39,6 @@ const BankBalanceCard = () => {
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [editingAccount, setEditingAccount] = useState<{ id: string; name: string; balance: string } | null>(null);
   const [newAccount, setNewAccount] = useState({ name: '', balance: '' });
-  const [showBreakdown, setShowBreakdown] = useState(false);
 
   // Get total balance for the selected month from history, or fall back to current balance
   const monthlyTotal = getTotalBalanceForMonth(currentMonth);
@@ -159,7 +158,7 @@ const BankBalanceCard = () => {
           </div>
         </div>
       </PopoverTrigger>
-      <PopoverContent className="w-96 p-0" align="end">
+      <PopoverContent className="w-[28rem] p-0" align="end">
         <div className="p-4 border-b">
           <div className="flex items-center justify-between">
             <div>
@@ -296,98 +295,99 @@ const BankBalanceCard = () => {
             </div>
           )}
         </div>
-        {/* Transaction Breakdown Toggle */}
-        <div className="border-t">
-          <button
-            onClick={() => setShowBreakdown(!showBreakdown)}
-            className="w-full p-3 flex items-center justify-between hover:bg-muted/50 transition-colors"
-          >
-            <span className="text-sm font-medium">Monthly Activity Breakdown</span>
-            {showBreakdown ? (
-              <ChevronUp className="h-4 w-4 text-muted-foreground" />
-            ) : (
-              <ChevronDown className="h-4 w-4 text-muted-foreground" />
-            )}
-          </button>
+        {/* Monthly Activity Breakdown - Always visible */}
+        <div className="border-t p-4 space-y-3 bg-muted/20">
+          <h5 className="text-sm font-semibold flex items-center gap-2">
+            <TrendingUp className="h-4 w-4 text-primary" />
+            Monthly Cash Flow
+          </h5>
           
-          {showBreakdown && (
-            <div className="px-3 pb-3 space-y-2">
-              {/* Starting Balance */}
-              <div className="flex items-center justify-between text-sm py-1.5 border-b border-dashed">
-                <span className="text-muted-foreground">Recorded Balance</span>
-                <span className="font-medium">{formatCurrency(displayTotal)}</span>
+          {/* Starting Balance */}
+          <div className="flex items-center justify-between text-sm py-1.5 border-b border-dashed">
+            <span className="text-muted-foreground">Recorded Balance</span>
+            <span className="font-medium">{formatCurrency(displayTotal)}</span>
+          </div>
+          
+          {/* Incomes */}
+          <div className="flex items-center justify-between text-sm py-1">
+            <div className="flex items-center gap-2">
+              <div className="p-1 rounded bg-success/20">
+                <ArrowDownRight className="h-3 w-3 text-success" />
               </div>
-              
-              {/* Incomes */}
-              <div className="flex items-center justify-between text-sm py-1">
-                <div className="flex items-center gap-2">
-                  <ArrowDownRight className="h-3.5 w-3.5 text-success" />
-                  <span>Incomes Received</span>
-                </div>
-                <span className="text-success font-medium">+{formatCurrency(monthlyIncomes)}</span>
+              <span>Incomes Received</span>
+            </div>
+            <span className="text-success font-medium">+{formatCurrency(monthlyIncomes)}</span>
+          </div>
+          
+          {/* Credit Card Debit (last month) */}
+          <div className="flex items-center justify-between text-sm py-1">
+            <div className="flex items-center gap-2">
+              <div className="p-1 rounded bg-destructive/20">
+                <CreditCard className="h-3 w-3 text-destructive" />
               </div>
-              
-              {/* Credit Card Debit (last month) */}
-              {lastMonthCreditCardExpenses > 0 && (
-                <div className="flex items-center justify-between text-sm py-1">
-                  <div className="flex items-center gap-2">
-                    <CreditCard className="h-3.5 w-3.5 text-destructive" />
-                    <span>Credit Card Debit (prev month)</span>
-                  </div>
-                  <span className="text-destructive font-medium">-{formatCurrency(lastMonthCreditCardExpenses)}</span>
-                </div>
-              )}
-              
-              {/* Bank Transfers (current month) */}
-              {currentMonthBankTransfers > 0 && (
-                <div className="flex items-center justify-between text-sm py-1">
-                  <div className="flex items-center gap-2">
-                    <ArrowUpRight className="h-3.5 w-3.5 text-destructive" />
-                    <span>Bank Transfers</span>
-                  </div>
-                  <span className="text-destructive font-medium">-{formatCurrency(currentMonthBankTransfers)}</span>
-                </div>
-              )}
-              
-              {/* Savings Deposits */}
-              <div className="flex items-center justify-between text-sm py-1">
-                <div className="flex items-center gap-2">
-                  <PiggyBank className="h-3.5 w-3.5 text-primary" />
-                  <span>Savings Deposits</span>
-                </div>
-                <span className="text-destructive font-medium">-{formatCurrency(savingsDeposits)}</span>
+              <div>
+                <span>Credit Card Debit</span>
+                <p className="text-[10px] text-muted-foreground">from previous month</p>
               </div>
-              
-              {/* Savings Withdrawals */}
-              {savingsWithdrawals > 0 && (
-                <div className="flex items-center justify-between text-sm py-1">
-                  <div className="flex items-center gap-2">
-                    <ArrowUpRight className="h-3.5 w-3.5 text-success" />
-                    <span>Savings Withdrawals</span>
-                  </div>
-                  <span className="text-success font-medium">+{formatCurrency(savingsWithdrawals)}</span>
-                </div>
-              )}
-              
-              {/* Projected Balance */}
-              <div className={cn(
-                "flex items-center justify-between text-sm py-2 mt-2 border-t rounded-lg px-2 -mx-2",
-                netChange >= 0 ? "bg-success/10" : "bg-destructive/10"
-              )}>
-                <span className="font-medium">Projected Balance</span>
-                <span className={cn(
-                  "font-bold",
-                  netChange >= 0 ? "text-success" : "text-destructive"
-                )}>
-                  {formatCurrency(projectedBalance)}
-                </span>
+            </div>
+            <span className="text-destructive font-medium">-{formatCurrency(lastMonthCreditCardExpenses)}</span>
+          </div>
+          
+          {/* Bank Transfers (current month) */}
+          <div className="flex items-center justify-between text-sm py-1">
+            <div className="flex items-center gap-2">
+              <div className="p-1 rounded bg-destructive/20">
+                <ArrowUpRight className="h-3 w-3 text-destructive" />
               </div>
-              
-              <p className="text-[10px] text-muted-foreground text-center pt-1">
-                Based on transactions up to today
-              </p>
+              <span>Bank Transfers</span>
+            </div>
+            <span className="text-destructive font-medium">-{formatCurrency(currentMonthBankTransfers)}</span>
+          </div>
+          
+          {/* Savings Deposits */}
+          <div className="flex items-center justify-between text-sm py-1">
+            <div className="flex items-center gap-2">
+              <div className="p-1 rounded bg-primary/20">
+                <PiggyBank className="h-3 w-3 text-primary" />
+              </div>
+              <span>Savings Deposits</span>
+            </div>
+            <span className="text-destructive font-medium">-{formatCurrency(savingsDeposits)}</span>
+          </div>
+          
+          {/* Savings Withdrawals */}
+          {savingsWithdrawals > 0 && (
+            <div className="flex items-center justify-between text-sm py-1">
+              <div className="flex items-center gap-2">
+                <div className="p-1 rounded bg-success/20">
+                  <PiggyBank className="h-3 w-3 text-success" />
+                </div>
+                <span>Savings Withdrawals</span>
+              </div>
+              <span className="text-success font-medium">+{formatCurrency(savingsWithdrawals)}</span>
             </div>
           )}
+          
+          {/* Projected Balance */}
+          <div className={cn(
+            "flex items-center justify-between text-sm py-3 mt-2 rounded-lg px-3",
+            netChange >= 0 ? "bg-success/10 border border-success/30" : "bg-destructive/10 border border-destructive/30"
+          )}>
+            <div>
+              <span className="font-semibold">Projected Balance</span>
+              <p className="text-[10px] text-muted-foreground">after all transactions</p>
+            </div>
+            <span className={cn(
+              "text-lg font-bold",
+              netChange >= 0 ? "text-success" : "text-destructive"
+            )}>
+              {formatCurrency(projectedBalance)}
+            </span>
+          </div>
+          
+          <p className="text-[10px] text-muted-foreground text-center">
+            Based on transactions up to today
+          </p>
         </div>
         
         <div className="p-3 border-t bg-muted/30">
