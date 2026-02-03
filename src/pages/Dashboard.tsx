@@ -80,14 +80,24 @@ const Dashboard = () => {
       .filter((s) => s.month === prevMonth && s.action === 'deposit')
       .reduce((sum, s) => sum + Number(s.action_amount || s.monthly_deposit || 0), 0);
 
-    // Total savings portfolio - get latest record per account name (across ALL time)
-    const latestSavingsPerName = savings.reduce((acc, saving) => {
-      const existing = acc.get(saving.name);
-      if (!existing || new Date(saving.updated_at) > new Date(existing.updated_at)) {
-        acc.set(saving.name, saving);
-      }
-      return acc;
-    }, new Map<string, typeof savings[0]>());
+    // Total savings portfolio - get latest record per account name UP TO selected month
+    // Match the same logic as SavingsCurrentStatus for consistency
+    const currentMonthDate = new Date(currentMonth + '-01');
+    const latestSavingsPerName = savings
+      .filter(s => s.month <= currentMonth) // Only include entries up to selected month
+      .filter(s => {
+        // Show if not closed, OR if closed after the selected month
+        if (!s.closed_at) return true;
+        const closedDate = new Date(s.closed_at);
+        return closedDate > currentMonthDate;
+      })
+      .reduce((acc, saving) => {
+        const existing = acc.get(saving.name);
+        if (!existing || new Date(saving.updated_at) > new Date(existing.updated_at)) {
+          acc.set(saving.name, saving);
+        }
+        return acc;
+      }, new Map<string, typeof savings[0]>());
     
     const totalSavings = Array.from(latestSavingsPerName.values())
       .reduce((sum, s) => sum + Number(s.amount), 0);
