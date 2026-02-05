@@ -72,9 +72,20 @@ const BankBalanceCard = () => {
   const shouldFilterByDate = isCurrentMonth(currentMonth);
   
   // Calculate incomes received (bank transfers only affect bank balance)
-  const monthlyIncomes = incomes
-    .filter(i => i.month === currentMonth && (!shouldFilterByDate || isDateUpToToday(i.income_date || '')))
+  // Current month incomes already received
+  const currentMonthIncomes = incomes
+    .filter(i => i.month === currentMonth)
     .reduce((sum, i) => sum + Number(i.amount), 0);
+  
+  // Next month expected income from recurring incomes
+  const [yearNum, monthNum] = currentMonth.split('-').map(Number);
+  const nextMonthDate = new Date(yearNum, monthNum, 1);
+  const nextMonthStr = `${nextMonthDate.getFullYear()}-${String(nextMonthDate.getMonth() + 1).padStart(2, '0')}`;
+  
+  const expectedNextMonthIncome = recurringIncomes
+    .filter(i => i.is_active)
+    .filter(i => !i.end_date || i.end_date >= nextMonthStr)
+    .reduce((sum, i) => sum + Number(i.default_amount), 0);
 
   // Credit card debit = expenses with category 'debit_from_credit_card' in current month
   // (User records this on the 3rd when the debit happens)
@@ -86,12 +97,11 @@ const BankBalanceCard = () => {
     )
     .reduce((sum, e) => sum + Number(e.amount), 0);
 
-  // Planned credit card expenses (will become debit next month)
-  const plannedCreditCardExpenses = expenses
+  // Current month's credit card expenses (planned + paid) that will become debit next month
+  const currentMonthCCExpenses = expenses
     .filter(e => 
       e.month === currentMonth && 
       e.payment_method === 'credit_card' && 
-      e.kind === 'planned' &&
       e.category !== 'debit_from_credit_card'
     )
     .reduce((sum, e) => sum + Number(e.amount), 0);
@@ -125,8 +135,8 @@ const BankBalanceCard = () => {
     .filter(s => s.action === 'withdrawal')
     .reduce((sum, s) => sum + Number(s.action_amount || 0), 0);
 
-  // Calculate projected balance
-  const netChange = monthlyIncomes - monthlyExpensesPaid - savingsDeposits + savingsWithdrawals;
+  // Calculate projected balance using current month incomes
+  const netChange = currentMonthIncomes - monthlyExpensesPaid - savingsDeposits + savingsWithdrawals;
   const projectedBalance = displayTotal + netChange;
 
   // Next month prediction based on recurring transactions
@@ -166,7 +176,7 @@ const BankBalanceCard = () => {
       .reduce((sum, p) => sum + Number(p.default_amount), 0);
     
     // Include pending CC expenses from current month (becomes debit next month)
-    const totalCreditCardDebit = nextMonthCreditCardExpenses + plannedCreditCardExpenses;
+    const totalCreditCardDebit = nextMonthCreditCardExpenses + currentMonthCCExpenses;
     
     const predictedBalance = startingBalance 
       + nextMonthIncome 
@@ -186,7 +196,7 @@ const BankBalanceCard = () => {
       nextMonthSavingsWithdrawals,
       totalCreditCardDebit,
     };
-  }, [currentMonth, projectedBalance, recurringIncomes, recurringSavings, recurringPayments, plannedCreditCardExpenses]);
+  }, [currentMonth, projectedBalance, recurringIncomes, recurringSavings, recurringPayments, currentMonthCCExpenses]);
 
   const formatNextMonth = (month: string) => {
     const [year, monthNum] = month.split('-').map(Number);
@@ -460,9 +470,12 @@ const BankBalanceCard = () => {
               <div className="p-1 rounded bg-success/20">
                 <ArrowDownRight className="h-3 w-3 text-success" />
               </div>
-              <span>Incomes Received</span>
+              <div>
+                <span>Expected Income</span>
+                <p className="text-[10px] text-muted-foreground">next month recurring</p>
+              </div>
             </div>
-            <span className="text-success font-medium">+{formatCurrency(monthlyIncomes)}</span>
+            <span className="text-success font-medium">+{formatCurrency(expectedNextMonthIncome)}</span>
           </div>
           
           {/* Credit Card Debit */}
@@ -472,28 +485,12 @@ const BankBalanceCard = () => {
                 <CreditCard className="h-3 w-3 text-destructive" />
               </div>
               <div>
-                <span>Credit Card Debit</span>
-                <p className="text-[10px] text-muted-foreground">recorded on the 3rd</p>
+                <span>CC Next Month Debit</span>
+                <p className="text-[10px] text-muted-foreground">current month CC total</p>
               </div>
             </div>
-            <span className="text-destructive font-medium">-{formatCurrency(creditCardDebit)}</span>
+            <span className="text-destructive font-medium">-{formatCurrency(currentMonthCCExpenses)}</span>
           </div>
-          
-          {/* Pending CC Expenses (will become debit next month) */}
-          {plannedCreditCardExpenses > 0 && (
-            <div className="flex items-center justify-between text-sm py-1 pl-6 opacity-70">
-              <div className="flex items-center gap-2">
-                <div className="p-1 rounded bg-warning/20">
-                  <CreditCard className="h-3 w-3 text-warning" />
-                </div>
-                <div>
-                  <span className="text-muted-foreground">Pending CC</span>
-                  <p className="text-[10px] text-muted-foreground">becomes debit next month</p>
-                </div>
-              </div>
-              <span className="text-warning font-medium">({formatCurrency(plannedCreditCardExpenses)})</span>
-            </div>
-          )}
           
           {/* Bank Transfers (current month) */}
           <div className="flex items-center justify-between text-sm py-1">
@@ -501,7 +498,10 @@ const BankBalanceCard = () => {
               <div className="p-1 rounded bg-destructive/20">
                 <ArrowUpRight className="h-3 w-3 text-destructive" />
               </div>
-              <span>Bank Transfers</span>
+              <div>
+                <span>Bank Transfers</span>
+                <p className="text-[10px] text-muted-foreground">current month</p>
+              </div>
             </div>
             <span className="text-destructive font-medium">-{formatCurrency(currentMonthBankTransfers)}</span>
           </div>
@@ -512,7 +512,10 @@ const BankBalanceCard = () => {
               <div className="p-1 rounded bg-primary/20">
                 <PiggyBank className="h-3 w-3 text-primary" />
               </div>
-              <span>Savings Deposits</span>
+              <div>
+                <span>Savings Deposits</span>
+                <p className="text-[10px] text-muted-foreground">current month</p>
+              </div>
             </div>
             <span className="text-destructive font-medium">-{formatCurrency(savingsDeposits)}</span>
           </div>
