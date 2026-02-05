@@ -26,10 +26,10 @@ const BudgetProgress = () => {
   const budget = getBudgetForMonth(currentMonth);
   const totalBudget = budget ? Number(budget.total_budget) : 0;
 
-  const { spentBudget, leftBudget, dailyLimit, plannedCreditCardExpenses } = calculatedBudget;
+  const { spentBudget, leftBudget, dailyLimit, plannedCreditCardExpenses, plannedGoalCreditCardExpenses } = calculatedBudget;
   
   // Actual spent = CC debits - planned CC
-  const actualSpent = spentBudget - plannedCreditCardExpenses;
+  const actualSpent = spentBudget - plannedCreditCardExpenses - plannedGoalCreditCardExpenses;
   // Progress shows actual spent against the defined budget
   const percentage = totalBudget > 0 ? Math.min((Math.max(0, actualSpent) / totalBudget) * 100, 100) : 0;
   const isOverBudget = leftBudget < 0;
@@ -155,9 +155,13 @@ const BudgetProgress = () => {
           </div>
         </div>
 
-        {plannedCreditCardExpenses > 0 && (
+        {(plannedCreditCardExpenses > 0 || plannedGoalCreditCardExpenses > 0) && (
           <div className="text-xs text-muted-foreground text-center pt-2 p-2 rounded bg-warning/10 border border-warning/20">
-            <span className="text-warning font-medium">Budget: {formatCurrency(totalBudget)} + Planned CC: {formatCurrency(plannedCreditCardExpenses)}</span>
+            <span className="text-warning font-medium">
+              Budget: {formatCurrency(totalBudget)}
+              {plannedCreditCardExpenses > 0 && ` + Planned CC: ${formatCurrency(plannedCreditCardExpenses)}`}
+              {plannedGoalCreditCardExpenses > 0 && ` + Goals CC: ${formatCurrency(plannedGoalCreditCardExpenses)}`}
+            </span>
           </div>
         )}
 

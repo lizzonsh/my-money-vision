@@ -5,7 +5,7 @@ import { useExpenseCategories } from '@/hooks/useExpenseCategories';
 import { useGoalItems } from '@/hooks/useGoalItems';
 import { formatCurrency, formatDate } from '@/lib/formatters';
 import { isDateUpToToday, isCurrentMonth } from '@/lib/dateUtils';
-import { Plus, Trash2, CreditCard, Building2, Repeat, Pencil, CalendarIcon, Tag, Target } from 'lucide-react';
+import { Plus, Trash2, CreditCard, Building2, Repeat, Pencil, CalendarIcon, Tag } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -215,7 +215,8 @@ const ExpensesList = () => {
       <div className="flex items-center justify-between mb-4">
         <div>
           <h3 className="font-semibold">Expenses</h3>
-          <p className="text-lg font-bold">{formatCurrency(effectiveTotal)}</p>
+          <p className="text-lg font-bold">{formatCurrency(effectiveTotal + plannedGoalExpenses)}</p>
+          <p className="text-xs text-muted-foreground">(incl. {formatCurrency(plannedGoalExpenses)} in goals)</p>
           <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground mt-1">
             <span className="text-success">Bank Paid: {formatCurrency(paidBankTransferExpenses)}</span>
             <span className="text-warning">CC Debit: {formatCurrency(creditCardDebitTotal)}</span>
@@ -406,52 +407,12 @@ const ExpensesList = () => {
       </div>
 
       <div className="space-y-2 max-h-80 overflow-y-auto custom-scrollbar">
-        {monthlyExpenses.length === 0 && plannedGoalItems.length === 0 ? (
+        {monthlyExpenses.length === 0 ? (
           <p className="text-sm text-muted-foreground text-center py-4">
             No expenses this month
           </p>
         ) : (
-          <>
-            {/* Planned Goal Items */}
-            {plannedGoalItems.map((item) => (
-              <div
-                key={`goal-${item.id}`}
-                className="flex items-center justify-between p-3 rounded-lg bg-primary/10 border border-primary/20 interactive-card group"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-lg bg-primary/20">
-                    <Target className="h-4 w-4 text-primary" />
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <p className="text-sm font-medium">{item.name}</p>
-                    </div>
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-xs px-2 py-0.5 rounded-full bg-primary/20 text-primary">
-                        goal
-                      </span>
-                      <span className={cn(
-                        'text-xs px-2 py-0.5 rounded-full',
-                        item.payment_method === 'credit_card' 
-                          ? 'bg-primary/20 text-primary' 
-                          : 'bg-success/20 text-success'
-                      )}>
-                        {item.payment_method === 'credit_card' 
-                          ? (item.card_id ? formatCardName(item.card_id) : 'Credit Card')
-                          : 'Bank Transfer'}
-                      </span>
-                      <span className="text-xs px-2 py-0.5 rounded-full bg-accent/20 text-accent-foreground">
-                        Planned
-                      </span>
-                    </div>
-                  </div>
-                </div>
-                <span className="font-semibold text-primary">{formatCurrency(Number(item.estimated_cost))}</span>
-              </div>
-            ))}
-            
-            {/* Regular Expenses */}
-            {monthlyExpenses.map((expense) => (
+          monthlyExpenses.map((expense) => (
             <div
               key={expense.id}
               className="flex items-center justify-between p-3 rounded-lg bg-secondary/30 interactive-card group"
@@ -522,8 +483,7 @@ const ExpensesList = () => {
                 </button>
               </div>
             </div>
-          ))}
-          </>
+          ))
         )}
       </div>
     </div>

@@ -10,6 +10,7 @@ import { useRecurringSavings, RecurringSavings } from '@/hooks/useRecurringSavin
 import { useRecurringIncomes, RecurringIncome } from '@/hooks/useRecurringIncomes';
 import { useBankAccounts, BankAccount } from '@/hooks/useBankAccounts';
 import { useBankBalanceHistory, BankBalanceHistory, BankBalanceHistoryInsert } from '@/hooks/useBankBalanceHistory';
+import { useGoalItems, GoalItem } from '@/hooks/useGoalItems';
 import { isDateUpToToday, getCurrentMonth } from '@/lib/dateUtils';
 
 interface FinanceContextType {
@@ -23,6 +24,7 @@ interface FinanceContextType {
   recurringSavings: RecurringSavings[];
   recurringIncomes: RecurringIncome[];
   bankAccounts: BankAccount[];
+  goalItems: GoalItem[];
   
   // Loading states
   isLoading: boolean;
@@ -91,6 +93,7 @@ interface FinanceContextType {
     leftBudget: number;
     dailyLimit: number;
     plannedCreditCardExpenses: number;
+    plannedGoalCreditCardExpenses: number;
   };
 }
 
@@ -118,6 +121,7 @@ export const FinanceProvider = ({ children }: { children: ReactNode }) => {
   const recurringIncomesHook = useRecurringIncomes();
   const bankAccountsHook = useBankAccounts();
   const bankBalanceHistoryHook = useBankBalanceHistory();
+  const goalItemsHook = useGoalItems();
   const isLoading = 
     budgetsHook.isLoading || 
     expensesHook.isLoading || 
@@ -128,11 +132,11 @@ export const FinanceProvider = ({ children }: { children: ReactNode }) => {
     recurringSavingsHook.isLoading ||
     recurringIncomesHook.isLoading ||
     bankAccountsHook.isLoading ||
-    bankBalanceHistoryHook.isLoading;
+    bankBalanceHistoryHook.isLoading ||
+    goalItemsHook.isLoading;
 
   // Calculate budget based on user's logic:
-  // spentBudget = credit card debits only (debit_from_credit_card)
-  // leftBudget = totalBudget - creditCardDebits - plannedCreditCardExpenses
+  // left = budget + planned CC + goals CC - debit CC
   const calculatedBudget = useMemo(() => {
     const budget = budgetsHook.getBudgetForMonth(currentMonth);
     const totalBudget = budget ? Number(budget.total_budget) : 0;
@@ -157,11 +161,20 @@ export const FinanceProvider = ({ children }: { children: ReactNode }) => {
       )
       .reduce((sum, e) => sum + Number(e.amount), 0);
     
+    // Planned goal items paid via credit card for current month
+    const plannedGoalCreditCardExpenses = goalItemsHook.goalItems
+      .filter(item => 
+        !item.is_purchased && 
+        item.planned_month === currentMonth &&
+        item.payment_method === 'credit_card'
+      )
+      .reduce((sum, item) => sum + Number(item.estimated_cost), 0);
+    
     // Spent budget = only credit card debits (what's already been paid)
     const spentBudget = creditCardDebits;
     
-    // Left budget = total budget + planned CC expenses - credit card debits
-    const leftBudget = totalBudget + plannedCreditCardExpenses - creditCardDebits;
+    // Left budget = total budget + planned CC expenses + planned goal CC - credit card debits
+    const leftBudget = totalBudget + plannedCreditCardExpenses + plannedGoalCreditCardExpenses - creditCardDebits;
     
     const today = new Date();
     const [year, month] = currentMonth.split('-').map(Number);
@@ -169,8 +182,8 @@ export const FinanceProvider = ({ children }: { children: ReactNode }) => {
     const daysRemaining = Math.max(1, daysInMonth - today.getDate() + 1);
     const dailyLimit = leftBudget / daysRemaining;
 
-    return { spentBudget, leftBudget, dailyLimit, plannedCreditCardExpenses };
-  }, [budgetsHook.budgets, expensesHook.expenses, currentMonth]);
+    return { spentBudget, leftBudget, dailyLimit, plannedCreditCardExpenses, plannedGoalCreditCardExpenses };
+  }, [budgetsHook.budgets, expensesHook.expenses, goalItemsHook.goalItems, currentMonth]);
 
   return (
     <FinanceContext.Provider
@@ -185,6 +198,7 @@ export const FinanceProvider = ({ children }: { children: ReactNode }) => {
         recurringSavings: recurringSavingsHook.recurringSavings,
         recurringIncomes: recurringIncomesHook.recurringIncomes,
         bankAccounts: bankAccountsHook.bankAccounts,
+        goalItems: goalItemsHook.goalItems,
         
         // Loading
         isLoading,
