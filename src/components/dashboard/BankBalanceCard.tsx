@@ -551,7 +551,7 @@ const BankBalanceCard = () => {
                 </div>
               </div>
               <span className="text-warning font-medium">
-                {formatCurrency(calculatedBudget.spentBudget)} / {formatCurrency(getBudgetForMonth(currentMonth)?.total_budget || 0)}
+                {formatCurrency(Math.max(0, calculatedBudget.spentBudget - calculatedBudget.plannedCreditCardExpenses))} / {formatCurrency(getBudgetForMonth(currentMonth)?.total_budget || 0)}
               </span>
             </div>
           )}
