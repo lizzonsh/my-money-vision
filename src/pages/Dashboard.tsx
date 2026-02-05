@@ -62,10 +62,25 @@ const Dashboard = () => {
       .reduce((sum, i) => sum + Number(i.amount), 0);
 
     // Current month expenses (filtered by date for current month)
-    const monthlyExpenses = expenses
+    // Match ExpensesList logic: exclude planned credit card expenses to avoid double-counting
+    // (they will be counted when they appear as debit_from_credit_card)
+    const expensesUpToDate = expenses
       .filter((e) => e.month === currentMonth)
-      .filter((e) => !shouldFilterByDate || isDateUpToToday(e.expense_date))
+      .filter((e) => !shouldFilterByDate || isDateUpToToday(e.expense_date));
+    
+    // Regular expenses excluding planned credit card (to avoid double-counting)
+    const regularExpenses = expensesUpToDate.filter(e => 
+      e.category !== 'debit_from_credit_card' && 
+      !(e.payment_method === 'credit_card' && e.kind === 'planned')
+    );
+    
+    // Credit card debits (actual withdrawals from bank)
+    const creditCardDebitTotal = expensesUpToDate
+      .filter(e => e.category === 'debit_from_credit_card')
       .reduce((sum, e) => sum + Number(e.amount), 0);
+    
+    // Bank transfers + credit card paid + credit card debits = effective total
+    const monthlyExpenses = regularExpenses.reduce((sum, e) => sum + Number(e.amount), 0) + creditCardDebitTotal;
 
     // Previous month expenses (full month)
     const prevMonthExpenses = expenses
