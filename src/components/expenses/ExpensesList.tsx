@@ -215,9 +215,7 @@ const ExpensesList = () => {
 
   // Check if an expense is from a goal purchase
   const isGoalExpense = (expense: Expense) => {
-    return expense.category === 'planned' && goalItems.some(
-      item => item.is_purchased && item.name === expense.description
-    );
+    return expense.category === 'goal';
   };
 
   const handleExpenseClick = (expense: Expense) => {
