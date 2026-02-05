@@ -89,6 +89,7 @@ interface FinanceContextType {
     spentBudget: number;
     leftBudget: number;
     dailyLimit: number;
+    plannedCreditCardExpenses: number;
   };
 }
 
@@ -129,8 +130,8 @@ export const FinanceProvider = ({ children }: { children: ReactNode }) => {
     bankBalanceHistoryHook.isLoading;
 
   // Calculate budget based on user's logic:
-  // spentBudget = credit card debits (debit_from_credit_card) + planned credit card expenses
-  // leftBudget = totalBudget - spentBudget
+  // spentBudget = credit card debits only (debit_from_credit_card)
+  // leftBudget = totalBudget - creditCardDebits - plannedCreditCardExpenses
   const calculatedBudget = useMemo(() => {
     const budget = budgetsHook.getBudgetForMonth(currentMonth);
     const totalBudget = budget ? Number(budget.total_budget) : 0;
@@ -155,11 +156,11 @@ export const FinanceProvider = ({ children }: { children: ReactNode }) => {
       )
       .reduce((sum, e) => sum + Number(e.amount), 0);
     
-    // Spent budget = credit card debits + planned credit card expenses
-    const spentBudget = creditCardDebits + plannedCreditCardExpenses;
+    // Spent budget = only credit card debits (what's already been paid)
+    const spentBudget = creditCardDebits;
     
-    // Left budget = total budget - spent
-    const leftBudget = totalBudget - spentBudget;
+    // Left budget = total budget - credit card debits - planned CC expenses
+    const leftBudget = totalBudget - creditCardDebits - plannedCreditCardExpenses;
     
     const today = new Date();
     const [year, month] = currentMonth.split('-').map(Number);
@@ -167,7 +168,7 @@ export const FinanceProvider = ({ children }: { children: ReactNode }) => {
     const daysRemaining = Math.max(1, daysInMonth - today.getDate() + 1);
     const dailyLimit = leftBudget / daysRemaining;
 
-    return { spentBudget, leftBudget, dailyLimit };
+    return { spentBudget, leftBudget, dailyLimit, plannedCreditCardExpenses };
   }, [budgetsHook.budgets, expensesHook.expenses, currentMonth]);
 
   return (

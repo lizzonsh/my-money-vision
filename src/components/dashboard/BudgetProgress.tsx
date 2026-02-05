@@ -26,7 +26,7 @@ const BudgetProgress = () => {
   const budget = getBudgetForMonth(currentMonth);
   const totalBudget = budget ? Number(budget.total_budget) : 0;
 
-  const { spentBudget, leftBudget, dailyLimit } = calculatedBudget;
+  const { spentBudget, leftBudget, dailyLimit, plannedCreditCardExpenses } = calculatedBudget;
   const percentage = totalBudget > 0 ? Math.min((spentBudget / totalBudget) * 100, 100) : 0;
   const isOverBudget = leftBudget < 0;
 
@@ -155,6 +155,13 @@ const BudgetProgress = () => {
             </p>
           </div>
         </div>
+
+        {plannedCreditCardExpenses > 0 && (
+          <div className="text-xs text-muted-foreground text-center pt-2 p-2 rounded bg-warning/10 border border-warning/20">
+            <span className="text-warning font-medium">Planned CC: {formatCurrency(plannedCreditCardExpenses)}</span>
+            <span className="ml-1">(included in remaining)</span>
+          </div>
+        )}
 
         <div className="text-xs text-muted-foreground text-center pt-2">
           {daysRemaining} days remaining in month
