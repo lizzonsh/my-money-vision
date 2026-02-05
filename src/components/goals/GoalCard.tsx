@@ -313,7 +313,7 @@ const generateMonthOptions = () => {
                          <Button
                            size="sm"
                            variant="ghost"
-                           className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100"
+                            className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 hover:bg-success/20 hover:text-success"
                            onClick={() => onPurchaseItem(item)}
                            title="Mark as purchased"
                          >
