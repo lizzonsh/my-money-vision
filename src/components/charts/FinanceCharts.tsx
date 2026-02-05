@@ -16,6 +16,7 @@ import {
 } from 'recharts';
 import { useFinance } from '@/contexts/FinanceContext';
 import { formatCurrency } from '@/lib/formatters';
+import { useNavigate } from 'react-router-dom';
 
 interface CustomTooltipProps {
   active?: boolean;
@@ -61,7 +62,8 @@ const formatMonth = (monthKey: string): string => {
 };
 
 export const IncomeExpenseChart = () => {
-  const { incomes, expenses } = useFinance();
+  const { incomes, expenses, setCurrentMonth } = useFinance();
+  const navigate = useNavigate();
 
   const chartData = useMemo(() => {
     const last6Months = getLastNMonths(6);
@@ -83,6 +85,13 @@ export const IncomeExpenseChart = () => {
       };
     });
   }, [incomes, expenses]);
+
+  const handleBarClick = (data: any, dataKey: 'income' | 'expenses') => {
+    if (data?.monthKey) {
+      setCurrentMonth(data.monthKey);
+      navigate(dataKey === 'income' ? '/income' : '/expenses');
+    }
+  };
 
   return (
     <div className="glass rounded-xl p-5 shadow-card animate-slide-up">
@@ -111,12 +120,16 @@ export const IncomeExpenseChart = () => {
               fill="hsl(var(--success))" 
               radius={[4, 4, 0, 0]}
               name="Income"
+              className="cursor-pointer"
+              onClick={(data) => handleBarClick(data, 'income')}
             />
             <Bar 
               dataKey="expenses" 
               fill="hsl(var(--destructive))" 
               radius={[4, 4, 0, 0]}
               name="Expenses"
+              className="cursor-pointer"
+              onClick={(data) => handleBarClick(data, 'expenses')}
             />
           </BarChart>
         </ResponsiveContainer>
