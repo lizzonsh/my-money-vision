@@ -2,11 +2,12 @@
  import { BigPurchaseGoal } from '@/contexts/FinanceContext';
  import { GoalItem, GoalItemInsert } from '@/hooks/useGoalItems';
  import { formatCurrency, formatMonth } from '@/lib/formatters';
- import { Trash2, Pencil, Plus, ChevronDown, ChevronUp, ShoppingCart, Check, X } from 'lucide-react';
+import { Trash2, Pencil, Plus, ChevronDown, ChevronUp, ShoppingCart, Check, X, CalendarDays } from 'lucide-react';
  import { Button } from '@/components/ui/button';
  import { Input } from '@/components/ui/input';
  import { Label } from '@/components/ui/label';
  import { Progress } from '@/components/ui/progress';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
  import {
    Select,
    SelectContent,
@@ -56,6 +57,19 @@
    low: 'border-l-success bg-success/5',
  };
  
+// Generate months for picker (current month + next 24 months)
+const generateMonthOptions = () => {
+  const months = [];
+  const now = new Date();
+  for (let i = 0; i < 24; i++) {
+    const date = new Date(now.getFullYear(), now.getMonth() + i, 1);
+    const value = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+    const label = date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+    months.push({ value, label });
+  }
+  return months;
+};
+
  const GoalCard = ({
    goal,
    items,
@@ -77,6 +91,7 @@
      cardId: '',
      notes: '',
    });
+  const [monthPickerOpen, setMonthPickerOpen] = useState(false);
  
    const purchasedItems = items.filter(i => i.is_purchased);
    const pendingItems = items.filter(i => !i.is_purchased);
@@ -111,7 +126,7 @@
    };
  
    return (
-     <div className={cn('glass rounded-xl border-l-4 shadow-card overflow-hidden', priorityStyles[goal.priority])}>
+    <div className={cn('glass rounded-xl border-l-4 shadow-card overflow-hidden hover-glow', priorityStyles[goal.priority])}>
        {/* Goal Header */}
        <div className="p-5">
          <div className="flex items-start justify-between mb-3">
@@ -123,10 +138,10 @@
              </div>
            </div>
            <div className="flex items-center gap-1">
-             <button onClick={() => onEditGoal(goal)} className="p-1.5 hover:bg-secondary rounded transition-all">
+              <button onClick={() => onEditGoal(goal)} className="p-1.5 hover:bg-secondary hover:scale-110 rounded transition-all">
                <Pencil className="h-4 w-4 text-muted-foreground" />
              </button>
-             <button onClick={() => onDeleteGoal(goal.id)} className="p-1.5 hover:bg-destructive/10 rounded transition-all">
+              <button onClick={() => onDeleteGoal(goal.id)} className="p-1.5 hover:bg-destructive/10 hover:scale-110 rounded transition-all">
                <Trash2 className="h-4 w-4 text-destructive" />
              </button>
            </div>
@@ -189,13 +204,42 @@
                      </div>
                      <div className="space-y-2">
                        <Label htmlFor="plannedMonth">Planned Month</Label>
-                       <Input
-                         id="plannedMonth"
-                         type="month"
-                         value={itemFormData.plannedMonth}
-                         onChange={(e) => setItemFormData({ ...itemFormData, plannedMonth: e.target.value })}
-                         required
-                       />
+                        <Popover open={monthPickerOpen} onOpenChange={setMonthPickerOpen}>
+                          <PopoverTrigger asChild>
+                            <Button
+                              variant="outline"
+                              className={cn(
+                                "w-full justify-start text-left font-normal",
+                                !itemFormData.plannedMonth && "text-muted-foreground"
+                              )}
+                            >
+                              <CalendarDays className="mr-2 h-4 w-4" />
+                              {itemFormData.plannedMonth 
+                                ? new Date(itemFormData.plannedMonth + '-01').toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+                                : 'Select month'}
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-56 p-0" align="start">
+                            <div className="max-h-64 overflow-y-auto custom-scrollbar">
+                              {generateMonthOptions().map((month) => (
+                                <button
+                                  key={month.value}
+                                  type="button"
+                                  className={cn(
+                                    "w-full px-3 py-2 text-left text-sm hover:bg-secondary transition-colors",
+                                    itemFormData.plannedMonth === month.value && "bg-primary/20 text-primary font-medium"
+                                  )}
+                                  onClick={() => {
+                                    setItemFormData({ ...itemFormData, plannedMonth: month.value });
+                                    setMonthPickerOpen(false);
+                                  }}
+                                >
+                                  {month.label}
+                                </button>
+                              ))}
+                            </div>
+                          </PopoverContent>
+                        </Popover>
                      </div>
                    </div>
                    <div className="grid grid-cols-2 gap-4">
@@ -251,10 +295,10 @@
                    {pendingItems.map((item) => (
                      <div
                        key={item.id}
-                       className="flex items-center justify-between p-3 rounded-lg bg-secondary/30 group"
+                        className="flex items-center justify-between p-3 rounded-lg bg-secondary/30 group hover:bg-secondary/50 transition-all"
                      >
                        <div className="flex items-center gap-3">
-                         <div className="p-2 rounded-lg bg-warning/20 text-warning">
+                          <div className="p-2 rounded-lg bg-warning/20 text-warning group-hover:scale-110 transition-transform">
                            <ShoppingCart className="h-4 w-4" />
                          </div>
                          <div>
@@ -292,10 +336,10 @@
                        {purchasedItems.map((item) => (
                          <div
                            key={item.id}
-                           className="flex items-center justify-between p-3 rounded-lg bg-success/10 group"
+                            className="flex items-center justify-between p-3 rounded-lg bg-success/10 group hover:bg-success/15 transition-all"
                          >
                            <div className="flex items-center gap-3">
-                             <div className="p-2 rounded-lg bg-success/20 text-success">
+                              <div className="p-2 rounded-lg bg-success/20 text-success group-hover:scale-110 transition-transform">
                                <Check className="h-4 w-4" />
                              </div>
                              <div>
