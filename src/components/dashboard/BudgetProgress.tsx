@@ -36,9 +36,12 @@ const BudgetProgress = () => {
   const daysRemaining = Math.max(1, daysInMonth - today.getDate() + 1);
 
   const handleOpenEdit = () => {
+    const [year, monthNum] = currentMonth.split('-').map(Number);
+    const autoDaysInMonth = new Date(year, monthNum, 0).getDate();
+    
     setEditBudget({
       totalBudget: totalBudget.toString(),
-      daysInMonth: (budget?.days_in_month || daysInMonth).toString(),
+      daysInMonth: (budget?.days_in_month || autoDaysInMonth).toString(),
       notes: budget?.notes || '',
     });
     setIsOpen(true);
