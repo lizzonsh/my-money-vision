@@ -111,14 +111,18 @@ const IncomePage = () => {
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
-          <ResizablePanelGroup direction="vertical" className="min-h-[700px] rounded-lg">
+          <ResizablePanelGroup direction="horizontal" className="min-h-[700px] rounded-lg">
+            {/* Main content - Income List */}
             <ResizablePanel defaultSize={60} minSize={30}>
               <div className="h-full p-1 overflow-auto">
                 <IncomesList />
               </div>
             </ResizablePanel>
+            
             <ResizableHandle withHandle />
-            <ResizablePanel defaultSize={40} minSize={20}>
+            
+            {/* Side panel - Income Trend Chart */}
+            <ResizablePanel defaultSize={40} minSize={25}>
               <div className="h-full p-1 overflow-auto">
                 <IncomeTrendChart />
               </div>

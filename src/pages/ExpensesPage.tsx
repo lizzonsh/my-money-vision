@@ -29,29 +29,37 @@ const ExpensesPage = () => {
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
-          <ResizablePanelGroup direction="vertical" className="min-h-[800px] rounded-lg">
-            <ResizablePanel defaultSize={45} minSize={20}>
+          <ResizablePanelGroup direction="horizontal" className="min-h-[700px] rounded-lg">
+            {/* Main content - Expenses List */}
+            <ResizablePanel defaultSize={60} minSize={30}>
               <div className="h-full p-1 overflow-auto">
                 <ExpensesList />
               </div>
             </ResizablePanel>
+            
             <ResizableHandle withHandle />
-            <ResizablePanel defaultSize={20} minSize={10}>
-              <div className="h-full p-1 overflow-auto">
-                <BudgetProgress />
-              </div>
-            </ResizablePanel>
-            <ResizableHandle withHandle />
-            <ResizablePanel defaultSize={15} minSize={10}>
-              <div className="h-full p-1 overflow-auto">
-                <PlannedGoalsPanel />
-              </div>
-            </ResizablePanel>
-            <ResizableHandle withHandle />
-            <ResizablePanel defaultSize={20} minSize={10}>
-              <div className="h-full p-1 overflow-auto">
-                <SpendingByCategoryChart />
-              </div>
+            
+            {/* Side panels - vertically resizable */}
+            <ResizablePanel defaultSize={40} minSize={25}>
+              <ResizablePanelGroup direction="vertical" className="h-full">
+                <ResizablePanel defaultSize={35} minSize={15}>
+                  <div className="h-full p-1 overflow-auto">
+                    <BudgetProgress />
+                  </div>
+                </ResizablePanel>
+                <ResizableHandle withHandle />
+                <ResizablePanel defaultSize={30} minSize={15}>
+                  <div className="h-full p-1 overflow-auto">
+                    <PlannedGoalsPanel />
+                  </div>
+                </ResizablePanel>
+                <ResizableHandle withHandle />
+                <ResizablePanel defaultSize={35} minSize={15}>
+                  <div className="h-full p-1 overflow-auto">
+                    <SpendingByCategoryChart />
+                  </div>
+                </ResizablePanel>
+              </ResizablePanelGroup>
             </ResizablePanel>
           </ResizablePanelGroup>
         </TabsContent>
