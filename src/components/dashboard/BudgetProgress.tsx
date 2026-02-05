@@ -51,10 +51,13 @@ const BudgetProgress = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    const [year, monthNum] = currentMonth.split('-').map(Number);
+    const autoDaysInMonth = new Date(year, monthNum, 0).getDate();
+    
     const budgetData = {
       month: currentMonth,
       total_budget: parseFloat(editBudget.totalBudget),
-      days_in_month: parseInt(editBudget.daysInMonth),
+      days_in_month: autoDaysInMonth,
       notes: editBudget.notes || null,
       currency: 'ILS',
       daily_limit: null,
@@ -99,17 +102,6 @@ const BudgetProgress = () => {
                     value={editBudget.totalBudget}
                     onChange={(e) => setEditBudget({ ...editBudget, totalBudget: e.target.value })}
                     placeholder="0"
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="daysInMonth">Days in Month</Label>
-                  <Input
-                    id="daysInMonth"
-                    type="number"
-                    value={editBudget.daysInMonth}
-                    onChange={(e) => setEditBudget({ ...editBudget, daysInMonth: e.target.value })}
-                    placeholder="30"
                     required
                   />
                 </div>
