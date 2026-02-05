@@ -71,8 +71,9 @@ const ExpensesList = () => {
     .reduce((sum, e) => sum + Number(e.amount), 0);
   
   // Planned credit card expenses (for display only, not counted in totals)
-  const plannedCreditCardExpenses = expensesUpToDate
-    .filter(e => e.payment_method === 'credit_card' && e.kind === 'planned')
+  // Use all monthly expenses (not filtered by date) to match FinanceContext calculation
+  const plannedCreditCardExpenses = monthlyExpenses
+    .filter(e => e.payment_method === 'credit_card' && e.kind === 'planned' && e.category !== 'debit_from_credit_card')
     .reduce((sum, e) => sum + Number(e.amount), 0);
   
   // Total that affects current month = bank transfers + credit card debits (actual withdrawals)
