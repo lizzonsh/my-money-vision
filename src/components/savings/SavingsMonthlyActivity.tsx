@@ -159,6 +159,7 @@ const SavingsMonthlyActivity = () => {
       .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())[0];
     
     const currentAmount = latestForAccount ? Number(latestForAccount.amount) : 0;
+    const accountCurrency = latestForAccount?.currency || 'ILS';
     const actionAmount = parseFloat(formData.actionAmount) || 0;
     const newAmount = formData.action === 'deposit' 
       ? currentAmount + actionAmount 
@@ -168,7 +169,7 @@ const SavingsMonthlyActivity = () => {
       month: currentMonth,
       name: formData.name,
       amount: Math.max(0, newAmount),
-      currency: 'ILS',
+      currency: accountCurrency,
       transfer_method: formData.transferMethod as 'bank_account' | 'credit_card',
       card_id: formData.cardId || null,
       action: formData.action as 'deposit' | 'withdrawal',
