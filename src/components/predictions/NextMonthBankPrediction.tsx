@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { useFinance } from '@/contexts/FinanceContext';
 import { formatCurrency } from '@/lib/formatters';
-import { TrendingUp, TrendingDown, Wallet, ArrowRight, PiggyBank, CreditCard, Banknote } from 'lucide-react';
+import { ArrowRight, PiggyBank, CreditCard, Banknote, Wallet } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const getNextMonth = (month: string): string => {
@@ -17,7 +17,8 @@ const NextMonthBankPrediction = () => {
     getTotalBalanceForMonth,
     recurringIncomes, 
     recurringSavings, 
-    recurringPayments 
+    recurringPayments,
+    calculatedBudget
   } = useFinance();
 
   const prediction = useMemo(() => {
@@ -78,6 +79,9 @@ const NextMonthBankPrediction = () => {
     };
   }, [currentMonth, totalBankBalance, getTotalBalanceForMonth, recurringIncomes, recurringSavings, recurringPayments]);
 
+  // Final projected balance after accounting for remaining budget to be spent
+  const finalProjectedBalance = prediction.predictedBalance - calculatedBudget.leftBudget;
+
   const formatNextMonth = (month: string) => {
     const [year, monthNum] = month.split('-').map(Number);
     const date = new Date(year, monthNum - 1, 1);
@@ -100,20 +104,20 @@ const NextMonthBankPrediction = () => {
         <ArrowRight className="h-5 w-5 text-muted-foreground flex-shrink-0" />
         <div className={cn(
           "flex-1 p-4 rounded-lg",
-          prediction.balanceChange >= 0 ? "bg-success/10" : "bg-destructive/10"
+          finalProjectedBalance >= prediction.currentBankBalance ? "bg-success/10" : "bg-destructive/10"
         )}>
           <p className="text-xs text-muted-foreground mb-1">Predicted Balance</p>
           <p className={cn(
             "text-xl font-bold",
-            prediction.balanceChange >= 0 ? "text-success" : "text-destructive"
+            finalProjectedBalance >= prediction.currentBankBalance ? "text-success" : "text-destructive"
           )}>
-            {formatCurrency(prediction.predictedBalance)}
+            {formatCurrency(finalProjectedBalance)}
           </p>
           <p className={cn(
             "text-xs",
-            prediction.balanceChange >= 0 ? "text-success" : "text-destructive"
+            finalProjectedBalance >= prediction.currentBankBalance ? "text-success" : "text-destructive"
           )}>
-            {prediction.balanceChange >= 0 ? '+' : ''}{formatCurrency(prediction.balanceChange)}
+            {finalProjectedBalance >= prediction.currentBankBalance ? '+' : ''}{formatCurrency(finalProjectedBalance - prediction.currentBankBalance)}
           </p>
         </div>
       </div>
@@ -155,10 +159,18 @@ const NextMonthBankPrediction = () => {
           </div>
           <span className="text-sm font-medium text-destructive">-{formatCurrency(prediction.nextMonthCreditCardExpenses)}</span>
         </div>
+
+        <div className="flex items-center justify-between p-3 rounded-lg bg-warning/5 border border-warning/20">
+          <div className="flex items-center gap-2">
+            <Wallet className="h-4 w-4 text-warning" />
+            <span className="text-sm">Remaining Budget</span>
+          </div>
+          <span className="text-sm font-medium text-warning">-{formatCurrency(calculatedBudget.leftBudget)}</span>
+        </div>
       </div>
 
       <p className="text-xs text-muted-foreground mt-4 text-center">
-        Based on active recurring transactions only
+        Based on active recurring transactions and remaining budget
       </p>
     </div>
   );
