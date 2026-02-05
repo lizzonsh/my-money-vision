@@ -27,7 +27,7 @@ import GoalCard from '@/components/goals/GoalCard';
 import { useToast } from '@/hooks/use-toast';
 
 const BigPurchasePlanner = () => {
-  const { bigPurchases, addBigPurchase, updateBigPurchase, deleteBigPurchase, addExpense } = useFinance();
+  const { bigPurchases, addBigPurchase, updateBigPurchase, deleteBigPurchase, addExpense, deleteExpense, expenses } = useFinance();
   const { goalItems, addGoalItem, updateGoalItem, deleteGoalItem, markAsPurchased, unmarkAsPurchased } = useGoalItems();
   const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
@@ -105,6 +105,24 @@ const BigPurchasePlanner = () => {
     // Mark as purchased
     markAsPurchased({ itemId: item.id });
     toast({ title: `${item.name} added to expenses`, description: `₪${item.estimated_cost} expense created` });
+  };
+
+  const handleUnpurchaseItem = (itemId: string) => {
+    // Find the goal item to get its name
+    const item = goalItems.find(i => i.id === itemId);
+    if (item) {
+      // Find and delete the associated expense (match by description and category)
+      const associatedExpense = expenses.find(
+        e => e.description === item.name && e.category === 'goal'
+      );
+      if (associatedExpense) {
+        deleteExpense(associatedExpense.id);
+      }
+    }
+    
+    // Unmark as purchased
+    unmarkAsPurchased(itemId);
+    toast({ title: 'Purchase undone', description: 'Expense has been removed' });
   };
 
   const getItemsForGoal = (goalId: string) => goalItems.filter(item => item.goal_id === goalId);
@@ -215,7 +233,7 @@ const BigPurchasePlanner = () => {
               onUpdateItem={updateGoalItem}
               onDeleteItem={deleteGoalItem}
               onPurchaseItem={handlePurchaseItem}
-              onUnpurchaseItem={unmarkAsPurchased}
+              onUnpurchaseItem={handleUnpurchaseItem}
             />
           ))
         )}

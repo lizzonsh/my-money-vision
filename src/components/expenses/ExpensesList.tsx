@@ -498,13 +498,13 @@ const ExpensesList = () => {
                   </p>
                 </div>
                 <button
-                  onClick={() => handleOpenEdit(expense)}
+                  onClick={(e) => { e.stopPropagation(); handleOpenEdit(expense); }}
                   className="p-1.5 opacity-0 group-hover:opacity-100 hover:bg-secondary rounded transition-all"
                 >
                   <Pencil className="h-4 w-4 text-muted-foreground" />
                 </button>
                 <button
-                  onClick={() => deleteExpense(expense.id)}
+                  onClick={(e) => { e.stopPropagation(); deleteExpense(expense.id); }}
                   className="p-1.5 opacity-0 group-hover:opacity-100 hover:bg-destructive/10 rounded transition-all"
                 >
                   <Trash2 className="h-4 w-4 text-destructive" />
