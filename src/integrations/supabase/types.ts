@@ -271,6 +271,65 @@ export type Database = {
         }
         Relationships: []
       }
+      goal_items: {
+        Row: {
+          card_id: string | null
+          created_at: string
+          estimated_cost: number
+          expense_id: string | null
+          goal_id: string
+          id: string
+          is_purchased: boolean
+          name: string
+          notes: string | null
+          payment_method: string
+          planned_month: string
+          purchased_at: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          card_id?: string | null
+          created_at?: string
+          estimated_cost?: number
+          expense_id?: string | null
+          goal_id: string
+          id?: string
+          is_purchased?: boolean
+          name: string
+          notes?: string | null
+          payment_method?: string
+          planned_month: string
+          purchased_at?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          card_id?: string | null
+          created_at?: string
+          estimated_cost?: number
+          expense_id?: string | null
+          goal_id?: string
+          id?: string
+          is_purchased?: boolean
+          name?: string
+          notes?: string | null
+          payment_method?: string
+          planned_month?: string
+          purchased_at?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "goal_items_goal_id_fkey"
+            columns: ["goal_id"]
+            isOneToOne: false
+            referencedRelation: "big_purchase_goals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       incomes: {
         Row: {
           amount: number
