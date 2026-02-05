@@ -197,12 +197,7 @@ const ExpensesList = () => {
           <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground mt-1">
             <span className="text-success">Bank: {formatCurrency(bankTransferExpenses)}</span>
             <span className="text-warning">CC Debit: {formatCurrency(creditCardDebitTotal)}</span>
-            {plannedCreditCardExpenses > 0 && (
-              <span className="text-muted-foreground">(Planned CC: {formatCurrency(plannedCreditCardExpenses)})</span>
-            )}
-            {predictedExpenses > 0 && (
-              <span className="text-muted-foreground">Predicted: {formatCurrency(predictedExpenses)}</span>
-            )}
+            <span className="text-primary">Planned CC: {formatCurrency(plannedCreditCardExpenses)}</span>
           </div>
         </div>
         <Dialog open={isOpen} onOpenChange={(open) => { setIsOpen(open); if (!open) resetForm(); }}>
