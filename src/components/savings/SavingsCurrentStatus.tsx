@@ -87,13 +87,14 @@ const SavingsCurrentStatus = () => {
 
   // Total monthly deposits from recurring savings templates (active ones)
   const activeRecurringSavings = recurringSavings.filter(rs => rs.is_active);
-  const totalRecurringDeposits = activeRecurringSavings
+  // Calculate recurring totals in ILS
+  const totalRecurringDepositsILS = activeRecurringSavings
     .filter(rs => rs.action_type === 'deposit')
-    .reduce((sum, rs) => sum + Number(rs.default_amount), 0);
-  const totalRecurringWithdrawals = activeRecurringSavings
+    .reduce((sum, rs) => sum + convertToILS(Number(rs.default_amount), rs.currency || 'ILS'), 0);
+  const totalRecurringWithdrawalsILS = activeRecurringSavings
     .filter(rs => rs.action_type === 'withdrawal')
-    .reduce((sum, rs) => sum + Number(rs.default_amount), 0);
-  const netRecurringMonthly = totalRecurringDeposits - totalRecurringWithdrawals;
+    .reduce((sum, rs) => sum + convertToILS(Number(rs.default_amount), rs.currency || 'ILS'), 0);
+  const netRecurringMonthlyILS = totalRecurringDepositsILS - totalRecurringWithdrawalsILS;
 
   const resetForm = () => {
     setFormData({
@@ -156,9 +157,9 @@ const SavingsCurrentStatus = () => {
           <p className="text-lg font-bold">{formatCurrency(totalPortfolioValue)}</p>
           <p className="text-xs text-muted-foreground mt-1">
             {uniqueSavingsWithRecurring.length} account{uniqueSavingsWithRecurring.length !== 1 ? 's' : ''}
-            {netRecurringMonthly !== 0 && (
-              <span className={netRecurringMonthly > 0 ? "text-success ml-2" : "text-destructive ml-2"}>
-                {netRecurringMonthly > 0 ? '+' : ''}{formatCurrency(netRecurringMonthly)}/mo recurring
+            {netRecurringMonthlyILS !== 0 && (
+              <span className={netRecurringMonthlyILS > 0 ? "text-success ml-2" : "text-destructive ml-2"}>
+                {netRecurringMonthlyILS > 0 ? '+' : ''}{formatCurrency(netRecurringMonthlyILS)}/mo recurring
               </span>
             )}
           </p>
