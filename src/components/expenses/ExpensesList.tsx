@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { format } from 'date-fns';
+import { useNavigate } from 'react-router-dom';
 import { useFinance, Expense } from '@/contexts/FinanceContext';
 import { useExpenseCategories } from '@/hooks/useExpenseCategories';
 import { useGoalItems } from '@/hooks/useGoalItems';
 import { formatCurrency, formatDate } from '@/lib/formatters';
 import { isDateUpToToday, isCurrentMonth } from '@/lib/dateUtils';
-import { Plus, Trash2, CreditCard, Building2, Repeat, Pencil, CalendarIcon, Tag } from 'lucide-react';
+import { Plus, Trash2, CreditCard, Building2, Repeat, Pencil, CalendarIcon, Tag, Target } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -28,6 +29,7 @@ import {
 import { cn } from '@/lib/utils';
 
 const ExpensesList = () => {
+  const navigate = useNavigate();
   const { expenses, currentMonth, addExpense, updateExpense, deleteExpense } = useFinance();
   const { categories, addCategory, isAddingCategory } = useExpenseCategories();
   const { goalItems } = useGoalItems();
@@ -200,6 +202,7 @@ const ExpensesList = () => {
     debit_from_credit_card: 'bg-warning/20 text-warning',
     budget: 'bg-accent/20 text-accent-foreground',
     goal: 'bg-primary/20 text-primary',
+    planned: 'bg-chart-4/20 text-chart-4',
     other: 'bg-muted text-muted-foreground',
   };
 
@@ -209,6 +212,19 @@ const ExpensesList = () => {
       categoryColors[cat.name] = 'bg-primary/20 text-primary';
     }
   });
+
+  // Check if an expense is from a goal purchase
+  const isGoalExpense = (expense: Expense) => {
+    return expense.category === 'planned' && goalItems.some(
+      item => item.is_purchased && item.name === expense.description
+    );
+  };
+
+  const handleExpenseClick = (expense: Expense) => {
+    if (isGoalExpense(expense)) {
+      navigate('/goals');
+    }
+  };
 
   return (
     <div className="glass rounded-xl p-5 shadow-card animate-slide-up">
@@ -412,14 +428,25 @@ const ExpensesList = () => {
             No expenses this month
           </p>
         ) : (
-          monthlyExpenses.map((expense) => (
+          monthlyExpenses.map((expense) => {
+            const isFromGoal = isGoalExpense(expense);
+            return (
             <div
               key={expense.id}
-              className="flex items-center justify-between p-3 rounded-lg bg-secondary/30 interactive-card group"
+              onClick={() => handleExpenseClick(expense)}
+              className={cn(
+                "flex items-center justify-between p-3 rounded-lg bg-secondary/30 interactive-card group",
+                isFromGoal && "cursor-pointer hover:bg-secondary/50"
+              )}
             >
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-secondary">
-                  {expense.payment_method === 'credit_card' ? (
+                <div className={cn(
+                  "p-2 rounded-lg",
+                  isFromGoal ? "bg-chart-4/20" : "bg-secondary"
+                )}>
+                  {isFromGoal ? (
+                    <Target className="h-4 w-4 text-chart-4" />
+                  ) : expense.payment_method === 'credit_card' ? (
                     <CreditCard className="h-4 w-4 text-muted-foreground" />
                   ) : (
                     <Building2 className="h-4 w-4 text-muted-foreground" />
@@ -430,6 +457,9 @@ const ExpensesList = () => {
                     <p className="text-sm font-medium">{expense.description}</p>
                     {expense.recurring_type && (
                       <Repeat className="h-3 w-3 text-muted-foreground" />
+                    )}
+                    {isFromGoal && (
+                      <span className="text-xs text-chart-4">→ Goals</span>
                     )}
                   </div>
                   <div className="flex items-center gap-2 flex-wrap">
@@ -483,7 +513,8 @@ const ExpensesList = () => {
                 </button>
               </div>
             </div>
-          ))
+            );
+          })
         )}
       </div>
     </div>
