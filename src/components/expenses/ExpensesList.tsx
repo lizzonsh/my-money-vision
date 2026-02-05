@@ -206,10 +206,13 @@ const ExpensesList = () => {
           <h3 className="font-semibold">Expenses</h3>
           <p className="text-lg font-bold">{formatCurrency(effectiveTotal)}</p>
           <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground mt-1">
-            <span className="text-success" title="Paid bank transfers">🏦 Paid: {formatCurrency(paidBankTransferExpenses)}</span>
-            <span className="text-success/70" title="Planned bank transfers">🏦 Planned: {formatCurrency(plannedBankTransferExpenses)}</span>
-            <span className="text-warning" title="Credit card debits">💳 Debit: {formatCurrency(creditCardDebitTotal)}</span>
-            <span className="text-primary" title="Planned credit card expenses">💳 Planned: {formatCurrency(plannedCreditCardExpenses)}</span>
+            <span className="text-success">Bank Paid: {formatCurrency(paidBankTransferExpenses)}</span>
+            <span className="text-warning">CC Debit: {formatCurrency(creditCardDebitTotal)}</span>
+          </div>
+          <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs mt-1 p-2 rounded bg-secondary/50">
+            <span className="font-medium text-muted-foreground">Planned:</span>
+            <span className="text-success/80">Bank: {formatCurrency(plannedBankTransferExpenses)}</span>
+            <span className="text-primary">CC: {formatCurrency(plannedCreditCardExpenses)}</span>
           </div>
         </div>
         <Dialog open={isOpen} onOpenChange={(open) => { setIsOpen(open); if (!open) resetForm(); }}>
@@ -439,7 +442,7 @@ const ExpensesList = () => {
                         ? 'bg-warning/20 text-warning' 
                         : 'bg-muted text-muted-foreground'
                     )}>
-                      {expense.kind === 'planned' ? '📋 Planned' : '✓ Paid'}
+                      {expense.kind === 'planned' ? 'Planned' : 'Paid'}
                     </span>
                   </div>
                 </div>
