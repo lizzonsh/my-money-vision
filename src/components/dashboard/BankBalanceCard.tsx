@@ -219,14 +219,15 @@ const BankBalanceCard = () => {
   };
 
   // Apply prediction to next month - distribute proportionally across accounts
+  // Uses finalPredictedBalance (includes remaining budget subtraction) to match displayed value
   const handleApplyPredictionToNextMonth = () => {
-    const { nextMonth, predictedBalance } = nextMonthPrediction;
+    const { nextMonth } = nextMonthPrediction;
     const currentTotal = displayTotal || 1; // Avoid division by zero
     
     accounts.forEach(account => {
       const accountBalance = getAccountBalanceForMonth(account.id, account.current_balance);
       const proportion = accountBalance / currentTotal;
-      const newBalance = predictedBalance * proportion;
+      const newBalance = finalPredictedBalance * proportion;
       
       upsertBalanceHistory({
         bank_account_id: account.id,
