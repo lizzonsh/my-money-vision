@@ -199,6 +199,10 @@ const BankBalanceCard = () => {
     };
   }, [currentMonth, projectedBalance, recurringIncomes, recurringSavings, recurringPayments, currentMonthCCExpenses]);
 
+  // Final predicted balance after accounting for remaining budget to be spent
+  const finalPredictedBalance = nextMonthPrediction.predictedBalance - calculatedBudget.leftBudget;
+  const finalBalanceChange = finalPredictedBalance - nextMonthPrediction.startingBalance;
+
   const formatNextMonth = (month: string) => {
     const [year, monthNum] = month.split('-').map(Number);
     const date = new Date(year, monthNum - 1, 1);
@@ -595,14 +599,14 @@ const BankBalanceCard = () => {
             <ArrowRight className="h-4 w-4 text-muted-foreground flex-shrink-0" />
             <div className={cn(
               "flex-1 p-2 rounded text-center",
-              nextMonthPrediction.balanceChange >= 0 ? "bg-success/10" : "bg-destructive/10"
+              finalBalanceChange >= 0 ? "bg-success/10" : "bg-destructive/10"
             )}>
               <p className="text-[10px] text-muted-foreground">Predicted</p>
               <p className={cn(
                 "font-medium",
-                nextMonthPrediction.balanceChange >= 0 ? "text-success" : "text-destructive"
+                finalBalanceChange >= 0 ? "text-success" : "text-destructive"
               )}>
-                {formatCurrency(nextMonthPrediction.predictedBalance)}
+                {formatCurrency(finalPredictedBalance)}
               </p>
             </div>
           </div>
@@ -627,6 +631,10 @@ const BankBalanceCard = () => {
               <span>- CC Debit (incl. pending)</span>
               <span className="text-destructive">-{formatCurrency(nextMonthPrediction.totalCreditCardDebit)}</span>
             </div>
+            <div className="flex justify-between">
+              <span>- Remaining Budget</span>
+              <span className="text-warning">-{formatCurrency(calculatedBudget.leftBudget)}</span>
+            </div>
           </div>
           
           {/* Apply Button */}
@@ -641,7 +649,7 @@ const BankBalanceCard = () => {
           </Button>
           
           <p className="text-[10px] text-muted-foreground text-center">
-            Based on active recurring transactions
+            Based on recurring transactions and remaining budget
           </p>
         </div>
         
