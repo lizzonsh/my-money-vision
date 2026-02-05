@@ -28,7 +28,7 @@ const BudgetProgress = () => {
 
   const { spentBudget, leftBudget, dailyLimit, plannedCreditCardExpenses, plannedGoalCreditCardExpenses } = calculatedBudget;
   
-  // Progress shows CC debits (spentBudget) against the defined budget
+  // Progress shows total spent against the defined budget
   const percentage = totalBudget > 0 ? Math.min((spentBudget / totalBudget) * 100, 100) : 0;
   const isOverBudget = leftBudget < 0;
 
