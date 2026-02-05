@@ -1,43 +1,17 @@
- import { useState } from 'react';
- import ExpensesList from '@/components/expenses/ExpensesList';
- import RecurringPaymentsPanel from '@/components/expenses/RecurringPaymentsPanel';
- import BudgetProgress from '@/components/dashboard/BudgetProgress';
- import MonthNavigation from '@/components/navigation/MonthNavigation';
- import PlannedGoalsPanel from '@/components/expenses/PlannedGoalsPanel';
- import { SpendingByCategoryChart } from '@/components/charts/FinanceCharts';
- import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
- import {
-   ResizablePanelGroup,
-   ResizablePanel,
-   ResizableHandle,
- } from '@/components/ui/resizable';
- import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
- import { GripVertical } from 'lucide-react';
- 
- interface PanelConfig {
-   id: string;
-   title: string;
-   component: React.ReactNode;
- }
+import ExpensesList from '@/components/expenses/ExpensesList';
+import RecurringPaymentsPanel from '@/components/expenses/RecurringPaymentsPanel';
+import BudgetProgress from '@/components/dashboard/BudgetProgress';
+import MonthNavigation from '@/components/navigation/MonthNavigation';
+import PlannedGoalsPanel from '@/components/expenses/PlannedGoalsPanel';
+import { SpendingByCategoryChart } from '@/components/charts/FinanceCharts';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  ResizablePanelGroup,
+  ResizablePanel,
+  ResizableHandle,
+} from '@/components/ui/resizable';
 
 const ExpensesPage = () => {
-  const [panelOrder, setPanelOrder] = useState<string[]>(['expenses', 'budget', 'goals', 'chart']);
-
-  const panels: Record<string, PanelConfig> = {
-    expenses: { id: 'expenses', title: 'Expenses', component: <ExpensesList /> },
-    budget: { id: 'budget', title: 'Budget', component: <BudgetProgress /> },
-    goals: { id: 'goals', title: 'Goals', component: <PlannedGoalsPanel /> },
-    chart: { id: 'chart', title: 'Spending Chart', component: <SpendingByCategoryChart /> },
-  };
-
-  const handleDragEnd = (result: DropResult) => {
-    if (!result.destination) return;
-    const items = Array.from(panelOrder);
-    const [reorderedItem] = items.splice(result.source.index, 1);
-    items.splice(result.destination.index, 0, reorderedItem);
-    setPanelOrder(items);
-  };
-
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -55,52 +29,28 @@ const ExpensesPage = () => {
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
-          <ResizablePanelGroup direction="horizontal" className="min-h-[600px] rounded-lg">
-            <ResizablePanel defaultSize={60} minSize={30}>
-              <div className="h-full p-1">
+          <ResizablePanelGroup direction="vertical" className="min-h-[800px] rounded-lg">
+            <ResizablePanel defaultSize={45} minSize={20}>
+              <div className="h-full p-1 overflow-auto">
                 <ExpensesList />
               </div>
             </ResizablePanel>
             <ResizableHandle withHandle />
-            <ResizablePanel defaultSize={40} minSize={25}>
-              <div className="h-full p-1">
-                <DragDropContext onDragEnd={handleDragEnd}>
-                  <Droppable droppableId="side-panels">
-                    {(provided) => (
-                      <div
-                        {...provided.droppableProps}
-                        ref={provided.innerRef}
-                        className="space-y-4"
-                      >
-                        {panelOrder.filter(id => id !== 'expenses').map((panelId, index) => {
-                          const panel = panels[panelId];
-                          if (!panel) return null;
-                          return (
-                            <Draggable key={panel.id} draggableId={panel.id} index={index}>
-                              {(provided, snapshot) => (
-                                <div
-                                  ref={provided.innerRef}
-                                  {...provided.draggableProps}
-                                  className={`relative ${snapshot.isDragging ? 'z-50 opacity-90' : ''}`}
-                                >
-                                  <div
-                                    {...provided.dragHandleProps}
-                                    className="absolute -left-1 top-4 p-1 cursor-grab active:cursor-grabbing hover:bg-secondary/50 rounded transition-colors z-10"
-                                    title="Drag to reorder"
-                                  >
-                                    <GripVertical className="h-4 w-4 text-muted-foreground" />
-                                  </div>
-                                  {panel.component}
-                                </div>
-                              )}
-                            </Draggable>
-                          );
-                        })}
-                        {provided.placeholder}
-                      </div>
-                    )}
-                  </Droppable>
-                </DragDropContext>
+            <ResizablePanel defaultSize={20} minSize={10}>
+              <div className="h-full p-1 overflow-auto">
+                <BudgetProgress />
+              </div>
+            </ResizablePanel>
+            <ResizableHandle withHandle />
+            <ResizablePanel defaultSize={15} minSize={10}>
+              <div className="h-full p-1 overflow-auto">
+                <PlannedGoalsPanel />
+              </div>
+            </ResizablePanel>
+            <ResizableHandle withHandle />
+            <ResizablePanel defaultSize={20} minSize={10}>
+              <div className="h-full p-1 overflow-auto">
+                <SpendingByCategoryChart />
               </div>
             </ResizablePanel>
           </ResizablePanelGroup>
