@@ -28,20 +28,28 @@ const SavingsPage = () => {
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
-          <ResizablePanelGroup direction="vertical" className="min-h-[700px] rounded-lg">
-            <ResizablePanel defaultSize={35} minSize={20}>
-              <div className="h-full p-1 overflow-auto">
-                <SavingsCurrentStatus />
-              </div>
+          <ResizablePanelGroup direction="horizontal" className="min-h-[700px] rounded-lg">
+            {/* Left side - vertically resizable */}
+            <ResizablePanel defaultSize={60} minSize={30}>
+              <ResizablePanelGroup direction="vertical" className="h-full">
+                <ResizablePanel defaultSize={50} minSize={25}>
+                  <div className="h-full p-1 overflow-auto">
+                    <SavingsCurrentStatus />
+                  </div>
+                </ResizablePanel>
+                <ResizableHandle withHandle />
+                <ResizablePanel defaultSize={50} minSize={25}>
+                  <div className="h-full p-1 overflow-auto">
+                    <SavingsMonthlyActivity />
+                  </div>
+                </ResizablePanel>
+              </ResizablePanelGroup>
             </ResizablePanel>
+            
             <ResizableHandle withHandle />
-            <ResizablePanel defaultSize={35} minSize={20}>
-              <div className="h-full p-1 overflow-auto">
-                <SavingsMonthlyActivity />
-              </div>
-            </ResizablePanel>
-            <ResizableHandle withHandle />
-            <ResizablePanel defaultSize={30} minSize={15}>
+            
+            {/* Right side - Growth Chart */}
+            <ResizablePanel defaultSize={40} minSize={25}>
               <div className="h-full p-1 overflow-auto">
                 <SavingsGrowthChart />
               </div>
