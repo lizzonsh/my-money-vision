@@ -127,14 +127,17 @@ const BudgetProgress = () => {
         <div>
           <div className="flex justify-between text-sm mb-2">
             <span className="text-muted-foreground">Budget / Spent</span>
-            <span className={isOverBudget ? 'text-destructive' : ''}>
-              {formatCurrency(totalBudget)} / {formatCurrency(spentBudget)}
+            <span className={isOverBudget ? 'text-destructive' : spentBudget < 0 ? 'text-warning' : ''}>
+              {formatCurrency(totalBudget)} / {spentBudget < 0 ? `(${formatCurrency(Math.abs(spentBudget))})` : formatCurrency(spentBudget)}
             </span>
           </div>
           <Progress 
             value={Math.abs(percentage)} 
-            className={`h-3 ${isOverBudget ? '[&>div]:bg-destructive' : '[&>div]:bg-primary'}`}
+            className={`h-3 ${isOverBudget ? '[&>div]:bg-destructive' : spentBudget < 0 ? '[&>div]:bg-warning' : '[&>div]:bg-primary'}`}
           />
+          {spentBudget < 0 && (
+            <p className="text-xs text-warning mt-1">Not all planned payments included in debit yet</p>
+          )}
         </div>
         
         <div className="grid grid-cols-2 gap-4 pt-2">
