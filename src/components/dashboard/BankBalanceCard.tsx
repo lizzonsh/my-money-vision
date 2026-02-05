@@ -3,6 +3,7 @@ import { useMemo } from 'react';
 import { useFinance } from '@/contexts/FinanceContext';
 import { formatCurrency, formatMonth } from '@/lib/formatters';
 import { isDateUpToToday, isCurrentMonth } from '@/lib/dateUtils';
+import { convertToILS } from '@/lib/currencyUtils';
 import { Building2, Pencil, Plus, Trash2, History, Save, ArrowDownRight, ArrowUpRight, PiggyBank, CreditCard, TrendingUp, CalendarIcon, ArrowRight, Sparkles } from 'lucide-react';
 import { Wallet } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -130,11 +131,19 @@ const BankBalanceCard = () => {
   // Savings deposits - include entries with action='deposit' OR entries with action_amount but no action
   const savingsDeposits = monthlySavings
     .filter(s => s.action === 'deposit' || (!s.action && (s.action_amount || s.monthly_deposit)))
-    .reduce((sum, s) => sum + Number(s.action_amount || s.monthly_deposit || 0), 0);
+    .reduce(
+      (sum, s) =>
+        sum +
+        convertToILS(
+          Number(s.action_amount || s.monthly_deposit || 0),
+          s.currency || 'ILS'
+        ),
+      0
+    );
   
   const savingsWithdrawals = monthlySavings
     .filter(s => s.action === 'withdrawal')
-    .reduce((sum, s) => sum + Number(s.action_amount || 0), 0);
+    .reduce((sum, s) => sum + convertToILS(Number(s.action_amount || 0), s.currency || 'ILS'), 0);
 
   // Calculate projected balance using current month incomes
   const netChange = currentMonthIncomes - monthlyExpensesPaid - savingsDeposits + savingsWithdrawals;
