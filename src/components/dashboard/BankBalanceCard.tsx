@@ -642,9 +642,6 @@ const BankBalanceCard = () => {
         {/* Goal Scenarios */}
         <GoalScenarioComparison
           projectedBalance={projectedBalance}
-          recurringIncomes={recurringIncomes}
-          recurringSavings={recurringSavings}
-          recurringPayments={recurringPayments}
         />
         
         <div className="p-3 border-t bg-muted/30">
