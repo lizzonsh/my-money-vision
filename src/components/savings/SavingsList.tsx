@@ -23,7 +23,7 @@ import {
 import { cn } from '@/lib/utils';
 
 const SavingsList = () => {
-  const { savings, currentMonth, addSavings, updateSavings, deleteSavings, closeSavingsAccount } = useFinance();
+  const { savings, recurringSavings, currentMonth, addSavings, updateSavings, deleteSavings, closeSavingsAccount, addRecurringSavings, updateRecurringSavings } = useFinance();
   const [isOpen, setIsOpen] = useState(false);
   const [editingSaving, setEditingSaving] = useState<Savings | null>(null);
   const [formData, setFormData] = useState({
@@ -101,6 +101,9 @@ const SavingsList = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const today = new Date();
+    const actionAmount = formData.actionAmount ? parseFloat(formData.actionAmount) : null;
+    const isDeposit = formData.action === 'deposit';
+    
     const savingData = {
       month: `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`,
       name: formData.name,
@@ -109,10 +112,10 @@ const SavingsList = () => {
       transfer_method: formData.transferMethod as 'bank_account' | 'credit_card',
       card_id: formData.cardId || null,
       action: formData.action as 'deposit' | 'withdrawal',
-      action_amount: formData.actionAmount ? parseFloat(formData.actionAmount) : null,
-      monthly_deposit: formData.action === 'deposit' && formData.actionAmount ? parseFloat(formData.actionAmount) : null,
-      recurring_type: formData.action === 'deposit' && formData.actionAmount ? 'monthly' as const : null,
-      recurring_day_of_month: formData.action === 'deposit' && formData.actionAmount ? 15 : null,
+      action_amount: actionAmount,
+      monthly_deposit: isDeposit && actionAmount ? actionAmount : null,
+      recurring_type: isDeposit && actionAmount ? 'monthly' as const : null,
+      recurring_day_of_month: isDeposit && actionAmount ? 15 : null,
       closed_at: null,
     };
 
@@ -121,6 +124,37 @@ const SavingsList = () => {
     } else {
       addSavings(savingData);
     }
+
+    // Sync with recurring savings template if a monthly deposit is set
+    if (actionAmount && actionAmount > 0) {
+      const existingRecurring = recurringSavings.find(rs => rs.name === formData.name);
+      
+      if (existingRecurring) {
+        // Update existing recurring savings template
+        updateRecurringSavings({
+          id: existingRecurring.id,
+          default_amount: actionAmount,
+          action_type: formData.action as 'deposit' | 'withdrawal',
+          transfer_method: formData.transferMethod as 'bank_account' | 'credit_card',
+          card_id: formData.cardId || null,
+          is_active: true,
+        });
+      } else {
+        // Create new recurring savings template
+        addRecurringSavings({
+          name: formData.name,
+          default_amount: actionAmount,
+          action_type: formData.action as 'deposit' | 'withdrawal',
+          transfer_method: formData.transferMethod as 'bank_account' | 'credit_card',
+          card_id: formData.cardId || null,
+          day_of_month: 15,
+          is_active: true,
+          notes: null,
+          end_date: null,
+        });
+      }
+    }
+
     resetForm();
     setIsOpen(false);
   };
