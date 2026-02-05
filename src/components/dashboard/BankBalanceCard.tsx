@@ -4,6 +4,7 @@ import { useFinance } from '@/contexts/FinanceContext';
 import { formatCurrency, formatMonth } from '@/lib/formatters';
 import { isDateUpToToday, isCurrentMonth } from '@/lib/dateUtils';
 import { Building2, Pencil, Plus, Trash2, History, Save, ArrowDownRight, ArrowUpRight, PiggyBank, CreditCard, TrendingUp, CalendarIcon, ArrowRight, Sparkles } from 'lucide-react';
+import { Wallet } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -46,6 +47,8 @@ const BankBalanceCard = () => {
     recurringSavings,
     recurringPayments,
     bankAccounts: accounts,
+    calculatedBudget,
+    getBudgetForMonth,
   } = useFinance();
   
   const [isAddOpen, setIsAddOpen] = useState(false);
@@ -530,6 +533,26 @@ const BankBalanceCard = () => {
                 <span>Savings Withdrawals</span>
               </div>
               <span className="text-success font-medium">+{formatCurrency(savingsWithdrawals)}</span>
+            </div>
+          )}
+          
+          {/* Budget Spent Section */}
+          {getBudgetForMonth(currentMonth) && (
+            <div className="flex items-center justify-between text-sm py-1 mt-2 pt-2 border-t border-dashed">
+              <div className="flex items-center gap-2">
+                <div className="p-1 rounded bg-warning/20">
+                  <Wallet className="h-3 w-3 text-warning" />
+                </div>
+                <div>
+                  <span>Budget Spent</span>
+                  <p className="text-[10px] text-muted-foreground">
+                    {formatCurrency(calculatedBudget.leftBudget)} remaining
+                  </p>
+                </div>
+              </div>
+              <span className="text-warning font-medium">
+                {formatCurrency(calculatedBudget.spentBudget)} / {formatCurrency(getBudgetForMonth(currentMonth)?.total_budget || 0)}
+              </span>
             </div>
           )}
           
