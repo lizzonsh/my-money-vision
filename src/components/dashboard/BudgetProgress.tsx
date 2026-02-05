@@ -27,7 +27,10 @@ const BudgetProgress = () => {
   const totalBudget = budget ? Number(budget.total_budget) : 0;
 
   const { spentBudget, leftBudget, dailyLimit, plannedCreditCardExpenses } = calculatedBudget;
-  const percentage = totalBudget > 0 ? Math.min((spentBudget / totalBudget) * 100, 100) : 0;
+  
+  // Total available = defined budget + planned CC expenses
+  const totalAvailable = totalBudget + plannedCreditCardExpenses;
+  const percentage = totalAvailable > 0 ? Math.min((spentBudget / totalAvailable) * 100, 100) : 0;
   const isOverBudget = leftBudget < 0;
 
   const today = new Date();
@@ -134,7 +137,7 @@ const BudgetProgress = () => {
           <div className="flex justify-between text-sm mb-2">
             <span className="text-muted-foreground">Spent</span>
             <span className={isOverBudget ? 'text-destructive' : ''}>
-              {formatCurrency(Math.abs(spentBudget))} / {formatCurrency(totalBudget)}
+              {formatCurrency(Math.abs(spentBudget))} / {formatCurrency(totalAvailable)}
             </span>
           </div>
           <Progress 
@@ -161,8 +164,7 @@ const BudgetProgress = () => {
 
         {plannedCreditCardExpenses > 0 && (
           <div className="text-xs text-muted-foreground text-center pt-2 p-2 rounded bg-warning/10 border border-warning/20">
-            <span className="text-warning font-medium">Planned CC: {formatCurrency(plannedCreditCardExpenses)}</span>
-            <span className="ml-1">(included in remaining)</span>
+            <span className="text-warning font-medium">Budget: {formatCurrency(totalBudget)} + Planned CC: {formatCurrency(plannedCreditCardExpenses)}</span>
           </div>
         )}
 
