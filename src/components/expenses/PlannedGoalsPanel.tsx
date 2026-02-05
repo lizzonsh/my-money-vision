@@ -1,12 +1,14 @@
- import { useFinance } from '@/contexts/FinanceContext';
- import { useGoalItems, GoalItem } from '@/hooks/useGoalItems';
- import { formatCurrency, formatMonth } from '@/lib/formatters';
- import { Target, CreditCard, Building2 } from 'lucide-react';
- import { cn } from '@/lib/utils';
+import { useNavigate } from 'react-router-dom';
+import { useFinance } from '@/contexts/FinanceContext';
+import { useGoalItems, GoalItem } from '@/hooks/useGoalItems';
+import { formatCurrency, formatMonth } from '@/lib/formatters';
+import { Target, CreditCard, Building2 } from 'lucide-react';
+import { cn } from '@/lib/utils';
  
- const PlannedGoalsPanel = () => {
-   const { currentMonth } = useFinance();
-   const { goalItems } = useGoalItems();
+const PlannedGoalsPanel = () => {
+  const navigate = useNavigate();
+  const { currentMonth } = useFinance();
+  const { goalItems } = useGoalItems();
  
    // Get unpurchased goal items planned for current month
    const plannedGoalItems = goalItems.filter(
@@ -62,10 +64,11 @@
            </p>
          ) : (
            plannedGoalItems.map((item) => (
-             <div
-               key={item.id}
-               className="flex items-center justify-between p-3 rounded-lg bg-primary/10 border border-primary/20 interactive-card group"
-             >
+              <div
+                key={item.id}
+                onClick={() => navigate('/goals')}
+                className="flex items-center justify-between p-3 rounded-lg bg-primary/10 border border-primary/20 interactive-card group cursor-pointer hover:bg-primary/20 transition-colors"
+              >
                <div className="flex items-center gap-3">
                  <div className="p-2 rounded-lg bg-primary/20 group-hover:scale-110 transition-transform">
                    <Target className="h-4 w-4 text-primary" />
