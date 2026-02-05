@@ -7,11 +7,6 @@ import { useFinance } from '@/contexts/FinanceContext';
 import { formatCurrency } from '@/lib/formatters';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
-  ResizablePanelGroup,
-  ResizablePanel,
-  ResizableHandle,
-} from '@/components/ui/resizable';
-import {
   AreaChart,
   Area,
   XAxis,
@@ -44,7 +39,7 @@ const IncomeTrendChart = () => {
   }, [incomes, currentMonth]);
 
   return (
-    <div className="glass rounded-xl p-5 shadow-card animate-slide-up h-full">
+    <div className="glass rounded-xl p-5 shadow-card animate-slide-up">
       <h3 className="font-semibold mb-4">Income Trend</h3>
       <div className="h-64">
         <ResponsiveContainer width="100%" height="100%">
@@ -111,23 +106,17 @@ const IncomePage = () => {
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
-          <ResizablePanelGroup direction="horizontal" className="min-h-[700px] rounded-lg">
+          <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
             {/* Main content - Income List */}
-            <ResizablePanel defaultSize={60} minSize={30}>
-              <div className="h-full p-1 overflow-auto">
-                <IncomesList />
-              </div>
-            </ResizablePanel>
-            
-            <ResizableHandle withHandle />
+            <div className="lg:col-span-3">
+              <IncomesList />
+            </div>
             
             {/* Side panel - Income Trend Chart */}
-            <ResizablePanel defaultSize={40} minSize={25}>
-              <div className="h-full p-1 overflow-auto">
-                <IncomeTrendChart />
-              </div>
-            </ResizablePanel>
-          </ResizablePanelGroup>
+            <div className="lg:col-span-2">
+              <IncomeTrendChart />
+            </div>
+          </div>
         </TabsContent>
 
         <TabsContent value="defaults">
