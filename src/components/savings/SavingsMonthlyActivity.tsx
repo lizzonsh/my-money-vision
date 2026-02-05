@@ -85,6 +85,7 @@ const SavingsMonthlyActivity = () => {
       .filter(s => (s.action_amount && s.action_amount > 0) || (s.monthly_deposit && s.monthly_deposit > 0))
       .map(s => {
         const hasActionAmount = s.action_amount && s.action_amount > 0;
+        console.log('[SavingsMonthlyActivity] Activity item:', s.name, 'action_amount:', s.action_amount, 'currency:', s.currency);
         return {
           id: s.id,
           name: s.name,
