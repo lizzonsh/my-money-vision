@@ -189,3 +189,84 @@
     opacity: 0.7;
   }
 }
+
+/* Custom Scrollbar Styling */
+@layer utilities {
+  .custom-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--border)) transparent;
+  }
+  
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+    border-radius: 10px;
+  }
+  
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: hsl(var(--border));
+    border-radius: 10px;
+    border: 2px solid transparent;
+    background-clip: content-box;
+  }
+  
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-foreground));
+    border: 2px solid transparent;
+    background-clip: content-box;
+  }
+
+  /* Interactive hover enhancements */
+  .hover-lift {
+    @apply transition-all duration-200 ease-out;
+  }
+  
+  .hover-lift:hover {
+    @apply -translate-y-0.5 shadow-lg;
+  }
+  
+  .hover-glow {
+    @apply transition-all duration-200;
+  }
+  
+  .hover-glow:hover {
+    box-shadow: 0 0 20px -5px hsl(var(--primary) / 0.3);
+  }
+  
+  .interactive-card {
+    @apply transition-all duration-200 ease-out cursor-pointer;
+  }
+  
+  .interactive-card:hover {
+    @apply bg-secondary/60 -translate-y-0.5;
+  }
+}
+
+/* Apply scrollbar to all scrollable elements */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--border)) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+  border-radius: 10px;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: hsl(var(--border));
+  border-radius: 10px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground));
+}

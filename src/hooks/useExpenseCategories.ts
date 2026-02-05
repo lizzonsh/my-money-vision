@@ -25,6 +25,7 @@ export const DEFAULT_CATEGORIES = [
   { name: 'vacation', label: 'Vacation', color: 'hsl(var(--chart-5))' },
   { name: 'debit_from_credit_card', label: 'Debit from Credit Card', color: 'hsl(var(--warning))' },
   { name: 'budget', label: 'Budget', color: 'hsl(var(--accent))' },
+  { name: 'goal', label: 'Goal', color: 'hsl(var(--primary))' },
   { name: 'other', label: 'Other', color: 'hsl(var(--muted))' },
 ];
 

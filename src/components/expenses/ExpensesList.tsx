@@ -189,6 +189,7 @@ const ExpensesList = () => {
     vacation: 'bg-chart-5/20 text-chart-5',
     debit_from_credit_card: 'bg-warning/20 text-warning',
     budget: 'bg-accent/20 text-accent-foreground',
+    goal: 'bg-primary/20 text-primary',
     other: 'bg-muted text-muted-foreground',
   };
 
@@ -391,7 +392,7 @@ const ExpensesList = () => {
         </Dialog>
       </div>
 
-      <div className="space-y-2 max-h-80 overflow-y-auto">
+      <div className="space-y-2 max-h-80 overflow-y-auto custom-scrollbar">
         {monthlyExpenses.length === 0 ? (
           <p className="text-sm text-muted-foreground text-center py-4">
             No expenses this month
@@ -400,7 +401,7 @@ const ExpensesList = () => {
           monthlyExpenses.map((expense) => (
             <div
               key={expense.id}
-              className="flex items-center justify-between p-3 rounded-lg bg-secondary/30 hover:bg-secondary/50 transition-colors group"
+              className="flex items-center justify-between p-3 rounded-lg bg-secondary/30 interactive-card group"
             >
               <div className="flex items-center gap-3">
                 <div className="p-2 rounded-lg bg-secondary">
