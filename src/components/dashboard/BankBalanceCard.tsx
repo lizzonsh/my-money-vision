@@ -1,8 +1,9 @@
 import { useState } from 'react';
+import { useMemo } from 'react';
 import { useFinance } from '@/contexts/FinanceContext';
 import { formatCurrency, formatMonth } from '@/lib/formatters';
 import { isDateUpToToday, isCurrentMonth } from '@/lib/dateUtils';
-import { Building2, Pencil, Plus, Trash2, History, Save, ArrowDownRight, ArrowUpRight, PiggyBank, CreditCard, TrendingUp, CalendarIcon } from 'lucide-react';
+import { Building2, Pencil, Plus, Trash2, History, Save, ArrowDownRight, ArrowUpRight, PiggyBank, CreditCard, TrendingUp, CalendarIcon, ArrowRight, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -41,6 +42,10 @@ const BankBalanceCard = () => {
     expenses,
     incomes,
     savings,
+    recurringIncomes,
+    recurringSavings,
+    recurringPayments,
+    bankAccounts: accounts,
   } = useFinance();
   
   const [isAddOpen, setIsAddOpen] = useState(false);
@@ -123,6 +128,95 @@ const BankBalanceCard = () => {
   // Calculate projected balance
   const netChange = monthlyIncomes - monthlyExpensesPaid - savingsDeposits + savingsWithdrawals;
   const projectedBalance = displayTotal + netChange;
+
+  // Next month prediction based on recurring transactions
+  const nextMonthPrediction = useMemo(() => {
+    const [year, monthNum] = currentMonth.split('-').map(Number);
+    const nextDate = new Date(year, monthNum, 1);
+    const nextMonth = `${nextDate.getFullYear()}-${String(nextDate.getMonth() + 1).padStart(2, '0')}`;
+    
+    // Use projected balance as starting point (current balance after this month's transactions)
+    const startingBalance = projectedBalance;
+    
+    // Active recurring incomes for next month
+    const activeRecurringIncomes = recurringIncomes
+      .filter(i => i.is_active)
+      .filter(i => !i.end_date || i.end_date >= nextMonth);
+    const nextMonthIncome = activeRecurringIncomes
+      .reduce((sum, i) => sum + Number(i.default_amount), 0);
+    
+    // Active recurring savings for next month
+    const activeRecurringSavings = recurringSavings
+      .filter(s => s.is_active)
+      .filter(s => !s.end_date || s.end_date >= nextMonth);
+    
+    const nextMonthSavingsDeposits = activeRecurringSavings
+      .filter(s => s.action_type === 'deposit')
+      .reduce((sum, s) => sum + Number(s.default_amount), 0);
+    const nextMonthSavingsWithdrawals = activeRecurringSavings
+      .filter(s => s.action_type === 'withdrawal')
+      .reduce((sum, s) => sum + Number(s.default_amount), 0);
+    
+    // Active recurring payments (credit card = debit from bank)
+    const activeRecurringPayments = recurringPayments
+      .filter(p => p.is_active)
+      .filter(p => !p.end_date || p.end_date >= nextMonth)
+      .filter(p => p.payment_method === 'credit_card');
+    const nextMonthCreditCardExpenses = activeRecurringPayments
+      .reduce((sum, p) => sum + Number(p.default_amount), 0);
+    
+    // Include pending CC expenses from current month (becomes debit next month)
+    const totalCreditCardDebit = nextMonthCreditCardExpenses + plannedCreditCardExpenses;
+    
+    const predictedBalance = startingBalance 
+      + nextMonthIncome 
+      - nextMonthSavingsDeposits 
+      + nextMonthSavingsWithdrawals 
+      - totalCreditCardDebit;
+    
+    const balanceChange = predictedBalance - startingBalance;
+    
+    return {
+      nextMonth,
+      startingBalance,
+      predictedBalance,
+      balanceChange,
+      nextMonthIncome,
+      nextMonthSavingsDeposits,
+      nextMonthSavingsWithdrawals,
+      totalCreditCardDebit,
+    };
+  }, [currentMonth, projectedBalance, recurringIncomes, recurringSavings, recurringPayments, plannedCreditCardExpenses]);
+
+  const formatNextMonth = (month: string) => {
+    const [year, monthNum] = month.split('-').map(Number);
+    const date = new Date(year, monthNum - 1, 1);
+    return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+  };
+
+  // Apply prediction to next month - distribute proportionally across accounts
+  const handleApplyPredictionToNextMonth = () => {
+    const { nextMonth, predictedBalance } = nextMonthPrediction;
+    const currentTotal = displayTotal || 1; // Avoid division by zero
+    
+    accounts.forEach(account => {
+      const accountBalance = getAccountBalanceForMonth(account.id, account.current_balance);
+      const proportion = accountBalance / currentTotal;
+      const newBalance = predictedBalance * proportion;
+      
+      upsertBalanceHistory({
+        bank_account_id: account.id,
+        month: nextMonth,
+        balance: Math.round(newBalance * 100) / 100,
+        notes: 'Predicted from recurring transactions',
+      });
+    });
+  };
+
+  // Check if next month already has history
+  const nextMonthHasHistory = accounts.some(account => 
+    getBalanceForMonth(account.id, nextMonthPrediction.nextMonth)
+  );
 
   const getAccountBalanceForMonth = (accountId: string, currentBalance: number) => {
     const history = getBalanceForMonth(accountId, currentMonth);
@@ -455,6 +549,75 @@ const BankBalanceCard = () => {
           
           <p className="text-[10px] text-muted-foreground text-center">
             Based on transactions up to today
+          </p>
+        </div>
+
+        {/* Next Month Prediction */}
+        <div className="border-t p-4 space-y-3 bg-primary/5">
+          <div className="flex items-center justify-between">
+            <h5 className="text-sm font-semibold flex items-center gap-2">
+              <Sparkles className="h-4 w-4 text-primary" />
+              Next Month Prediction
+            </h5>
+            <span className="text-xs text-muted-foreground">{formatNextMonth(nextMonthPrediction.nextMonth)}</span>
+          </div>
+          
+          {/* Prediction Flow */}
+          <div className="flex items-center gap-2 text-sm">
+            <div className="flex-1 p-2 rounded bg-muted/50 text-center">
+              <p className="text-[10px] text-muted-foreground">Starting</p>
+              <p className="font-medium">{formatCurrency(nextMonthPrediction.startingBalance)}</p>
+            </div>
+            <ArrowRight className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+            <div className={cn(
+              "flex-1 p-2 rounded text-center",
+              nextMonthPrediction.balanceChange >= 0 ? "bg-success/10" : "bg-destructive/10"
+            )}>
+              <p className="text-[10px] text-muted-foreground">Predicted</p>
+              <p className={cn(
+                "font-medium",
+                nextMonthPrediction.balanceChange >= 0 ? "text-success" : "text-destructive"
+              )}>
+                {formatCurrency(nextMonthPrediction.predictedBalance)}
+              </p>
+            </div>
+          </div>
+          
+          {/* Breakdown */}
+          <div className="text-xs space-y-1 text-muted-foreground">
+            <div className="flex justify-between">
+              <span>+ Recurring Income</span>
+              <span className="text-success">+{formatCurrency(nextMonthPrediction.nextMonthIncome)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span>- Savings Deposits</span>
+              <span className="text-primary">-{formatCurrency(nextMonthPrediction.nextMonthSavingsDeposits)}</span>
+            </div>
+            {nextMonthPrediction.nextMonthSavingsWithdrawals > 0 && (
+              <div className="flex justify-between">
+                <span>+ Savings Withdrawals</span>
+                <span className="text-warning">+{formatCurrency(nextMonthPrediction.nextMonthSavingsWithdrawals)}</span>
+              </div>
+            )}
+            <div className="flex justify-between">
+              <span>- CC Debit (incl. pending)</span>
+              <span className="text-destructive">-{formatCurrency(nextMonthPrediction.totalCreditCardDebit)}</span>
+            </div>
+          </div>
+          
+          {/* Apply Button */}
+          <Button
+            size="sm"
+            variant={nextMonthHasHistory ? "outline" : "default"}
+            className="w-full"
+            onClick={handleApplyPredictionToNextMonth}
+          >
+            <Save className="h-3 w-3 mr-2" />
+            {nextMonthHasHistory ? 'Update Next Month Balance' : 'Save to Next Month'}
+          </Button>
+          
+          <p className="text-[10px] text-muted-foreground text-center">
+            Based on active recurring transactions
           </p>
         </div>
         
