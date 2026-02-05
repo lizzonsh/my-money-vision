@@ -1,16 +1,13 @@
 import { useState } from 'react';
 import { useFinance, BigPurchaseGoal } from '@/contexts/FinanceContext';
+import { useGoalItems, GoalItem } from '@/hooks/useGoalItems';
 import {
   formatCurrency,
-  getProgressPercentage,
-  calculateMonthsToGoal,
-  formatMonth,
 } from '@/lib/formatters';
-import { Plus, Trash2, Target, Calendar, TrendingUp, Pencil } from 'lucide-react';
+import { Plus, Target } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Progress } from '@/components/ui/progress';
 import { Textarea } from '@/components/ui/textarea';
 import {
   Select,
@@ -26,18 +23,17 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { cn } from '@/lib/utils';
+import GoalCard from '@/components/goals/GoalCard';
+import { useToast } from '@/hooks/use-toast';
 
 const BigPurchasePlanner = () => {
-  const { bigPurchases, addBigPurchase, updateBigPurchase, deleteBigPurchase } = useFinance();
+  const { bigPurchases, addBigPurchase, updateBigPurchase, deleteBigPurchase, addExpense } = useFinance();
+  const { goalItems, addGoalItem, updateGoalItem, deleteGoalItem, markAsPurchased, unmarkAsPurchased } = useGoalItems();
+  const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
   const [editingGoal, setEditingGoal] = useState<BigPurchaseGoal | null>(null);
   const [formData, setFormData] = useState({
     name: '',
-    targetAmount: '',
-    currentSaved: '',
-    monthlyContribution: '',
-    targetDate: '',
     priority: 'medium',
     category: 'other',
     notes: '',
@@ -46,10 +42,6 @@ const BigPurchasePlanner = () => {
   const resetForm = () => {
     setFormData({
       name: '',
-      targetAmount: '',
-      currentSaved: '',
-      monthlyContribution: '',
-      targetDate: '',
       priority: 'medium',
       category: 'other',
       notes: '',
@@ -61,10 +53,6 @@ const BigPurchasePlanner = () => {
     setEditingGoal(goal);
     setFormData({
       name: goal.name,
-      targetAmount: goal.target_amount.toString(),
-      currentSaved: goal.current_saved.toString(),
-      monthlyContribution: goal.monthly_contribution.toString(),
-      targetDate: goal.target_date || '',
       priority: goal.priority,
       category: goal.category,
       notes: goal.notes || '',
@@ -76,10 +64,10 @@ const BigPurchasePlanner = () => {
     e.preventDefault();
     const goalData = {
       name: formData.name,
-      target_amount: parseFloat(formData.targetAmount),
-      current_saved: parseFloat(formData.currentSaved) || 0,
-      monthly_contribution: parseFloat(formData.monthlyContribution),
-      target_date: formData.targetDate || null,
+      target_amount: 0, // Will be calculated from items
+      current_saved: 0,
+      monthly_contribution: 0,
+      target_date: null,
       priority: formData.priority as 'high' | 'medium' | 'low',
       category: formData.category as 'furniture' | 'electronics' | 'education' | 'vehicle' | 'property' | 'vacation' | 'other',
       notes: formData.notes || null,
@@ -94,28 +82,45 @@ const BigPurchasePlanner = () => {
     setIsOpen(false);
   };
 
-  const priorityStyles = {
-    high: 'border-l-destructive bg-destructive/5',
-    medium: 'border-l-warning bg-warning/5',
-    low: 'border-l-success bg-success/5',
+  const handlePurchaseItem = (item: GoalItem) => {
+    // Create an expense for this purchase
+    const today = new Date();
+    const expenseMonth = item.planned_month || `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
+    
+    addExpense({
+      month: expenseMonth,
+      description: item.name,
+      amount: Number(item.estimated_cost),
+      category: 'goal',
+      expense_date: today.toISOString().split('T')[0],
+      payment_method: item.payment_method as 'credit_card' | 'bank_transfer',
+      card_id: item.card_id || null,
+      kind: 'payed',
+      expense_month: null,
+      month_of_expense: null,
+      recurring_day_of_month: null,
+      recurring_type: null,
+    });
+
+    // Mark as purchased
+    markAsPurchased({ itemId: item.id });
+    toast({ title: `${item.name} added to expenses`, description: `₪${item.estimated_cost} expense created` });
   };
 
-  const categoryIcons: Record<string, string> = {
-    furniture: '🪑',
-    electronics: '💻',
-    education: '🎓',
-    vehicle: '🚗',
-    property: '🏠',
-    vacation: '✈️',
-    other: '📦',
-  };
+  const getItemsForGoal = (goalId: string) => goalItems.filter(item => item.goal_id === goalId);
+
+  // Calculate total stats
+  const totalItems = goalItems.length;
+  const purchasedItems = goalItems.filter(i => i.is_purchased).length;
+  const totalCost = goalItems.reduce((sum, i) => sum + Number(i.estimated_cost), 0);
+  const purchasedCost = goalItems.filter(i => i.is_purchased).reduce((sum, i) => sum + Number(i.estimated_cost), 0);
 
   return (
     <div className="space-y-6 animate-slide-up">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold">Big Purchase Planner</h2>
-          <p className="text-muted-foreground">Plan and track your financial goals</p>
+          <h2 className="text-2xl font-bold">Goals</h2>
+          <p className="text-muted-foreground">Track your planned purchases</p>
         </div>
         <Dialog open={isOpen} onOpenChange={(open) => { setIsOpen(open); if (!open) resetForm(); }}>
           <DialogTrigger asChild>
@@ -123,32 +128,12 @@ const BigPurchasePlanner = () => {
           </DialogTrigger>
           <DialogContent className="glass max-w-md">
             <DialogHeader>
-              <DialogTitle>{editingGoal ? 'Edit Goal' : 'Create Savings Goal'}</DialogTitle>
+              <DialogTitle>{editingGoal ? 'Edit Goal' : 'Create Goal'}</DialogTitle>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="name">Goal Name</Label>
-                <Input id="name" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} placeholder="e.g., New Laptop" required />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="targetAmount">Target Amount (₪)</Label>
-                  <Input id="targetAmount" type="number" value={formData.targetAmount} onChange={(e) => setFormData({ ...formData, targetAmount: e.target.value })} required />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="currentSaved">Already Saved (₪)</Label>
-                  <Input id="currentSaved" type="number" value={formData.currentSaved} onChange={(e) => setFormData({ ...formData, currentSaved: e.target.value })} />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="monthlyContribution">Monthly Contribution (₪)</Label>
-                  <Input id="monthlyContribution" type="number" value={formData.monthlyContribution} onChange={(e) => setFormData({ ...formData, monthlyContribution: e.target.value })} required />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="targetDate">Target Date</Label>
-                  <Input id="targetDate" type="month" value={formData.targetDate} onChange={(e) => setFormData({ ...formData, targetDate: e.target.value })} />
-                </div>
+                <Input id="name" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} placeholder="e.g., New Setup" required />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -188,73 +173,51 @@ const BigPurchasePlanner = () => {
         </Dialog>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
+      {/* Summary Stats */}
+      {totalItems > 0 && (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div className="glass rounded-xl p-4 text-center">
+            <p className="text-xs text-muted-foreground mb-1">Total Items</p>
+            <p className="text-2xl font-bold">{totalItems}</p>
+          </div>
+          <div className="glass rounded-xl p-4 text-center">
+            <p className="text-xs text-muted-foreground mb-1">Purchased</p>
+            <p className="text-2xl font-bold text-success">{purchasedItems}</p>
+          </div>
+          <div className="glass rounded-xl p-4 text-center">
+            <p className="text-xs text-muted-foreground mb-1">Total Cost</p>
+            <p className="text-2xl font-bold">{formatCurrency(totalCost)}</p>
+          </div>
+          <div className="glass rounded-xl p-4 text-center">
+            <p className="text-xs text-muted-foreground mb-1">Spent</p>
+            <p className="text-2xl font-bold text-success">{formatCurrency(purchasedCost)}</p>
+          </div>
+        </div>
+      )}
+
+      <div className="grid gap-4 md:grid-cols-1 lg:grid-cols-2">
         {bigPurchases.length === 0 ? (
           <div className="col-span-2 glass rounded-xl p-8 text-center">
             <Target className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
             <h3 className="font-semibold mb-2">No goals yet</h3>
-            <p className="text-sm text-muted-foreground mb-4">Start planning your big purchases</p>
+            <p className="text-sm text-muted-foreground mb-4">Create a goal to start tracking your purchases</p>
             <Button onClick={() => setIsOpen(true)}>Create Your First Goal</Button>
           </div>
         ) : (
-          bigPurchases.map((goal) => {
-            const progress = getProgressPercentage(Number(goal.current_saved), Number(goal.target_amount));
-            const remaining = Number(goal.target_amount) - Number(goal.current_saved);
-            const monthsToGoal = calculateMonthsToGoal(remaining, Number(goal.monthly_contribution));
-            const estimatedDate = new Date();
-            estimatedDate.setMonth(estimatedDate.getMonth() + monthsToGoal);
-
-            return (
-              <div key={goal.id} className={cn('glass rounded-xl p-5 border-l-4 shadow-card group', priorityStyles[goal.priority])}>
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-center gap-3">
-                    <span className="text-2xl">{categoryIcons[goal.category]}</span>
-                    <div>
-                      <h3 className="font-semibold">{goal.name}</h3>
-                      <p className="text-sm text-muted-foreground capitalize">{goal.priority} priority</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <button onClick={() => handleOpenEdit(goal)} className="p-1.5 opacity-0 group-hover:opacity-100 hover:bg-secondary rounded transition-all">
-                      <Pencil className="h-4 w-4 text-muted-foreground" />
-                    </button>
-                    <button onClick={() => deleteBigPurchase(goal.id)} className="p-1.5 opacity-0 group-hover:opacity-100 hover:bg-destructive/10 rounded transition-all">
-                      <Trash2 className="h-4 w-4 text-destructive" />
-                    </button>
-                  </div>
-                </div>
-                <div className="space-y-4">
-                  <div>
-                    <div className="flex justify-between text-sm mb-2">
-                      <span className="text-muted-foreground">Progress</span>
-                      <span className="font-medium">{formatCurrency(Number(goal.current_saved))} / {formatCurrency(Number(goal.target_amount))}</span>
-                    </div>
-                    <Progress value={progress} className="h-2.5" />
-                  </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="p-3 rounded-lg bg-secondary/50 text-center">
-                      <div className="flex items-center justify-center gap-1 text-muted-foreground mb-1">
-                        <TrendingUp className="h-3 w-3" /><span className="text-xs">Monthly</span>
-                      </div>
-                      <p className="text-sm font-semibold text-primary">{formatCurrency(Number(goal.monthly_contribution))}</p>
-                    </div>
-                    <div className="p-3 rounded-lg bg-secondary/50 text-center">
-                      <div className="flex items-center justify-center gap-1 text-muted-foreground mb-1">
-                        <Calendar className="h-3 w-3" /><span className="text-xs">Remaining</span>
-                      </div>
-                      <p className="text-sm font-semibold">{formatCurrency(remaining)}</p>
-                    </div>
-                  </div>
-                  {goal.target_date && (
-                    <div className="flex items-center justify-between text-sm pt-3 border-t border-border/50">
-                      <span className="text-muted-foreground">Target date</span>
-                      <span className="font-medium">{formatMonth(goal.target_date)}</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            );
-          })
+          bigPurchases.map((goal) => (
+            <GoalCard
+              key={goal.id}
+              goal={goal}
+              items={getItemsForGoal(goal.id)}
+              onEditGoal={handleOpenEdit}
+              onDeleteGoal={deleteBigPurchase}
+              onAddItem={addGoalItem}
+              onUpdateItem={updateGoalItem}
+              onDeleteItem={deleteGoalItem}
+              onPurchaseItem={handlePurchaseItem}
+              onUnpurchaseItem={unmarkAsPurchased}
+            />
+          ))
         )}
       </div>
     </div>
