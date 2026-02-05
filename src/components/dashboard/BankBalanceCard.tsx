@@ -6,6 +6,7 @@ import { isDateUpToToday, isCurrentMonth } from '@/lib/dateUtils';
 import { convertToILS } from '@/lib/currencyUtils';
 import { Building2, Pencil, Plus, Trash2, History, Save, ArrowDownRight, ArrowUpRight, PiggyBank, CreditCard, TrendingUp, CalendarIcon, ArrowRight, Sparkles } from 'lucide-react';
 import { Wallet } from 'lucide-react';
+import GoalScenarioComparison from './GoalScenarioComparison';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -637,6 +638,14 @@ const BankBalanceCard = () => {
           </Button>
           
         </div>
+
+        {/* Goal Scenarios */}
+        <GoalScenarioComparison
+          projectedBalance={projectedBalance}
+          recurringIncomes={recurringIncomes}
+          recurringSavings={recurringSavings}
+          recurringPayments={recurringPayments}
+        />
         
         <div className="p-3 border-t bg-muted/30">
           <div className="flex items-center justify-between">
