@@ -316,7 +316,7 @@ const ExpensesList = () => {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="payed">Paid (Not Planned)</SelectItem>
+                      <SelectItem value="payed">None</SelectItem>
                       <SelectItem value="planned">Planned</SelectItem>
                     </SelectContent>
                   </Select>
@@ -442,7 +442,7 @@ const ExpensesList = () => {
                         ? 'bg-warning/20 text-warning' 
                         : 'bg-muted text-muted-foreground'
                     )}>
-                      {expense.kind === 'planned' ? 'Planned' : 'Paid'}
+                      {expense.kind === 'planned' ? 'Planned' : ''}
                     </span>
                   </div>
                 </div>
