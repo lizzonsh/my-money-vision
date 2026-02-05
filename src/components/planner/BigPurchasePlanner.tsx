@@ -91,7 +91,7 @@ const BigPurchasePlanner = () => {
       month: expenseMonth,
       description: item.name,
       amount: Number(item.estimated_cost),
-      category: 'goal',
+      category: 'planned',
       expense_date: today.toISOString().split('T')[0],
       payment_method: item.payment_method as 'credit_card' | 'bank_transfer',
       card_id: item.card_id || null,
