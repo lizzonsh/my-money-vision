@@ -14,6 +14,7 @@ interface GoalItemInfo {
   plannedMonth: string;
   debitMonth: string; // When the bank is actually affected
   affordable: boolean;
+  isPurchased: boolean;
 }
 
 interface MonthProjection {
@@ -47,29 +48,33 @@ const GoalScenarioComparison = ({
   const { currentMonth, bigPurchases, calculatedBudget } = useFinance();
   const { goalItems } = useGoalItems();
 
-  // Get unpurchased goal items with debit month calculated
-  const unpurchasedGoalItems = useMemo(() => {
-    return goalItems
-      .filter(item => !item.is_purchased)
-      .map(item => {
-        const goal = bigPurchases.find(g => g.id === item.goal_id);
-        // CC purchases debit the bank in the NEXT month; bank transfers debit immediately
-        const debitMonth = item.payment_method === 'credit_card'
-          ? getNextMonth(item.planned_month)
-          : item.planned_month;
-        
-        return {
-          id: item.id,
-          name: item.name,
-          cost: Number(item.estimated_cost),
-          goalName: goal?.name || 'Unknown Goal',
-          paymentMethod: item.payment_method,
-          plannedMonth: item.planned_month,
-          debitMonth,
-          affordable: false, // Will be calculated during projection
-        };
-      });
+  // Get all goal items with debit month calculated, separating purchased from unpurchased
+  const allGoalItems = useMemo(() => {
+    return goalItems.map(item => {
+      const goal = bigPurchases.find(g => g.id === item.goal_id);
+      // CC purchases debit the bank in the NEXT month; bank transfers debit immediately
+      const debitMonth = item.payment_method === 'credit_card'
+        ? getNextMonth(item.planned_month)
+        : item.planned_month;
+      
+      return {
+        id: item.id,
+        name: item.name,
+        cost: Number(item.estimated_cost),
+        goalName: goal?.name || 'Unknown Goal',
+        paymentMethod: item.payment_method,
+        plannedMonth: item.planned_month,
+        debitMonth,
+        affordable: false, // Will be calculated during projection
+        isPurchased: item.is_purchased,
+      };
+    });
   }, [goalItems, bigPurchases]);
+
+  // Only unpurchased items affect the balance calculation
+  const unpurchasedGoalItems = useMemo(() => {
+    return allGoalItems.filter(item => !item.isPurchased);
+  }, [allGoalItems]);
 
   // Find the furthest debit month to project until
   const furthestDebitMonth = useMemo(() => {
@@ -108,21 +113,23 @@ const GoalScenarioComparison = ({
       const projectionDate = new Date(startYear, startMonthNum - 1 + i, 1);
       const monthStr = `${projectionDate.getFullYear()}-${String(projectionDate.getMonth() + 1).padStart(2, '0')}`;
       
-      // Find goal items PLANNED for this month (for display purposes)
-      const goalItemsPlanned = unpurchasedGoalItems
+      // Find goal items PLANNED for this month (for display purposes) - include both purchased and unpurchased
+      const goalItemsPlanned = allGoalItems
         .filter(item => item.plannedMonth === monthStr)
         .map(item => ({ ...item }));
       
-      // Find goal items whose DEBIT happens this month (for balance calculation)
-      const goalDebitsThisMonth = unpurchasedGoalItems
+      // Find goal items whose DEBIT happens this month - include all for display, but only unpurchased affect balance
+      const goalDebitsThisMonth = allGoalItems
         .filter(item => item.debitMonth === monthStr)
         .map(item => ({
           ...item,
-          affordable: runningBalanceWithGoals >= item.cost,
+          affordable: item.isPurchased || runningBalanceWithGoals >= item.cost,
         }));
       
-      // Deduct goal debits from withGoals balance
-      const totalGoalDebitsThisMonth = goalDebitsThisMonth.reduce((sum, item) => sum + item.cost, 0);
+      // Deduct only UNPURCHASED goal debits from withGoals balance
+      const totalGoalDebitsThisMonth = goalDebitsThisMonth
+        .filter(item => !item.isPurchased)
+        .reduce((sum, item) => sum + item.cost, 0);
       runningBalanceWithGoals -= totalGoalDebitsThisMonth;
       
       projections.push({
@@ -139,6 +146,7 @@ const GoalScenarioComparison = ({
     currentMonth,
     furthestDebitMonth,
     afterBudgetBalance,
+    allGoalItems,
     unpurchasedGoalItems,
   ]);
 
@@ -149,7 +157,8 @@ const GoalScenarioComparison = ({
     ? monthlyProjections[monthlyProjections.length - 1].balanceWithGoals 
     : afterBudgetBalance;
 
-  if (unpurchasedGoalItems.length === 0) {
+  // Show panel if there are any goal items (purchased or not)
+  if (allGoalItems.length === 0) {
     return null;
   }
 
@@ -161,7 +170,7 @@ const GoalScenarioComparison = ({
           Goal Scenarios
         </h5>
         <span className="text-xs text-muted-foreground">
-          {unpurchasedGoalItems.length} planned items
+          {unpurchasedGoalItems.length} pending • {allGoalItems.length - unpurchasedGoalItems.length} paid
         </span>
       </div>
 
@@ -225,9 +234,14 @@ const GoalScenarioComparison = ({
               {hasDebits && (
                 <div className="mt-2 space-y-1 pl-2 border-l-2 border-primary/30">
                   {projection.goalDebitsThisMonth.map(item => (
-                    <div key={item.id} className="flex items-center justify-between">
+                    <div key={item.id} className={cn(
+                      "flex items-center justify-between",
+                      item.isPurchased && "opacity-60"
+                    )}>
                       <div className="flex items-center gap-1.5">
-                        {item.affordable ? (
+                        {item.isPurchased ? (
+                          <Check className="h-3 w-3 text-success" />
+                        ) : item.affordable ? (
                           <Check className="h-3 w-3 text-success" />
                         ) : (
                           <X className="h-3 w-3 text-destructive" />
@@ -237,10 +251,18 @@ const GoalScenarioComparison = ({
                         ) : (
                           <Building2 className="h-3 w-3 text-muted-foreground" />
                         )}
-                        <span className="truncate max-w-[100px]" title={item.name}>
+                        <span className={cn(
+                          "truncate max-w-[100px]",
+                          item.isPurchased && "line-through"
+                        )} title={item.name}>
                           {item.name}
                         </span>
-                        {item.paymentMethod === 'credit_card' && (
+                        {item.isPurchased && (
+                          <span className="text-[10px] text-success font-medium">
+                            Paid
+                          </span>
+                        )}
+                        {!item.isPurchased && item.paymentMethod === 'credit_card' && (
                           <span className="text-[10px] text-muted-foreground">
                             (from {formatMonth(item.plannedMonth)})
                           </span>
@@ -248,6 +270,7 @@ const GoalScenarioComparison = ({
                       </div>
                       <span className={cn(
                         "font-medium",
+                        item.isPurchased ? "text-muted-foreground line-through" : 
                         item.affordable ? "text-foreground" : "text-destructive"
                       )}>
                         {formatCurrency(item.cost)}
