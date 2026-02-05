@@ -83,17 +83,12 @@ const IncomesList = () => {
     return [...regularIncomes, ...withdrawalsAsIncome];
   }, [incomesUpToDate, withdrawalsAsIncome]);
 
-  // Get only the latest record per income name/source for display
-  const latestIncomesPerName = allIncomeItems.reduce((acc, income) => {
-    const key = income.isWithdrawal ? `${income.name}-${income.id}` : income.name;
-    const existing = acc.get(key);
-    if (!existing || new Date(income.updated_at) > new Date(existing.updated_at)) {
-      acc.set(key, income);
-    }
-    return acc;
-  }, new Map<string, IncomeItem>());
-
-  const uniqueIncomes = Array.from(latestIncomesPerName.values());
+  // Sort by date (newest first)
+  const sortedIncomes = [...allIncomeItems].sort((a, b) => {
+    const dateA = a.income_date ? new Date(a.income_date) : new Date(a.updated_at);
+    const dateB = b.income_date ? new Date(b.income_date) : new Date(b.updated_at);
+    return dateB.getTime() - dateA.getTime();
+  });
   
   const totalIncome = allIncomeItems.reduce((sum, i) => sum + i.amount, 0);
 
@@ -167,12 +162,7 @@ const IncomesList = () => {
           <h3 className="font-semibold">Income</h3>
           <p className="text-lg font-bold text-success">{formatCurrency(totalIncome)}</p>
           <p className="text-xs text-muted-foreground mt-1">
-            {uniqueIncomes.length} source{uniqueIncomes.length !== 1 ? 's' : ''} this month
-            {monthlyIncomes.length > uniqueIncomes.length && (
-              <span className="text-muted-foreground/70 ml-1">
-                ({monthlyIncomes.length} total entries)
-              </span>
-            )}
+            {sortedIncomes.length} entr{sortedIncomes.length !== 1 ? 'ies' : 'y'} this month
           </p>
         </div>
         <Dialog open={isOpen} onOpenChange={(open) => { setIsOpen(open); if (!open) resetForm(); }}>
@@ -262,12 +252,12 @@ const IncomesList = () => {
       </div>
 
       <div className="space-y-2 max-h-80 overflow-y-auto">
-        {uniqueIncomes.length === 0 ? (
+        {sortedIncomes.length === 0 ? (
           <p className="text-sm text-muted-foreground text-center py-4">
             No income this month
           </p>
         ) : (
-          uniqueIncomes.map((income) => (
+          sortedIncomes.map((income) => (
             <div
               key={income.id}
               className="flex items-center justify-between p-3 rounded-lg bg-secondary/30 hover:bg-secondary/50 transition-colors group"
