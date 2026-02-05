@@ -200,8 +200,8 @@ const BankBalanceCard = () => {
   }, [currentMonth, projectedBalance, recurringIncomes, recurringSavings, recurringPayments, currentMonthCCExpenses]);
 
   // Final predicted balance after accounting for remaining budget to be spent
-  const finalPredictedBalance = nextMonthPrediction.predictedBalance - calculatedBudget.leftBudget;
-  const finalBalanceChange = finalPredictedBalance - nextMonthPrediction.startingBalance;
+  const finalPredictedBalance = projectedBalance - calculatedBudget.leftBudget;
+  const finalBalanceChange = finalPredictedBalance - displayTotal;
 
   const formatNextMonth = (month: string) => {
     const [year, monthNum] = month.split('-').map(Number);
@@ -593,15 +593,15 @@ const BankBalanceCard = () => {
           {/* Prediction Flow */}
           <div className="flex items-center gap-2 text-sm">
             <div className="flex-1 p-2 rounded bg-muted/50 text-center">
-              <p className="text-[10px] text-muted-foreground">Starting</p>
-              <p className="font-medium">{formatCurrency(nextMonthPrediction.startingBalance)}</p>
+              <p className="text-[10px] text-muted-foreground">Projected</p>
+              <p className="font-medium">{formatCurrency(projectedBalance)}</p>
             </div>
             <ArrowRight className="h-4 w-4 text-muted-foreground flex-shrink-0" />
             <div className={cn(
               "flex-1 p-2 rounded text-center",
               finalBalanceChange >= 0 ? "bg-success/10" : "bg-destructive/10"
             )}>
-              <p className="text-[10px] text-muted-foreground">Predicted</p>
+              <p className="text-[10px] text-muted-foreground">After Budget</p>
               <p className={cn(
                 "font-medium",
                 finalBalanceChange >= 0 ? "text-success" : "text-destructive"
@@ -610,6 +610,10 @@ const BankBalanceCard = () => {
               </p>
             </div>
           </div>
+          
+          <p className="text-xs text-muted-foreground text-center">
+            Remaining budget: {formatCurrency(calculatedBudget.leftBudget)}
+          </p>
           
           {/* Apply Button */}
           <Button
@@ -622,9 +626,6 @@ const BankBalanceCard = () => {
             {nextMonthHasHistory ? 'Update Next Month Balance' : 'Save to Next Month'}
           </Button>
           
-          <p className="text-[10px] text-muted-foreground text-center">
-            Based on recurring transactions and remaining budget
-          </p>
         </div>
         
         <div className="p-3 border-t bg-muted/30">
