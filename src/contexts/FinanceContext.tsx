@@ -160,8 +160,8 @@ export const FinanceProvider = ({ children }: { children: ReactNode }) => {
     // Spent budget = only credit card debits (what's already been paid)
     const spentBudget = creditCardDebits;
     
-    // Left budget = total budget - credit card debits - planned CC expenses
-    const leftBudget = totalBudget - creditCardDebits - plannedCreditCardExpenses;
+    // Left budget = total budget + planned CC expenses - credit card debits
+    const leftBudget = totalBudget + plannedCreditCardExpenses - creditCardDebits;
     
     const today = new Date();
     const [year, month] = currentMonth.split('-').map(Number);
