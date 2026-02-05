@@ -183,7 +183,7 @@ export const FinanceProvider = ({ children }: { children: ReactNode }) => {
     const dailyLimit = leftBudget / daysRemaining;
 
     return { spentBudget, leftBudget, dailyLimit, plannedCreditCardExpenses, plannedGoalCreditCardExpenses };
-  }, [budgetsHook.budgets, expensesHook.expenses, goalItemsHook.goalItems, currentMonth]);
+  }, [budgetsHook.budgets, budgetsHook.getBudgetForMonth, expensesHook.expenses, goalItemsHook.goalItems, currentMonth]);
 
   return (
     <FinanceContext.Provider
