@@ -113,10 +113,8 @@ const BankBalanceCard = () => {
   const currentMonthBankTransfers = expenses
     .filter(e => 
       e.month === currentMonth && 
-      e.kind === 'payed' && 
       e.payment_method === 'bank_transfer' &&
-      e.category !== 'debit_from_credit_card' &&
-      (!shouldFilterByDate || isDateUpToToday(e.expense_date))
+      e.category !== 'debit_from_credit_card'
     )
     .reduce((sum, e) => sum + Number(e.amount), 0);
 
@@ -124,14 +122,14 @@ const BankBalanceCard = () => {
   const monthlyExpensesPaid = creditCardDebit + currentMonthBankTransfers;
 
   // Calculate savings deposits and withdrawals (bank account transfers)
+  // Get all savings entries for the current month
   const monthlySavings = savings.filter(s => 
-    s.month === currentMonth && 
-    s.transfer_method === 'bank_account' &&
-    (!shouldFilterByDate || isDateUpToToday(s.updated_at))
+    s.month === currentMonth
   );
   
+  // Savings deposits - include entries with action='deposit' OR entries with action_amount but no action
   const savingsDeposits = monthlySavings
-    .filter(s => s.action === 'deposit' || (!s.action && s.action_amount))
+    .filter(s => s.action === 'deposit' || (!s.action && (s.action_amount || s.monthly_deposit)))
     .reduce((sum, s) => sum + Number(s.action_amount || s.monthly_deposit || 0), 0);
   
   const savingsWithdrawals = monthlySavings
