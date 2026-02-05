@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useFinance, Savings } from '@/contexts/FinanceContext';
 import { formatCurrency } from '@/lib/formatters';
-import { convertToILS } from '@/lib/currencyUtils';
+import { convertToILS, convertFromILS, SUPPORTED_CURRENCIES } from '@/lib/currencyUtils';
 import { isDateUpToToday, isCurrentMonth } from '@/lib/dateUtils';
 import { ArrowUpRight, ArrowDownRight, TrendingUp, TrendingDown, Minus, Plus, Pencil, Trash2, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -46,6 +46,7 @@ const SavingsMonthlyActivity = () => {
     actionAmount: '',
     transferMethod: 'bank_account',
     cardId: '',
+    inputCurrency: 'ILS',
   });
 
   // Filter savings for current month only
@@ -85,7 +86,6 @@ const SavingsMonthlyActivity = () => {
       .filter(s => (s.action_amount && s.action_amount > 0) || (s.monthly_deposit && s.monthly_deposit > 0))
       .map(s => {
         const hasActionAmount = s.action_amount && s.action_amount > 0;
-        console.log('[SavingsMonthlyActivity] Activity item:', s.name, 'action_amount:', s.action_amount, 'currency:', s.currency);
         return {
           id: s.id,
           name: s.name,
@@ -135,6 +135,7 @@ const SavingsMonthlyActivity = () => {
       actionAmount: '',
       transferMethod: 'bank_account',
       cardId: '',
+      inputCurrency: 'ILS',
     });
     setEditingActivity(null);
   };
@@ -147,6 +148,7 @@ const SavingsMonthlyActivity = () => {
       actionAmount: (activity.action_amount || '').toString(),
       transferMethod: activity.transfer_method,
       cardId: activity.card_id || '',
+      inputCurrency: activity.currency || 'ILS',
     });
     setIsOpen(true);
   };
@@ -161,10 +163,19 @@ const SavingsMonthlyActivity = () => {
     
     const currentAmount = latestForAccount ? Number(latestForAccount.amount) : 0;
     const accountCurrency = latestForAccount?.currency || 'ILS';
-    const actionAmount = parseFloat(formData.actionAmount) || 0;
+    const inputAmount = parseFloat(formData.actionAmount) || 0;
+    
+    // Convert input amount to account currency if different
+    let actionAmountInAccountCurrency = inputAmount;
+    if (formData.inputCurrency !== accountCurrency) {
+      // First convert input to ILS, then to account currency
+      const amountInILS = convertToILS(inputAmount, formData.inputCurrency);
+      actionAmountInAccountCurrency = convertFromILS(amountInILS, accountCurrency);
+    }
+    
     const newAmount = formData.action === 'deposit' 
-      ? currentAmount + actionAmount 
-      : currentAmount - actionAmount;
+      ? currentAmount + actionAmountInAccountCurrency 
+      : currentAmount - actionAmountInAccountCurrency;
 
     const activityData = {
       month: currentMonth,
@@ -174,7 +185,7 @@ const SavingsMonthlyActivity = () => {
       transfer_method: formData.transferMethod as 'bank_account' | 'credit_card',
       card_id: formData.cardId || null,
       action: formData.action as 'deposit' | 'withdrawal',
-      action_amount: actionAmount,
+      action_amount: actionAmountInAccountCurrency,
       monthly_deposit: null,
       recurring_type: null,
       recurring_day_of_month: null,
@@ -189,6 +200,21 @@ const SavingsMonthlyActivity = () => {
     resetForm();
     setIsOpen(false);
   };
+
+  // Get selected account's currency for display
+  const selectedAccountCurrency = formData.name 
+    ? savings.find(s => s.name === formData.name && !s.closed_at)?.currency || 'ILS'
+    : 'ILS';
+
+  // Calculate converted amount preview
+  const inputAmount = parseFloat(formData.actionAmount) || 0;
+  const showConversion = formData.inputCurrency !== selectedAccountCurrency && inputAmount > 0 && formData.name;
+  const convertedAmount = showConversion
+    ? convertFromILS(convertToILS(inputAmount, formData.inputCurrency), selectedAccountCurrency)
+    : 0;
+  const ilsEquivalent = formData.inputCurrency !== 'ILS' && inputAmount > 0
+    ? convertToILS(inputAmount, formData.inputCurrency)
+    : inputAmount;
 
   return (
     <div className="glass rounded-xl p-5 shadow-card animate-slide-up">
@@ -242,15 +268,46 @@ const SavingsMonthlyActivity = () => {
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="actionAmount">Amount (₪)</Label>
-                  <Input
-                    id="actionAmount"
-                    type="number"
-                    value={formData.actionAmount}
-                    onChange={(e) => setFormData({ ...formData, actionAmount: e.target.value })}
-                    placeholder="0"
-                    required
-                  />
+                  <Label htmlFor="actionAmount">Amount</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      id="actionAmount"
+                      type="number"
+                      value={formData.actionAmount}
+                      onChange={(e) => setFormData({ ...formData, actionAmount: e.target.value })}
+                      placeholder="0"
+                      className="flex-1"
+                      required
+                    />
+                    <Select
+                      value={formData.inputCurrency}
+                      onValueChange={(value) => setFormData({ ...formData, inputCurrency: value })}
+                    >
+                      <SelectTrigger className="w-24">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {SUPPORTED_CURRENCIES.map((c) => (
+                          <SelectItem key={c.code} value={c.code}>
+                            {c.symbol} {c.code}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  {/* Show conversion preview */}
+                  {formData.name && inputAmount > 0 && (
+                    <div className="text-xs text-muted-foreground space-y-0.5">
+                      {showConversion && (
+                        <p>
+                          → {formatCurrency(convertedAmount, selectedAccountCurrency)} to account
+                        </p>
+                      )}
+                      {formData.inputCurrency !== 'ILS' && (
+                        <p>≈ {formatCurrency(ilsEquivalent)} ILS</p>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
