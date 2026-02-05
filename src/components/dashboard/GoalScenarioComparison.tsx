@@ -83,7 +83,10 @@ const GoalScenarioComparison = ({
     return debitMonths[debitMonths.length - 1] || null;
   }, [unpurchasedGoalItems]);
 
-  // Calculate monthly projection until furthest debit month
+  // "After Budget" is the baseline - no recurring added on top
+  const afterBudgetBalance = projectedBalance - calculatedBudget.leftBudget;
+
+  // Calculate projection: baseline stays the same, only goals affect the "With Goals" balance
   const monthlyProjections = useMemo(() => {
     if (!furthestDebitMonth) return [];
 
@@ -95,35 +98,15 @@ const GoalScenarioComparison = ({
     const monthsDiff = (endYear - startYear) * 12 + (endMonthNum - startMonthNum);
     const monthsToProject = Math.min(Math.max(monthsDiff, 1), 24); // Cap at 24 months
     
-    let runningBalanceWithoutGoals = projectedBalance - calculatedBudget.leftBudget;
-    let runningBalanceWithGoals = projectedBalance - calculatedBudget.leftBudget;
+    // "Without Goals" stays constant at the After Budget value
+    const balanceWithoutGoals = afterBudgetBalance;
+    
+    // "With Goals" starts at After Budget and decreases as goal debits occur
+    let runningBalanceWithGoals = afterBudgetBalance;
     
     for (let i = 1; i <= monthsToProject; i++) {
       const projectionDate = new Date(startYear, startMonthNum - 1 + i, 1);
       const monthStr = `${projectionDate.getFullYear()}-${String(projectionDate.getMonth() + 1).padStart(2, '0')}`;
-      
-      // Calculate recurring changes for this month
-      const monthlyIncome = recurringIncomes
-        .filter(inc => inc.is_active && (!inc.end_date || inc.end_date >= monthStr))
-        .reduce((sum, inc) => sum + Number(inc.default_amount), 0);
-      
-      const monthlyDeposits = recurringSavings
-        .filter(s => s.is_active && s.action_type === 'deposit' && (!s.end_date || s.end_date >= monthStr))
-        .reduce((sum, s) => sum + Number(s.default_amount), 0);
-      
-      const monthlyWithdrawals = recurringSavings
-        .filter(s => s.is_active && s.action_type === 'withdrawal' && (!s.end_date || s.end_date >= monthStr))
-        .reduce((sum, s) => sum + Number(s.default_amount), 0);
-      
-      const monthlyCCPayments = recurringPayments
-        .filter(p => p.is_active && p.payment_method === 'credit_card' && (!p.end_date || p.end_date >= monthStr))
-        .reduce((sum, p) => sum + Number(p.default_amount), 0);
-      
-      const netMonthlyChange = monthlyIncome - monthlyDeposits + monthlyWithdrawals - monthlyCCPayments;
-      
-      // Update running balances
-      runningBalanceWithoutGoals += netMonthlyChange;
-      runningBalanceWithGoals += netMonthlyChange;
       
       // Find goal items PLANNED for this month (for display purposes)
       const goalItemsPlanned = unpurchasedGoalItems
@@ -144,7 +127,7 @@ const GoalScenarioComparison = ({
       
       projections.push({
         month: monthStr,
-        balanceWithoutGoals: runningBalanceWithoutGoals,
+        balanceWithoutGoals, // Always the same "After Budget" value
         balanceWithGoals: runningBalanceWithGoals,
         goalItemsPlanned,
         goalDebitsThisMonth,
@@ -155,18 +138,16 @@ const GoalScenarioComparison = ({
   }, [
     currentMonth,
     furthestDebitMonth,
-    projectedBalance,
-    calculatedBudget.leftBudget,
-    recurringIncomes,
-    recurringSavings,
-    recurringPayments,
+    afterBudgetBalance,
     unpurchasedGoalItems,
   ]);
 
   // Calculate totals for quick summary
   const totalGoalsCost = unpurchasedGoalItems.reduce((sum, item) => sum + item.cost, 0);
-  const nextMonthWithoutGoals = monthlyProjections[0]?.balanceWithoutGoals || projectedBalance;
-  const nextMonthWithGoals = monthlyProjections[0]?.balanceWithGoals || projectedBalance;
+  const nextMonthWithoutGoals = afterBudgetBalance; // Same as "After Budget"
+  const nextMonthWithGoals = monthlyProjections.length > 0 
+    ? monthlyProjections[monthlyProjections.length - 1].balanceWithGoals 
+    : afterBudgetBalance;
 
   if (unpurchasedGoalItems.length === 0) {
     return null;
@@ -187,7 +168,7 @@ const GoalScenarioComparison = ({
       {/* Summary Comparison */}
       <div className="grid grid-cols-2 gap-2">
         <div className="p-3 rounded-lg bg-muted/50 text-center">
-          <p className="text-[10px] text-muted-foreground mb-1">Without Goals</p>
+          <p className="text-[10px] text-muted-foreground mb-1">After Budget</p>
           <p className="font-semibold text-success">{formatCurrency(nextMonthWithoutGoals)}</p>
         </div>
         <div className="p-3 rounded-lg bg-primary/10 text-center">
