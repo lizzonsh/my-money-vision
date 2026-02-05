@@ -1,5 +1,5 @@
 export const formatCurrency = (amount: number, currency: string = 'ILS'): string => {
-  return new Intl.NumberFormat('he-IL', {
+  return new Intl.NumberFormat('en-IL', {
     style: 'currency',
     currency,
     minimumFractionDigits: 0,
