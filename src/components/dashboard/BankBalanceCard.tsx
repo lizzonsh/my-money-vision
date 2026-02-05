@@ -611,32 +611,6 @@ const BankBalanceCard = () => {
             </div>
           </div>
           
-          {/* Breakdown */}
-          <div className="text-xs space-y-1 text-muted-foreground">
-            <div className="flex justify-between">
-              <span>+ Recurring Income</span>
-              <span className="text-success">+{formatCurrency(nextMonthPrediction.nextMonthIncome)}</span>
-            </div>
-            <div className="flex justify-between">
-              <span>- Savings Deposits</span>
-              <span className="text-primary">-{formatCurrency(nextMonthPrediction.nextMonthSavingsDeposits)}</span>
-            </div>
-            {nextMonthPrediction.nextMonthSavingsWithdrawals > 0 && (
-              <div className="flex justify-between">
-                <span>+ Savings Withdrawals</span>
-                <span className="text-warning">+{formatCurrency(nextMonthPrediction.nextMonthSavingsWithdrawals)}</span>
-              </div>
-            )}
-            <div className="flex justify-between">
-              <span>- CC Debit (incl. pending)</span>
-              <span className="text-destructive">-{formatCurrency(nextMonthPrediction.totalCreditCardDebit)}</span>
-            </div>
-            <div className="flex justify-between">
-              <span>- Remaining Budget</span>
-              <span className="text-warning">-{formatCurrency(calculatedBudget.leftBudget)}</span>
-            </div>
-          </div>
-          
           {/* Apply Button */}
           <Button
             size="sm"
