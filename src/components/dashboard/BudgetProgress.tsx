@@ -126,9 +126,9 @@ const BudgetProgress = () => {
       <div className="space-y-4">
         <div>
           <div className="flex justify-between text-sm mb-2">
-            <span className="text-muted-foreground">Spent (CC Debits)</span>
+            <span className="text-muted-foreground">Budget / Spent</span>
             <span className={isOverBudget ? 'text-destructive' : ''}>
-              {formatCurrency(spentBudget)} / {formatCurrency(totalBudget)}
+              {formatCurrency(totalBudget)} / {formatCurrency(spentBudget)}
             </span>
           </div>
           <Progress 
