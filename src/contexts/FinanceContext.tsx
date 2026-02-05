@@ -171,8 +171,9 @@ export const FinanceProvider = ({ children }: { children: ReactNode }) => {
       )
       .reduce((sum, item) => sum + Number(item.estimated_cost), 0);
     
-    // Spent = CC debits only
-    const spentBudget = creditCardDebits;
+    // Spent = CC debits - planned CC expenses
+    // If negative, it means not all planned payments were included in the debit yet
+    const spentBudget = creditCardDebits - plannedCreditCardExpenses - plannedGoalCreditCardExpenses;
 
     // Remaining = Budget - Spent
     const leftBudget = totalBudget - spentBudget;
