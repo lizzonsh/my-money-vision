@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, ReactNode, useMemo } from 'react';
+// Finance Context - manages all financial data and operations
 import { useBudgets, Budget } from '@/hooks/useBudgets';
 import { useExpenses, Expense } from '@/hooks/useExpenses';
 import { useIncomes, Income } from '@/hooks/useIncomes';
