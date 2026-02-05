@@ -135,10 +135,9 @@ export const FinanceProvider = ({ children }: { children: ReactNode }) => {
     bankBalanceHistoryHook.isLoading ||
     goalItemsHook.isLoading;
 
-   // Calculate budget values used by the Monthly Budget widget.
-   // User expectation:
-   //   Remaining = Set Budget - Spent
-   // Where "Spent" should move when editing debit-card/bank-paid expenses.
+  // Calculate budget values used by the Monthly Budget widget.
+  // Spent = CC debits only (debit_from_credit_card category)
+  // Remaining = Budget - Spent
   const calculatedBudget = useMemo(() => {
     const budget = budgetsHook.getBudgetForMonth(currentMonth);
     const totalBudget = budget ? Number(budget.total_budget) : 0;
@@ -148,15 +147,10 @@ export const FinanceProvider = ({ children }: { children: ReactNode }) => {
       e.month === currentMonth && isDateUpToToday(e.expense_date)
     );
     
-     // Credit card statement debits already recorded (debit_from_credit_card category)
-     const creditCardDebits = monthExpenses
-       .filter(e => e.category === 'debit_from_credit_card')
-       .reduce((sum, e) => sum + Number(e.amount), 0);
-
-     // Bank/debit-card spending already recorded (any non-planned bank transfer)
-     const bankSpent = monthExpenses
-       .filter(e => e.payment_method === 'bank_transfer' && e.kind !== 'planned')
-       .reduce((sum, e) => sum + Number(e.amount), 0);
+    // Credit card debits (debit_from_credit_card category) - this is "Spent"
+    const creditCardDebits = monthExpenses
+      .filter(e => e.category === 'debit_from_credit_card')
+      .reduce((sum, e) => sum + Number(e.amount), 0);
     
     // Planned expenses paid via credit card (not bank transfer, excluding debit_from_credit_card)
     const plannedCreditCardExpenses = expensesHook.expenses
@@ -177,11 +171,11 @@ export const FinanceProvider = ({ children }: { children: ReactNode }) => {
       )
       .reduce((sum, item) => sum + Number(item.estimated_cost), 0);
     
-     // Spent budget = bank spending + CC statement debits (both are "actually spent")
-     const spentBudget = bankSpent + creditCardDebits;
+    // Spent = CC debits only
+    const spentBudget = creditCardDebits;
 
-     // Remaining budget = set budget - spent
-     const leftBudget = totalBudget - spentBudget;
+    // Remaining = Budget - Spent
+    const leftBudget = totalBudget - spentBudget;
     
     const today = new Date();
     const [year, month] = currentMonth.split('-').map(Number);
