@@ -32,7 +32,7 @@ const ExpensesList = () => {
   const navigate = useNavigate();
   const { expenses, currentMonth, addExpense, updateExpense, deleteExpense } = useFinance();
   const { categories, addCategory, isAddingCategory } = useExpenseCategories();
-  const { goalItems } = useGoalItems();
+  const { goalItems, unmarkAsPurchased } = useGoalItems();
   const [isOpen, setIsOpen] = useState(false);
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
   const [showNewCategory, setShowNewCategory] = useState(false);
@@ -222,6 +222,19 @@ const ExpensesList = () => {
     if (isGoalExpense(expense)) {
       navigate('/goals');
     }
+  };
+
+  const handleDeleteExpense = (expense: Expense) => {
+    // If this is a goal expense, also unmark the goal item as purchased
+    if (isGoalExpense(expense)) {
+      const associatedGoalItem = goalItems.find(
+        item => item.is_purchased && item.name === expense.description
+      );
+      if (associatedGoalItem) {
+        unmarkAsPurchased(associatedGoalItem.id);
+      }
+    }
+    deleteExpense(expense.id);
   };
 
   return (
@@ -504,7 +517,7 @@ const ExpensesList = () => {
                   <Pencil className="h-4 w-4 text-muted-foreground" />
                 </button>
                 <button
-                  onClick={(e) => { e.stopPropagation(); deleteExpense(expense.id); }}
+                  onClick={(e) => { e.stopPropagation(); handleDeleteExpense(expense); }}
                   className="p-1.5 opacity-0 group-hover:opacity-100 hover:bg-destructive/10 rounded transition-all"
                 >
                   <Trash2 className="h-4 w-4 text-destructive" />
