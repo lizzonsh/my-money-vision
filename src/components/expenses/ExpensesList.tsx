@@ -417,11 +417,16 @@ const ExpensesList = () => {
                     >
                       {expense.category.replace(/_/g, ' ')}
                     </span>
-                    {expense.category === 'debit_from_credit_card' && expense.card_id && (
-                      <span className="text-xs px-2 py-0.5 rounded-full bg-primary/20 text-primary">
-                        {formatCardName(expense.card_id)}
-                      </span>
-                    )}
+                    <span className={cn(
+                      'text-xs px-2 py-0.5 rounded-full',
+                      expense.payment_method === 'credit_card' 
+                        ? 'bg-primary/20 text-primary' 
+                        : 'bg-success/20 text-success'
+                    )}>
+                      {expense.payment_method === 'credit_card' 
+                        ? (expense.card_id ? formatCardName(expense.card_id) : 'Credit Card')
+                        : 'Bank Transfer'}
+                    </span>
                     <span className="text-xs text-muted-foreground capitalize">
                       {expense.kind}
                     </span>
