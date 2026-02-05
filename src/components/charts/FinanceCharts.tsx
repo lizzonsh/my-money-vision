@@ -221,13 +221,21 @@ export const SavingsGrowthChart = () => {
     const last6Months = getLastNMonths(6);
     
     return last6Months.map(monthKey => {
-      // Get latest savings per account for this month or earlier
-      const savingsUpToMonth = savings.filter(s => s.month <= monthKey);
+      // Get latest savings per account for this month or earlier,
+      // excluding accounts that were closed before this month
+      const monthDate = new Date(monthKey + '-01');
       
-      const latestPerAccount = savingsUpToMonth.reduce((acc, saving) => {
+      const latestPerAccount = savings
+        .filter(s => s.month <= monthKey) // Only include entries up to this month
+        .filter(s => {
+          // Show if not closed, OR if closed after this month
+          if (!s.closed_at) return true;
+          const closedDate = new Date(s.closed_at);
+          return closedDate > monthDate;
+        })
+        .reduce((acc, saving) => {
         const existing = acc.get(saving.name);
-        if (!existing || saving.month > existing.month || 
-            (saving.month === existing.month && new Date(saving.updated_at) > new Date(existing.updated_at))) {
+        if (!existing || new Date(saving.updated_at) > new Date(existing.updated_at)) {
           acc.set(saving.name, saving);
         }
         return acc;
