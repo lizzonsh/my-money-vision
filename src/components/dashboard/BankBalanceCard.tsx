@@ -486,10 +486,10 @@ const BankBalanceCard = () => {
               </div>
               <div>
                 <span>CC Next Month Debit</span>
-                <p className="text-[10px] text-muted-foreground">current month CC total</p>
+                <p className="text-[10px] text-muted-foreground">sum of debit from credit card</p>
               </div>
             </div>
-            <span className="text-destructive font-medium">-{formatCurrency(currentMonthCCExpenses)}</span>
+            <span className="text-destructive font-medium">-{formatCurrency(creditCardDebit)}</span>
           </div>
           
           {/* Bank Transfers (current month) */}
