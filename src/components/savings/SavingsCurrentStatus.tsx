@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useFinance, Savings } from '@/contexts/FinanceContext';
 import { formatCurrency } from '@/lib/formatters';
 import { convertToILS, SUPPORTED_CURRENCIES } from '@/lib/currencyUtils';
-import { Plus, Trash2, PiggyBank, TrendingUp, Pencil } from 'lucide-react';
+import { Plus, Trash2, PiggyBank, Pencil } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -29,10 +29,8 @@ const SavingsCurrentStatus = () => {
   const [formData, setFormData] = useState({
     name: '',
     amount: '',
-    actionAmount: '',
     transferMethod: 'bank_account',
     cardId: '',
-    action: 'deposit',
     currency: 'ILS',
   });
 
@@ -56,54 +54,21 @@ const SavingsCurrentStatus = () => {
       return acc;
     }, new Map<string, Savings>());
 
-  // Match recurring savings to savings accounts by name
-  const getRecurringSavingsForAccount = (accountName: string) => {
-    return recurringSavings.filter(
-      rs => rs.is_active && rs.name.toLowerCase() === accountName.toLowerCase()
-    );
-  };
-
-  // Calculate recurring contribution for an account
-  const getRecurringContribution = (accountName: string) => {
-    const matching = getRecurringSavingsForAccount(accountName);
-    const deposits = matching
-      .filter(rs => rs.action_type === 'deposit')
-      .reduce((sum, rs) => sum + Number(rs.default_amount), 0);
-    const withdrawals = matching
-      .filter(rs => rs.action_type === 'withdrawal')
-      .reduce((sum, rs) => sum + Number(rs.default_amount), 0);
-    return deposits - withdrawals;
-  };
-
-  // Build unique savings with recurring info attached
-  const uniqueSavingsWithRecurring = Array.from(latestSavingsPerName.values()).map(saving => ({
-    ...saving,
-    recurringContribution: getRecurringContribution(saving.name),
-    matchingRecurringSavings: getRecurringSavingsForAccount(saving.name),
-  }));
+  // Build unique savings list
+  const uniqueSavings = Array.from(latestSavingsPerName.values());
 
   // Total portfolio value (sum of latest values per account)
-  const totalPortfolioValue = uniqueSavingsWithRecurring.reduce((sum, s) => sum + Number(s.amount), 0);
-
-  // Total monthly deposits from recurring savings templates (active ones)
-  const activeRecurringSavings = recurringSavings.filter(rs => rs.is_active);
-  // Calculate recurring totals in ILS
-  const totalRecurringDepositsILS = activeRecurringSavings
-    .filter(rs => rs.action_type === 'deposit')
-    .reduce((sum, rs) => sum + convertToILS(Number(rs.default_amount), rs.currency || 'ILS'), 0);
-  const totalRecurringWithdrawalsILS = activeRecurringSavings
-    .filter(rs => rs.action_type === 'withdrawal')
-    .reduce((sum, rs) => sum + convertToILS(Number(rs.default_amount), rs.currency || 'ILS'), 0);
-  const netRecurringMonthlyILS = totalRecurringDepositsILS - totalRecurringWithdrawalsILS;
+  const totalPortfolioValue = uniqueSavings.reduce(
+    (sum, s) => sum + convertToILS(Number(s.amount), s.currency || 'ILS'), 
+    0
+  );
 
   const resetForm = () => {
     setFormData({
       name: '',
       amount: '',
-      actionAmount: '',
       transferMethod: 'bank_account',
       cardId: '',
-      action: 'deposit',
       currency: 'ILS',
     });
     setEditingSaving(null);
@@ -114,10 +79,8 @@ const SavingsCurrentStatus = () => {
     setFormData({
       name: saving.name,
       amount: saving.amount.toString(),
-      actionAmount: (saving.action_amount || saving.monthly_deposit || '').toString(),
       transferMethod: saving.transfer_method,
       cardId: saving.card_id || '',
-      action: saving.action || 'deposit',
       currency: saving.currency || 'ILS',
     });
     setIsOpen(true);
@@ -132,11 +95,11 @@ const SavingsCurrentStatus = () => {
       currency: formData.currency,
       transfer_method: formData.transferMethod as 'bank_account' | 'credit_card',
       card_id: formData.cardId || null,
-      action: formData.action as 'deposit' | 'withdrawal',
-      action_amount: formData.actionAmount ? parseFloat(formData.actionAmount) : null,
-      monthly_deposit: formData.action === 'deposit' && formData.actionAmount ? parseFloat(formData.actionAmount) : null,
-      recurring_type: formData.action === 'deposit' && formData.actionAmount ? 'monthly' as const : null,
-      recurring_day_of_month: formData.action === 'deposit' && formData.actionAmount ? 15 : null,
+      action: null,
+      action_amount: null,
+      monthly_deposit: null,
+      recurring_type: null,
+      recurring_day_of_month: null,
       closed_at: null,
     };
 
@@ -156,12 +119,7 @@ const SavingsCurrentStatus = () => {
           <h3 className="font-semibold">Current Portfolio</h3>
           <p className="text-lg font-bold">{formatCurrency(totalPortfolioValue)}</p>
           <p className="text-xs text-muted-foreground mt-1">
-            {uniqueSavingsWithRecurring.length} account{uniqueSavingsWithRecurring.length !== 1 ? 's' : ''}
-            {netRecurringMonthlyILS !== 0 && (
-              <span className={netRecurringMonthlyILS > 0 ? "text-success ml-2" : "text-destructive ml-2"}>
-                {netRecurringMonthlyILS > 0 ? '+' : ''}{formatCurrency(netRecurringMonthlyILS)}/mo recurring
-              </span>
-            )}
+            {uniqueSavings.length} account{uniqueSavings.length !== 1 ? 's' : ''}
           </p>
         </div>
         <Dialog open={isOpen} onOpenChange={(open) => { setIsOpen(open); if (!open) resetForm(); }}>
@@ -219,35 +177,6 @@ const SavingsCurrentStatus = () => {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>Action Type</Label>
-                  <Select
-                    value={formData.action}
-                    onValueChange={(value) => setFormData({ ...formData, action: value })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="deposit">Deposit</SelectItem>
-                      <SelectItem value="withdrawal">Withdrawal</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="actionAmount">
-                    {formData.action === 'deposit' ? 'Monthly Deposit' : 'Withdrawal Amount'} (₪)
-                  </Label>
-                  <Input
-                    id="actionAmount"
-                    type="number"
-                    value={formData.actionAmount}
-                    onChange={(e) => setFormData({ ...formData, actionAmount: e.target.value })}
-                    placeholder="0"
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
                   <Label>Transfer Method</Label>
                   <Select
                     value={formData.transferMethod}
@@ -290,12 +219,12 @@ const SavingsCurrentStatus = () => {
       </div>
 
       <div className="space-y-3">
-        {uniqueSavingsWithRecurring.length === 0 ? (
+        {uniqueSavings.length === 0 ? (
           <p className="text-sm text-muted-foreground text-center py-4">
             No savings accounts
           </p>
         ) : (
-          uniqueSavingsWithRecurring.map((saving) => (
+          uniqueSavings.map((saving) => (
             <div
               key={saving.id}
               className="p-4 rounded-lg bg-secondary/30 hover:bg-secondary/50 transition-colors group"
@@ -322,18 +251,6 @@ const SavingsCurrentStatus = () => {
                 <div className="flex items-center gap-2">
                   <div className="text-right">
                     <p className="text-lg font-bold">{formatCurrency(Number(saving.amount), saving.currency || 'ILS')}</p>
-                    {(saving.recurringContribution !== 0 || saving.monthly_deposit) && (
-                      <div className="flex items-center gap-1 text-xs">
-                        <TrendingUp className={cn("h-3 w-3", (saving.recurringContribution || Number(saving.monthly_deposit) || 0) > 0 ? "text-success" : "text-destructive")} />
-                        <span className={(saving.recurringContribution || Number(saving.monthly_deposit) || 0) > 0 ? "text-success" : "text-destructive"}>
-                          {(saving.recurringContribution || Number(saving.monthly_deposit) || 0) > 0 ? '+' : ''}
-                          {formatCurrency(saving.recurringContribution || Number(saving.monthly_deposit) || 0, saving.currency || 'ILS')}/mo
-                        </span>
-                        {saving.recurringContribution !== 0 && (
-                          <span className="text-muted-foreground">(recurring)</span>
-                        )}
-                      </div>
-                    )}
                   </div>
                   <button
                     onClick={() => handleOpenEdit(saving)}
