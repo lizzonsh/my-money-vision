@@ -10,8 +10,10 @@ export const getTodayString = (): string => {
  */
 export const isDateUpToToday = (dateString: string | undefined): boolean => {
   if (!dateString) return true; // If no date, include by default
+  // Extract just the date part (YYYY-MM-DD) for comparison
+  const dateOnly = dateString.split('T')[0];
   const today = getTodayString();
-  return dateString <= today;
+  return dateOnly <= today;
 };
 
 /**
