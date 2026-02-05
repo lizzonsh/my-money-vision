@@ -63,6 +63,19 @@ const SavingsMonthlyActivity = () => {
   // Get active recurring savings
   const activeRecurringSavings = recurringSavings.filter(rs => rs.is_active);
 
+  // Get names of savings that have already been recorded this month
+  // (synced by edge function or manually added)
+  const recordedSavingsNames = new Set(
+    savingsUpToDate
+      .filter(s => (s.action_amount && s.action_amount > 0) || (s.monthly_deposit && s.monthly_deposit > 0))
+      .map(s => s.name)
+  );
+
+  // Filter out recurring savings that have already been recorded
+  const pendingRecurringSavings = activeRecurringSavings.filter(
+    rs => !recordedSavingsNames.has(rs.name)
+  );
+
   // Create combined activity list
   const activityItems: ActivityItem[] = [
     // Actual savings transactions - include entries with action_amount OR monthly_deposit
@@ -80,8 +93,8 @@ const SavingsMonthlyActivity = () => {
           originalSaving: s,
         };
       }),
-    // Recurring savings as virtual transactions
-    ...activeRecurringSavings.map(rs => ({
+    // Only show recurring savings that haven't been recorded yet (pending)
+    ...pendingRecurringSavings.map(rs => ({
       id: `recurring-${rs.id}`,
       name: rs.name,
       action: rs.action_type as 'deposit' | 'withdrawal',
