@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useFinance, Savings } from '@/contexts/FinanceContext';
 import { formatCurrency } from '@/lib/formatters';
+import { convertToILS, SUPPORTED_CURRENCIES } from '@/lib/currencyUtils';
 import { Plus, Trash2, PiggyBank, TrendingUp, Pencil } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -34,13 +35,6 @@ const SavingsCurrentStatus = () => {
     action: 'deposit',
     currency: 'ILS',
   });
-
-  const currencies = [
-    { code: 'ILS', symbol: '₪', name: 'Israeli Shekel' },
-    { code: 'USD', symbol: '$', name: 'US Dollar' },
-    { code: 'EUR', symbol: '€', name: 'Euro' },
-    { code: 'GBP', symbol: '£', name: 'British Pound' },
-  ];
 
   // Get the latest record per savings account name UP TO the selected month
   // For closed accounts: show them if they were closed AFTER the selected month (history preserved)
@@ -213,7 +207,7 @@ const SavingsCurrentStatus = () => {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {currencies.map((c) => (
+                      {SUPPORTED_CURRENCIES.map((c) => (
                         <SelectItem key={c.code} value={c.code}>
                           {c.symbol} {c.code}
                         </SelectItem>
@@ -313,7 +307,14 @@ const SavingsCurrentStatus = () => {
                   <div>
                     <p className="font-medium">{saving.name}</p>
                     <p className="text-sm text-muted-foreground">
-                      {saving.currency} • Updated {new Date(saving.updated_at).toLocaleDateString()}
+                      {saving.currency || 'ILS'}
+                      {saving.currency && saving.currency !== 'ILS' && (
+                        <span className="ml-1">
+                          ≈ {formatCurrency(convertToILS(Number(saving.amount), saving.currency))}
+                        </span>
+                      )}
+                      <span className="mx-1">•</span>
+                      Updated {new Date(saving.updated_at).toLocaleDateString()}
                     </p>
                   </div>
                 </div>

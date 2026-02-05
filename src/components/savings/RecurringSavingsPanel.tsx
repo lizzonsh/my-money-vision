@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { useFinance, RecurringSavings } from '@/contexts/FinanceContext';
 import { formatCurrency } from '@/lib/formatters';
+import { convertToILS, SUPPORTED_CURRENCIES } from '@/lib/currencyUtils';
 import { format } from 'date-fns';
-import { Plus, Trash2, Pencil, Repeat, Pause, TrendingUp, ArrowDownRight, CalendarIcon } from 'lucide-react';
+import { Plus, Trash2, Pencil, Repeat, Pause, TrendingUp, ArrowDownRight, CalendarIcon, DollarSign } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -43,6 +44,7 @@ const RecurringSavingsPanel = () => {
     dayOfMonth: '',
     notes: '',
     endDate: null as Date | null,
+    currency: 'ILS',
   });
 
   const resetForm = () => {
@@ -55,6 +57,7 @@ const RecurringSavingsPanel = () => {
       dayOfMonth: '',
       notes: '',
       endDate: null,
+      currency: 'ILS',
     });
     setEditingTemplate(null);
   };
@@ -70,6 +73,7 @@ const RecurringSavingsPanel = () => {
       dayOfMonth: template.day_of_month.toString(),
       notes: template.notes || '',
       endDate: template.end_date ? new Date(template.end_date) : null,
+      currency: template.currency || 'ILS',
     });
     setIsOpen(true);
   };
@@ -86,6 +90,7 @@ const RecurringSavingsPanel = () => {
       is_active: true,
       notes: formData.notes || null,
       end_date: formData.endDate ? format(formData.endDate, 'yyyy-MM-dd') : null,
+      currency: formData.currency,
     };
 
     if (editingTemplate) {
@@ -162,15 +167,38 @@ const RecurringSavingsPanel = () => {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="defaultAmount">Default Amount (₪)</Label>
-                  <Input
-                    id="defaultAmount"
-                    type="number"
-                    value={formData.defaultAmount}
-                    onChange={(e) => setFormData({ ...formData, defaultAmount: e.target.value })}
-                    placeholder="0"
-                    required
-                  />
+                  <Label htmlFor="defaultAmount">Default Amount</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      id="defaultAmount"
+                      type="number"
+                      value={formData.defaultAmount}
+                      onChange={(e) => setFormData({ ...formData, defaultAmount: e.target.value })}
+                      placeholder="0"
+                      className="flex-1"
+                      required
+                    />
+                    <Select
+                      value={formData.currency}
+                      onValueChange={(value) => setFormData({ ...formData, currency: value })}
+                    >
+                      <SelectTrigger className="w-24">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {SUPPORTED_CURRENCIES.map((c) => (
+                          <SelectItem key={c.code} value={c.code}>
+                            {c.symbol} {c.code}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  {formData.currency !== 'ILS' && formData.defaultAmount && (
+                    <p className="text-xs text-muted-foreground">
+                      ≈ {formatCurrency(convertToILS(parseFloat(formData.defaultAmount) || 0, formData.currency))} ILS
+                    </p>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="dayOfMonth">Day of Month</Label>
@@ -353,12 +381,20 @@ const RecurringSavingsPanel = () => {
               </div>
               <div className="flex items-center gap-2">
                 <div className="text-right">
-                  <p className={cn(
-                    'text-sm font-semibold',
-                    template.action_type === 'withdrawal' ? 'text-destructive' : 'text-success'
-                  )}>
-                    {template.action_type === 'withdrawal' ? '-' : '+'}{formatCurrency(Number(template.default_amount))}
-                  </p>
+                  <div>
+                    <p className={cn(
+                      'text-sm font-semibold',
+                      template.action_type === 'withdrawal' ? 'text-destructive' : 'text-success'
+                    )}>
+                      {template.action_type === 'withdrawal' ? '-' : '+'}
+                      {formatCurrency(Number(template.default_amount), template.currency || 'ILS')}
+                    </p>
+                    {template.currency && template.currency !== 'ILS' && (
+                      <p className="text-[10px] text-muted-foreground">
+                        ≈ {formatCurrency(convertToILS(Number(template.default_amount), template.currency))}
+                      </p>
+                    )}
+                  </div>
                 </div>
                 <button
                   onClick={() => handleOpenEdit(template)}

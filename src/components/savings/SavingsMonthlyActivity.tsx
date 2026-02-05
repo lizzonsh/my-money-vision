@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useFinance, Savings } from '@/contexts/FinanceContext';
 import { formatCurrency } from '@/lib/formatters';
+import { convertToILS } from '@/lib/currencyUtils';
 import { isDateUpToToday, isCurrentMonth } from '@/lib/dateUtils';
 import { ArrowUpRight, ArrowDownRight, TrendingUp, TrendingDown, Minus, Plus, Pencil, Trash2, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -32,6 +33,7 @@ interface ActivityItem {
   isRecurring: boolean;
   dayOfMonth?: number;
   originalSaving?: Savings;
+  currency?: string;
 }
 
 const SavingsMonthlyActivity = () => {
@@ -91,6 +93,7 @@ const SavingsMonthlyActivity = () => {
           date: s.updated_at,
           isRecurring: false,
           originalSaving: s,
+          currency: s.currency || 'ILS',
         };
       }),
     // Only show recurring savings that haven't been recorded yet (pending)
@@ -102,19 +105,20 @@ const SavingsMonthlyActivity = () => {
       date: `${currentMonth}-${String(rs.day_of_month).padStart(2, '0')}`,
       isRecurring: true,
       dayOfMonth: rs.day_of_month,
+      currency: rs.currency || 'ILS',
     })),
   ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
-  // Calculate totals
-  const monthlyDeposits = activityItems
+  // Calculate totals in ILS
+  const monthlyDepositsILS = activityItems
     .filter(item => item.action === 'deposit')
-    .reduce((sum, item) => sum + item.amount, 0);
+    .reduce((sum, item) => sum + convertToILS(item.amount, item.currency || 'ILS'), 0);
 
-  const monthlyWithdrawals = activityItems
+  const monthlyWithdrawalsILS = activityItems
     .filter(item => item.action === 'withdrawal')
-    .reduce((sum, item) => sum + item.amount, 0);
+    .reduce((sum, item) => sum + convertToILS(item.amount, item.currency || 'ILS'), 0);
 
-  const netChange = monthlyDeposits - monthlyWithdrawals;
+  const netChangeILS = monthlyDepositsILS - monthlyWithdrawalsILS;
 
   // Get unique account names for the dropdown
   const accountNames = [...new Set(savings.filter(s => !s.closed_at).map(s => s.name))];
@@ -297,7 +301,7 @@ const SavingsMonthlyActivity = () => {
             <ArrowUpRight className="h-4 w-4 text-success" />
             <span className="text-xs text-muted-foreground">Deposits</span>
           </div>
-          <p className="text-lg font-bold text-success">{formatCurrency(monthlyDeposits)}</p>
+          <p className="text-lg font-bold text-success">{formatCurrency(monthlyDepositsILS)}</p>
         </div>
         
         <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-center md:col-span-2">
@@ -305,21 +309,21 @@ const SavingsMonthlyActivity = () => {
             <ArrowDownRight className="h-4 w-4 text-destructive" />
             <span className="text-xs text-muted-foreground">Withdrawals</span>
           </div>
-          <p className="text-lg font-bold text-destructive">{formatCurrency(monthlyWithdrawals)}</p>
+          <p className="text-lg font-bold text-destructive">{formatCurrency(monthlyWithdrawalsILS)}</p>
         </div>
         
         <div className={cn(
           "p-3 rounded-lg text-center border md:col-span-2",
-          netChange > 0 
+          netChangeILS > 0 
             ? "bg-success/10 border-success/20" 
-            : netChange < 0 
+            : netChangeILS < 0 
               ? "bg-destructive/10 border-destructive/20"
               : "bg-muted/50 border-muted"
         )}>
           <div className="flex items-center justify-center gap-2 mb-1">
-            {netChange > 0 ? (
+            {netChangeILS > 0 ? (
               <TrendingUp className="h-4 w-4 text-success" />
-            ) : netChange < 0 ? (
+            ) : netChangeILS < 0 ? (
               <TrendingDown className="h-4 w-4 text-destructive" />
             ) : (
               <Minus className="h-4 w-4 text-muted-foreground" />
@@ -328,9 +332,9 @@ const SavingsMonthlyActivity = () => {
           </div>
           <p className={cn(
             "text-lg font-bold",
-            netChange > 0 ? "text-success" : netChange < 0 ? "text-destructive" : "text-muted-foreground"
+            netChangeILS > 0 ? "text-success" : netChangeILS < 0 ? "text-destructive" : "text-muted-foreground"
           )}>
-            {netChange > 0 ? '+' : ''}{formatCurrency(netChange)}
+            {netChangeILS > 0 ? '+' : ''}{formatCurrency(netChangeILS)}
           </p>
         </div>
       </div>
@@ -388,8 +392,14 @@ const SavingsMonthlyActivity = () => {
                       "text-sm font-semibold",
                       item.action === 'withdrawal' ? "text-destructive" : "text-success"
                     )}>
-                      {item.action === 'withdrawal' ? '-' : '+'}{formatCurrency(item.amount)}
+                      {item.action === 'withdrawal' ? '-' : '+'}
+                      {formatCurrency(item.amount, item.currency || 'ILS')}
                     </p>
+                    {item.currency && item.currency !== 'ILS' && (
+                      <p className="text-[10px] text-muted-foreground">
+                        ≈ {formatCurrency(convertToILS(item.amount, item.currency))}
+                      </p>
+                    )}
                     <p className="text-xs text-muted-foreground">
                       {item.isRecurring ? `Day ${item.dayOfMonth}` : new Date(item.date).toLocaleDateString()}
                     </p>
