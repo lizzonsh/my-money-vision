@@ -408,6 +408,7 @@ export type Database = {
           action_type: Database["public"]["Enums"]["savings_action"]
           card_id: string | null
           created_at: string
+          currency: string | null
           day_of_month: number
           default_amount: number
           end_date: string | null
@@ -423,6 +424,7 @@ export type Database = {
           action_type: Database["public"]["Enums"]["savings_action"]
           card_id?: string | null
           created_at?: string
+          currency?: string | null
           day_of_month: number
           default_amount: number
           end_date?: string | null
@@ -438,6 +440,7 @@ export type Database = {
           action_type?: Database["public"]["Enums"]["savings_action"]
           card_id?: string | null
           created_at?: string
+          currency?: string | null
           day_of_month?: number
           default_amount?: number
           end_date?: string | null

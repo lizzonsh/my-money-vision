@@ -150,7 +150,7 @@ Deno.serve(async (req) => {
         action_amount: rs.default_amount,
         transfer_method: rs.transfer_method,
         card_id: rs.card_id,
-        currency: 'ILS',
+        currency: rs.currency || 'ILS',
         recurring_type: 'monthly',
         recurring_day_of_month: rs.day_of_month,
         monthly_deposit: rs.action_type === 'deposit' ? rs.default_amount : null,

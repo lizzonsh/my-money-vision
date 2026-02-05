@@ -173,6 +173,7 @@ const SavingsList = () => {
           is_active: true,
           notes: null,
           end_date: null,
+          currency: formData.currency,
         });
       }
     }
