@@ -22,6 +22,24 @@ import {
 } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
 
+// Conversion rates to ILS
+const CURRENCY_RATES: Record<string, number> = {
+  ILS: 1,
+  USD: 3.65,
+  EUR: 4.0,
+  GBP: 4.6,
+};
+
+const convertToILS = (amount: number, currency: string): number => {
+  return amount * (CURRENCY_RATES[currency] || 1);
+};
+
+const formatWithSymbol = (amount: number, currency: string): string => {
+  const symbols: Record<string, string> = { ILS: '₪', USD: '$', EUR: '€', GBP: '£' };
+  const symbol = symbols[currency] || '₪';
+  return `${symbol}${amount.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+};
+
 const SavingsList = () => {
   const { savings, recurringSavings, currentMonth, addSavings, updateSavings, deleteSavings, closeSavingsAccount, addRecurringSavings, updateRecurringSavings } = useFinance();
   const [isOpen, setIsOpen] = useState(false);
@@ -33,6 +51,7 @@ const SavingsList = () => {
     transferMethod: 'bank_account',
     cardId: '',
     action: 'deposit',
+    currency: 'ILS',
   });
 
   // Filter savings for current month only
@@ -61,9 +80,10 @@ const SavingsList = () => {
 
   const uniqueSavings = Array.from(latestSavingsPerName.values());
 
-  const totalSavings = uniqueSavings
+  // Calculate total in ILS (converting foreign currencies)
+  const totalSavingsILS = uniqueSavings
     .filter(s => s.action !== 'withdrawal')
-    .reduce((sum, s) => sum + Number(s.amount), 0);
+    .reduce((sum, s) => sum + convertToILS(Number(s.amount), s.currency || 'ILS'), 0);
 
   const totalWithdrawals = savingsUpToDate
     .filter(s => s.action === 'withdrawal')
@@ -81,6 +101,7 @@ const SavingsList = () => {
       transferMethod: 'bank_account',
       cardId: '',
       action: 'deposit',
+      currency: 'ILS',
     });
     setEditingSaving(null);
   };
@@ -94,6 +115,7 @@ const SavingsList = () => {
       transferMethod: saving.transfer_method,
       cardId: saving.card_id || '',
       action: saving.action || 'deposit',
+      currency: saving.currency || 'ILS',
     });
     setIsOpen(true);
   };
@@ -108,7 +130,7 @@ const SavingsList = () => {
       month: `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`,
       name: formData.name,
       amount: parseFloat(formData.amount),
-      currency: 'ILS',
+      currency: formData.currency,
       transfer_method: formData.transferMethod as 'bank_account' | 'credit_card',
       card_id: formData.cardId || null,
       action: formData.action as 'deposit' | 'withdrawal',
@@ -164,7 +186,7 @@ const SavingsList = () => {
       <div className="flex items-center justify-between mb-4">
         <div>
           <h3 className="font-semibold">Savings Accounts</h3>
-          <p className="text-lg font-bold">{formatCurrency(totalSavings)}</p>
+          <p className="text-lg font-bold">{formatCurrency(totalSavingsILS)}</p>
           <div className="flex gap-3 text-xs text-muted-foreground mt-1">
             <span className="text-success">+{formatCurrency(monthlyDeposits)}/mo</span>
             {totalWithdrawals > 0 && (
@@ -195,15 +217,32 @@ const SavingsList = () => {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="amount">Current Amount (₪)</Label>
-                <Input
-                  id="amount"
-                  type="number"
-                  value={formData.amount}
-                  onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-                  placeholder="0"
-                  required
-                />
+                <Label htmlFor="amount">Current Amount</Label>
+                <div className="flex gap-2">
+                  <Input
+                    id="amount"
+                    type="number"
+                    value={formData.amount}
+                    onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+                    placeholder="0"
+                    className="flex-1"
+                    required
+                  />
+                  <Select
+                    value={formData.currency}
+                    onValueChange={(value) => setFormData({ ...formData, currency: value })}
+                  >
+                    <SelectTrigger className="w-24">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="ILS">₪ ILS</SelectItem>
+                      <SelectItem value="USD">$ USD</SelectItem>
+                      <SelectItem value="EUR">€ EUR</SelectItem>
+                      <SelectItem value="GBP">£ GBP</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -283,76 +322,86 @@ const SavingsList = () => {
             No savings accounts
           </p>
         ) : (
-          uniqueSavings.map((saving) => (
-            <div
-              key={saving.id}
-              className={cn(
-                'p-4 rounded-lg transition-colors group',
-                saving.action === 'withdrawal'
-                  ? 'bg-destructive/10 border border-destructive/20'
-                  : 'bg-secondary/30 hover:bg-secondary/50'
-              )}
-            >
-              <div className="flex items-start justify-between">
-                <div className="flex items-center gap-3">
-                  <div
-                    className={cn(
-                      'p-2.5 rounded-lg',
-                      saving.action === 'withdrawal'
-                        ? 'bg-destructive/20 text-destructive'
-                        : 'bg-primary/10 text-primary'
-                    )}
-                  >
-                    {saving.action === 'withdrawal' ? (
-                      <ArrowDownRight className="h-5 w-5" />
-                    ) : (
-                      <PiggyBank className="h-5 w-5" />
-                    )}
-                  </div>
-                  <div>
-                    <p className="font-medium">{saving.name}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {saving.currency}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="text-right">
-                    <p className="text-lg font-bold">{formatCurrency(Number(saving.amount))}</p>
-                    {saving.monthly_deposit && (
-                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                        <TrendingUp className="h-3 w-3 text-success" />
-                        <span>+{formatCurrency(Number(saving.monthly_deposit))}/mo</span>
-                      </div>
-                    )}
-                    {saving.action === 'withdrawal' && saving.action_amount && (
-                      <p className="text-xs text-destructive">
-                        -{formatCurrency(Number(saving.action_amount))}
+          uniqueSavings.map((saving) => {
+            const currency = saving.currency || 'ILS';
+            const isNonILS = currency !== 'ILS';
+            
+            return (
+              <div
+                key={saving.id}
+                className={cn(
+                  'p-4 rounded-lg transition-colors group',
+                  saving.action === 'withdrawal'
+                    ? 'bg-destructive/10 border border-destructive/20'
+                    : 'bg-secondary/30 hover:bg-secondary/50'
+                )}
+              >
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center gap-3">
+                    <div
+                      className={cn(
+                        'p-2.5 rounded-lg',
+                        saving.action === 'withdrawal'
+                          ? 'bg-destructive/20 text-destructive'
+                          : 'bg-primary/10 text-primary'
+                      )}
+                    >
+                      {saving.action === 'withdrawal' ? (
+                        <ArrowDownRight className="h-5 w-5" />
+                      ) : (
+                        <PiggyBank className="h-5 w-5" />
+                      )}
+                    </div>
+                    <div>
+                      <p className="font-medium">{saving.name}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {currency}
+                        {isNonILS && (
+                          <span className="ml-1">
+                            ≈ {formatCurrency(convertToILS(Number(saving.amount), currency))}
+                          </span>
+                        )}
                       </p>
-                    )}
-                    {saving.action === 'deposit' && saving.action_amount && (
-                      <p className="text-xs text-success">
-                        +{formatCurrency(Number(saving.action_amount))}
-                      </p>
-                    )}
+                    </div>
                   </div>
-                  <button
-                    onClick={() => handleOpenEdit(saving)}
-                    className="p-1.5 opacity-0 group-hover:opacity-100 hover:bg-secondary rounded transition-all"
-                  >
-                    <Pencil className="h-4 w-4 text-muted-foreground" />
-                  </button>
-                  <button
-                    onClick={() => deleteSavings(saving.id)}
-                    className="p-1.5 opacity-0 group-hover:opacity-100 hover:bg-destructive/10 rounded transition-all"
-                    title="Delete this savings record"
-                  >
-                    <Trash2 className="h-4 w-4 text-destructive" />
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <div className="text-right">
+                      <p className="text-lg font-bold">{formatWithSymbol(Number(saving.amount), currency)}</p>
+                      {saving.monthly_deposit && (
+                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                          <TrendingUp className="h-3 w-3 text-success" />
+                          <span>+{formatCurrency(Number(saving.monthly_deposit))}/mo</span>
+                        </div>
+                      )}
+                      {saving.action === 'withdrawal' && saving.action_amount && (
+                        <p className="text-xs text-destructive">
+                          -{formatCurrency(Number(saving.action_amount))}
+                        </p>
+                      )}
+                      {saving.action === 'deposit' && saving.action_amount && (
+                        <p className="text-xs text-success">
+                          +{formatCurrency(Number(saving.action_amount))}
+                        </p>
+                      )}
+                    </div>
+                    <button
+                      onClick={() => handleOpenEdit(saving)}
+                      className="p-1.5 opacity-0 group-hover:opacity-100 hover:bg-secondary rounded transition-all"
+                    >
+                      <Pencil className="h-4 w-4 text-muted-foreground" />
+                    </button>
+                    <button
+                      onClick={() => deleteSavings(saving.id)}
+                      className="p-1.5 opacity-0 group-hover:opacity-100 hover:bg-destructive/10 rounded transition-all"
+                      title="Delete this savings record"
+                    >
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))
+            );
+          })
         )}
       </div>
     </div>
