@@ -417,9 +417,9 @@ const SavingsMonthlyActivity = () => {
                     : "bg-success/10 border border-success/20"
                 )}
               >
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 min-w-0 flex-1">
                   <div className={cn(
-                    "p-2 rounded-lg",
+                    "p-2 rounded-lg flex-shrink-0",
                     item.action === 'withdrawal'
                       ? "bg-destructive/20 text-destructive"
                       : "bg-success/20 text-success"
@@ -430,9 +430,9 @@ const SavingsMonthlyActivity = () => {
                       <ArrowUpRight className="h-4 w-4" />
                     )}
                   </div>
-                  <div>
+                  <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-1.5">
-                      <p className="text-sm font-medium">{item.name}</p>
+                      <p className="text-sm font-medium truncate">{item.name}</p>
                       {item.isRecurring && (
                         <span className="inline-flex items-center gap-0.5 text-[10px] text-primary bg-primary/10 px-1.5 py-0.5 rounded">
                           <RotateCcw className="h-2.5 w-2.5" />

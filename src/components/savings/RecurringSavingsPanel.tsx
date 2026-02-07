@@ -116,13 +116,14 @@ const RecurringSavingsPanel = () => {
     return cardNames[cardId] || cardId;
   };
 
+  // Convert all amounts to ILS before summing
   const totalMonthlyDeposits = recurringSavings
     .filter(t => t.is_active && t.action_type === 'deposit')
-    .reduce((sum, t) => sum + Number(t.default_amount), 0);
+    .reduce((sum, t) => sum + convertToILS(Number(t.default_amount), t.currency || 'ILS'), 0);
 
   const totalMonthlyWithdrawals = recurringSavings
     .filter(t => t.is_active && t.action_type === 'withdrawal')
-    .reduce((sum, t) => sum + Number(t.default_amount), 0);
+    .reduce((sum, t) => sum + convertToILS(Number(t.default_amount), t.currency || 'ILS'), 0);
 
   return (
     <div className="glass rounded-xl p-5 shadow-card animate-slide-up">
