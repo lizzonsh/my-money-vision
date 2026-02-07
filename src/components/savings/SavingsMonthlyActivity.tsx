@@ -406,7 +406,7 @@ const SavingsMonthlyActivity = () => {
             No savings activity this month
           </p>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+          <div className="space-y-2">
             {activityItems.map((item) => (
               <div
                 key={item.id}
@@ -417,9 +417,9 @@ const SavingsMonthlyActivity = () => {
                     : "bg-success/10 border border-success/20"
                 )}
               >
-                <div className="flex items-center gap-3 min-w-0 flex-1">
+                <div className="flex items-center gap-3">
                   <div className={cn(
-                    "p-2 rounded-lg flex-shrink-0",
+                    "p-2 rounded-lg",
                     item.action === 'withdrawal'
                       ? "bg-destructive/20 text-destructive"
                       : "bg-success/20 text-success"
@@ -430,41 +430,36 @@ const SavingsMonthlyActivity = () => {
                       <ArrowUpRight className="h-4 w-4" />
                     )}
                   </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-1.5">
-                      <p className="text-sm font-medium">{item.name}</p>
-                      {item.isRecurring && (
-                        <span className="inline-flex items-center gap-0.5 text-[10px] text-primary bg-primary/10 px-1.5 py-0.5 rounded flex-shrink-0">
-                          <RotateCcw className="h-2.5 w-2.5" />
-                          pending
-                        </span>
-                      )}
-                    </div>
+                  <div>
+                    <p className="text-sm font-medium">{item.name}</p>
+                    {item.isRecurring && (
+                      <span className="text-[10px] text-primary">pending</span>
+                    )}
                   </div>
                 </div>
-                <div className="flex items-center gap-2 flex-shrink-0">
+                <div className="flex items-center gap-3">
                   <p className={cn(
-                    "text-sm font-semibold whitespace-nowrap",
+                    "text-sm font-semibold",
                     item.action === 'withdrawal' ? "text-destructive" : "text-success"
                   )}>
                     {item.action === 'withdrawal' ? '-' : '+'}
                     {formatCurrency(item.amount, item.currency || 'ILS')}
                   </p>
                   {!item.isRecurring && item.originalSaving && (
-                    <>
+                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                       <button
                         onClick={() => handleOpenEdit(item.originalSaving!)}
-                        className="p-1.5 opacity-0 group-hover:opacity-100 hover:bg-secondary rounded transition-all"
+                        className="p-1.5 hover:bg-secondary rounded"
                       >
                         <Pencil className="h-3 w-3 text-muted-foreground" />
                       </button>
                       <button
                         onClick={() => deleteSavings(item.id)}
-                        className="p-1.5 opacity-0 group-hover:opacity-100 hover:bg-destructive/10 rounded transition-all"
+                        className="p-1.5 hover:bg-destructive/10 rounded"
                       >
                         <Trash2 className="h-3 w-3 text-destructive" />
                       </button>
-                    </>
+                    </div>
                   )}
                 </div>
               </div>
