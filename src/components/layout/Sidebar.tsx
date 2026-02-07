@@ -13,6 +13,7 @@ import {
   CircleDollarSign,
   Settings,
   LogOut,
+  Bug,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
@@ -25,6 +26,7 @@ const navigation = [
   { name: 'Savings', href: '/savings', icon: PiggyBank },
   { name: 'Goals', href: '/goals', icon: Target },
   { name: 'Analytics', href: '/analytics', icon: BarChart3 },
+  { name: 'Issues', href: '/issues', icon: Bug },
   { name: 'Settings', href: '/settings', icon: Settings },
 ];
 

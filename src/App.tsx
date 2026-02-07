@@ -14,6 +14,7 @@ import SavingsPage from "@/pages/SavingsPage";
 import GoalsPage from "@/pages/GoalsPage";
 import AnalyticsPage from "@/pages/AnalyticsPage";
 import SettingsPage from "@/pages/SettingsPage";
+import IssuesPage from "@/pages/IssuesPage";
 import LoginPage from "@/pages/LoginPage";
 import SignupPage from "@/pages/SignupPage";
 import NotFound from "./pages/NotFound";
@@ -100,6 +101,16 @@ const App = () => (
                   <ProtectedRoute>
                     <Sidebar>
                       <SettingsPage />
+                    </Sidebar>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/issues"
+                element={
+                  <ProtectedRoute>
+                    <Sidebar>
+                      <IssuesPage />
                     </Sidebar>
                   </ProtectedRoute>
                 }
