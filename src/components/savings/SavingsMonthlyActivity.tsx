@@ -432,37 +432,24 @@ const SavingsMonthlyActivity = () => {
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-1.5">
-                      <p className="text-sm font-medium truncate">{item.name}</p>
+                      <p className="text-sm font-medium">{item.name}</p>
                       {item.isRecurring && (
-                        <span className="inline-flex items-center gap-0.5 text-[10px] text-primary bg-primary/10 px-1.5 py-0.5 rounded">
+                        <span className="inline-flex items-center gap-0.5 text-[10px] text-primary bg-primary/10 px-1.5 py-0.5 rounded flex-shrink-0">
                           <RotateCcw className="h-2.5 w-2.5" />
-                          recurring
+                          pending
                         </span>
                       )}
                     </div>
-                    <p className="text-xs text-muted-foreground capitalize">
-                      {item.action}
-                    </p>
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <div className="text-right">
-                    <p className={cn(
-                      "text-sm font-semibold",
-                      item.action === 'withdrawal' ? "text-destructive" : "text-success"
-                    )}>
-                      {item.action === 'withdrawal' ? '-' : '+'}
-                      {formatCurrency(item.amount, item.currency || 'ILS')}
-                    </p>
-                    {item.currency && item.currency !== 'ILS' && (
-                      <p className="text-[10px] text-muted-foreground">
-                        ≈ {formatCurrency(convertToILS(item.amount, item.currency))}
-                      </p>
-                    )}
-                    <p className="text-xs text-muted-foreground">
-                      {item.isRecurring ? `Day ${item.dayOfMonth}` : new Date(item.date).toLocaleDateString()}
-                    </p>
-                  </div>
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <p className={cn(
+                    "text-sm font-semibold whitespace-nowrap",
+                    item.action === 'withdrawal' ? "text-destructive" : "text-success"
+                  )}>
+                    {item.action === 'withdrawal' ? '-' : '+'}
+                    {formatCurrency(item.amount, item.currency || 'ILS')}
+                  </p>
                   {!item.isRecurring && item.originalSaving && (
                     <>
                       <button
