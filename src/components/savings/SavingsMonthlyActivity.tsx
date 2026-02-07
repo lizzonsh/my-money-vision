@@ -430,12 +430,7 @@ const SavingsMonthlyActivity = () => {
                       <ArrowUpRight className="h-4 w-4" />
                     )}
                   </div>
-                  <div>
-                    <p className="text-sm font-medium">{item.name}</p>
-                    {item.isRecurring && (
-                      <span className="text-[10px] text-primary">pending</span>
-                    )}
-                  </div>
+                  <p className="text-sm font-medium">{item.name}</p>
                 </div>
                 <div className="flex items-center gap-3">
                   <p className={cn(
