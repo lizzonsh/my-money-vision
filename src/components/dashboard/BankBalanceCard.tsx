@@ -302,11 +302,11 @@ const BankBalanceCard = () => {
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <div className="glass rounded-lg px-4 py-2 flex items-center gap-3 cursor-pointer hover:bg-secondary/50 transition-colors">
-          <Building2 className="h-5 w-5 text-primary" />
+        <div className="glass rounded-lg px-3 py-1.5 sm:px-4 sm:py-2 flex items-center gap-2 sm:gap-3 cursor-pointer hover:bg-secondary/50 transition-colors">
+          <Building2 className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
           <div>
-            <p className="text-xs text-muted-foreground">Bank Balance</p>
-            <p className="font-semibold">{formatCurrency(displayTotal)}</p>
+            <p className="text-[10px] sm:text-xs text-muted-foreground">Bank Balance</p>
+            <p className="text-sm sm:text-base font-semibold">{formatCurrency(displayTotal)}</p>
           </div>
         </div>
       </PopoverTrigger>

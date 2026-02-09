@@ -54,19 +54,19 @@ const MonthNavigation = () => {
   };
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-1.5 sm:gap-2">
       <Button
         variant="outline"
         size="icon"
         onClick={() => navigateMonth('prev')}
-        className="h-9 w-9"
+        className="h-8 w-8 sm:h-9 sm:w-9"
       >
         <ChevronLeft className="h-4 w-4" />
       </Button>
       
       <Select value={currentMonth} onValueChange={setCurrentMonth}>
-        <SelectTrigger className="w-[180px]">
-          <Calendar className="h-4 w-4 mr-2" />
+        <SelectTrigger className="w-[140px] sm:w-[180px] h-8 sm:h-9 text-xs sm:text-sm">
+          <Calendar className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5 sm:mr-2" />
           <SelectValue>{formatMonth(currentMonth)}</SelectValue>
         </SelectTrigger>
         <SelectContent>
@@ -82,7 +82,7 @@ const MonthNavigation = () => {
         variant="outline"
         size="icon"
         onClick={() => navigateMonth('next')}
-        className="h-9 w-9"
+        className="h-8 w-8 sm:h-9 sm:w-9"
       >
         <ChevronRight className="h-4 w-4" />
       </Button>
@@ -92,7 +92,7 @@ const MonthNavigation = () => {
           variant="ghost"
           size="sm"
           onClick={goToCurrentMonth}
-          className="text-xs text-muted-foreground"
+          className="text-xs text-muted-foreground h-8 px-2"
         >
           Today
         </Button>
