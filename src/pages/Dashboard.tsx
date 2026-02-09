@@ -153,17 +153,17 @@ const Dashboard = () => {
   return (
     <div className="space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold">Dashboard</h1>
-          <p className="text-sm sm:text-base text-muted-foreground">
-            {formatMonth(currentMonth)} Overview
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
-          <MonthNavigation />
+      <div className="flex flex-col gap-3">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-xl sm:text-3xl font-bold">Dashboard</h1>
+            <p className="text-xs sm:text-base text-muted-foreground">
+              {formatMonth(currentMonth)} Overview
+            </p>
+          </div>
           <BankBalanceCard />
         </div>
+        <MonthNavigation />
       </div>
 
       {/* Stats Grid */}
