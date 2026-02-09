@@ -38,27 +38,27 @@ const StatCard = ({
 
   const cardContent = (
     <div className="flex items-start justify-between">
-      <div className="flex-1">
-        <p className="text-sm font-medium text-muted-foreground mb-1">{title}</p>
-        <p className="text-2xl font-bold tracking-tight">{value}</p>
+      <div className="flex-1 min-w-0">
+        <p className="text-xs sm:text-sm font-medium text-muted-foreground mb-0.5 sm:mb-1">{title}</p>
+        <p className="text-lg sm:text-2xl font-bold tracking-tight truncate">{value}</p>
         {subtitle && (
-          <p className="text-sm text-muted-foreground mt-1">{subtitle}</p>
+          <p className="text-xs sm:text-sm text-muted-foreground mt-0.5 sm:mt-1 truncate">{subtitle}</p>
         )}
         {trend && trendValue && (
-          <div className={cn('flex items-center gap-1 mt-2', trendColor)}>
-            <TrendIcon className="h-4 w-4" />
-            <span className="text-sm font-medium">{trendValue}</span>
+          <div className={cn('flex items-center gap-1 mt-1 sm:mt-2', trendColor)}>
+            <TrendIcon className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
+            <span className="text-xs sm:text-sm font-medium truncate">{trendValue}</span>
           </div>
         )}
       </div>
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
         {icon && (
-          <div className="p-2.5 rounded-lg bg-primary/10 text-primary">
+          <div className="p-1.5 sm:p-2.5 rounded-lg bg-primary/10 text-primary [&>svg]:h-4 [&>svg]:w-4 sm:[&>svg]:h-5 sm:[&>svg]:w-5">
             {icon}
           </div>
         )}
         {href && (
-          <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
+          <ChevronRight className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground group-hover:text-primary transition-colors" />
         )}
       </div>
     </div>
@@ -69,7 +69,7 @@ const StatCard = ({
       <Link
         to={href}
         className={cn(
-          'block glass rounded-xl p-5 shadow-card transition-all duration-300 hover:shadow-glow hover:scale-[1.02] animate-slide-up cursor-pointer group',
+          'block glass rounded-xl p-3 sm:p-5 shadow-card transition-all duration-300 hover:shadow-glow hover:scale-[1.02] animate-slide-up cursor-pointer group',
           variantStyles[variant],
           className
         )}
@@ -82,7 +82,7 @@ const StatCard = ({
   return (
     <div
       className={cn(
-        'glass rounded-xl p-5 shadow-card transition-all duration-300 hover:shadow-glow animate-slide-up',
+        'glass rounded-xl p-3 sm:p-5 shadow-card transition-all duration-300 hover:shadow-glow animate-slide-up',
         variantStyles[variant],
         className
       )}
