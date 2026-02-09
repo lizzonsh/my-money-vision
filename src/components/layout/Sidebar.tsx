@@ -49,16 +49,16 @@ const Sidebar = ({ children }: SidebarProps) => {
   return (
     <div className="min-h-screen bg-background">
       {/* Mobile header */}
-      <div className="lg:hidden fixed top-0 left-0 right-0 z-50 h-16 glass border-b border-border/50 flex items-center px-4">
+      <div className="lg:hidden fixed top-0 left-0 right-0 z-50 h-12 glass border-b border-border/50 flex items-center px-3">
         <button
           onClick={() => setMobileOpen(true)}
-          className="p-2 hover:bg-secondary rounded-lg transition-colors"
+          className="p-1.5 hover:bg-secondary rounded-lg transition-colors"
         >
-          <Menu className="h-5 w-5" />
+          <Menu className="h-4 w-4" />
         </button>
-        <div className="ml-4 flex items-center gap-2">
-          <CircleDollarSign className="h-6 w-6 text-primary" />
-          <h1 className="text-lg font-bold">MoneyFlow</h1>
+        <div className="ml-3 flex items-center gap-1.5">
+          <CircleDollarSign className="h-5 w-5 text-primary" />
+          <h1 className="text-base font-bold">MoneyFlow</h1>
         </div>
       </div>
 
@@ -164,11 +164,11 @@ const Sidebar = ({ children }: SidebarProps) => {
       {/* Main content */}
       <main
         className={cn(
-          'min-h-screen transition-all duration-300 pt-16 lg:pt-0',
+          'min-h-screen transition-all duration-300 pt-14 lg:pt-0',
           collapsed ? 'lg:pl-16' : 'lg:pl-64'
         )}
       >
-        <div className="p-4 lg:p-6">{children}</div>
+        <div className="p-2.5 sm:p-4 lg:p-6">{children}</div>
       </main>
     </div>
   );
