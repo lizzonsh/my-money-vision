@@ -310,7 +310,7 @@ const BankBalanceCard = () => {
           </div>
         </div>
       </PopoverTrigger>
-      <PopoverContent className="w-[28rem] p-0" align="end">
+      <PopoverContent className="w-[calc(100vw-1.5rem)] sm:w-[28rem] max-h-[80vh] overflow-y-auto p-0" align="end">
         <div className="p-4 border-b">
           <div className="flex items-center justify-between">
             <div>
@@ -468,7 +468,7 @@ const BankBalanceCard = () => {
           )}
         </div>
         {/* Monthly Activity Breakdown - Always visible */}
-        <div className="border-t p-4 space-y-3 bg-muted/20">
+        <div className="border-t p-3 sm:p-4 space-y-2.5 sm:space-y-3 bg-muted/20">
           <h5 className="text-sm font-semibold flex items-center gap-2">
             <TrendingUp className="h-4 w-4 text-primary" />
             Monthly Cash Flow
@@ -592,7 +592,7 @@ const BankBalanceCard = () => {
         </div>
 
         {/* Next Month Prediction */}
-        <div className="border-t p-4 space-y-3 bg-primary/5">
+        <div className="border-t p-3 sm:p-4 space-y-2.5 sm:space-y-3 bg-primary/5">
           <div className="flex items-center justify-between">
             <h5 className="text-sm font-semibold flex items-center gap-2">
               <Sparkles className="h-4 w-4 text-primary" />
