@@ -16,6 +16,7 @@ import {
 } from 'recharts';
 import { useFinance } from '@/contexts/FinanceContext';
 import { formatCurrency } from '@/lib/formatters';
+import { convertToILS } from '@/lib/currencyUtils';
 import { useNavigate } from 'react-router-dom';
 
 interface CustomTooltipProps {
@@ -242,7 +243,7 @@ export const SavingsGrowthChart = () => {
       }, new Map<string, typeof savings[0]>());
 
       const total = Array.from(latestPerAccount.values())
-        .reduce((sum, s) => sum + Number(s.amount), 0);
+        .reduce((sum, s) => sum + convertToILS(Number(s.amount), s.currency || 'ILS'), 0);
 
       return {
         month: formatMonth(monthKey),
