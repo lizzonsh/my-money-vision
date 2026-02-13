@@ -9,13 +9,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { Plus, Bug, Trash2, Edit, CheckCircle, Clock, AlertCircle } from 'lucide-react';
+import { Plus, Bug, Trash2, Edit, CheckCircle, Clock, AlertCircle, Filter } from 'lucide-react';
 import { format } from 'date-fns';
 
 const IssuesPage = () => {
   const { issues, isLoading, addIssue, updateIssue, deleteIssue } = useUserIssues();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [editingIssue, setEditingIssue] = useState<UserIssue | null>(null);
+  const [priorityFilter, setPriorityFilter] = useState<string>('all');
   
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -97,9 +98,18 @@ const IssuesPage = () => {
     }
   };
 
-  const openIssues = issues.filter(i => i.status === 'open');
-  const inProgressIssues = issues.filter(i => i.status === 'in_progress');
-  const resolvedIssues = issues.filter(i => i.status === 'resolved');
+  // Apply priority filter
+  const filteredIssues = priorityFilter === 'all' 
+    ? issues 
+    : issues.filter(i => i.priority === priorityFilter);
+
+  const priorityOrder = { high: 0, medium: 1, low: 2 };
+  const sortByPriority = (a: UserIssue, b: UserIssue) => 
+    (priorityOrder[a.priority as keyof typeof priorityOrder] ?? 2) - (priorityOrder[b.priority as keyof typeof priorityOrder] ?? 2);
+
+  const openIssues = filteredIssues.filter(i => i.status === 'open').sort(sortByPriority);
+  const inProgressIssues = filteredIssues.filter(i => i.status === 'in_progress').sort(sortByPriority);
+  const resolvedIssues = filteredIssues.filter(i => i.status === 'resolved').sort(sortByPriority);
 
   return (
     <div className="space-y-6">
@@ -176,7 +186,24 @@ const IssuesPage = () => {
                     </Select>
                   </div>
                 )}
-              </div>
+      </div>
+
+      {/* Priority Filter */}
+      <div className="flex items-center gap-2">
+        <Filter className="h-4 w-4 text-muted-foreground" />
+        <span className="text-sm text-muted-foreground">Priority:</span>
+        {['all', 'high', 'medium', 'low'].map((p) => (
+          <Button
+            key={p}
+            variant={priorityFilter === p ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setPriorityFilter(p)}
+            className="capitalize"
+          >
+            {p === 'all' ? 'All' : p}
+          </Button>
+        ))}
+      </div>
               
               <div className="flex justify-end gap-2">
                 <Button type="button" variant="outline" onClick={() => handleDialogClose(false)}>
