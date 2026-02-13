@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { useFinance } from '@/contexts/FinanceContext';
 import { formatCurrency, formatMonth } from '@/lib/formatters';
 import { isDateUpToToday, isCurrentMonth } from '@/lib/dateUtils';
+import { convertToILS } from '@/lib/currencyUtils';
 import StatCard from '@/components/dashboard/StatCard';
 import BudgetProgress from '@/components/dashboard/BudgetProgress';
 import RecentTransactions from '@/components/dashboard/RecentTransactions';
@@ -118,7 +119,7 @@ const Dashboard = () => {
       }, new Map<string, typeof savings[0]>());
     
     const totalSavings = Array.from(latestSavingsPerName.values())
-      .reduce((sum, s) => sum + Number(s.amount), 0);
+      .reduce((sum, s) => sum + convertToILS(Number(s.amount), s.currency || 'ILS'), 0);
 
     // Net worth = savings + incomes + bank balance - monthly expenses
     const netWorth = totalSavings + monthlyIncome + monthlyBankBalance - monthlyExpenses;
