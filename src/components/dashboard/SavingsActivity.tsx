@@ -1,27 +1,74 @@
 import { useFinance } from '@/contexts/FinanceContext';
-import { formatCurrency, formatDate } from '@/lib/formatters';
+import { formatCurrency } from '@/lib/formatters';
+import { convertToILS } from '@/lib/currencyUtils';
 import { isDateUpToToday, isCurrentMonth } from '@/lib/dateUtils';
 import { PiggyBank, ArrowUpRight, ArrowDownRight, TrendingUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const SavingsActivity = () => {
-  const { savings, currentMonth } = useFinance();
+  const { savings, recurringSavings, currentMonth } = useFinance();
 
-  // Filter savings for current month
-  const monthlySavings = savings.filter((s) => s.month === currentMonth);
+  // Filter savings for current month (same logic as SavingsMonthlyActivity)
+  const currentMonthDate = new Date(currentMonth + '-01');
+  const monthlySavings = savings.filter(s => {
+    if (s.month !== currentMonth) return false;
+    if (!s.closed_at) return true;
+    return new Date(s.closed_at) > currentMonthDate;
+  });
   
-  // For current month, only count items up to today's date
   const shouldFilterByDate = isCurrentMonth(currentMonth);
   const savingsUpToDate = monthlySavings.filter(s => 
     !shouldFilterByDate || isDateUpToToday(s.updated_at)
   );
 
-  // Calculate totals
-  const deposits = savingsUpToDate.filter(s => s.action === 'deposit');
-  const withdrawals = savingsUpToDate.filter(s => s.action === 'withdrawal');
-  
-  const totalDeposits = deposits.reduce((sum, s) => sum + Number(s.action_amount || s.monthly_deposit || 0), 0);
-  const totalWithdrawals = withdrawals.reduce((sum, s) => sum + Number(s.action_amount || 0), 0);
+  // Get active recurring savings
+  const activeRecurringSavings = recurringSavings.filter(rs => rs.is_active);
+
+  // Get names already recorded this month
+  const recordedSavingsNames = new Set(
+    savingsUpToDate
+      .filter(s => (s.action_amount && s.action_amount > 0) || (s.monthly_deposit && s.monthly_deposit > 0))
+      .map(s => s.name)
+  );
+
+  // Pending recurring savings not yet recorded
+  const pendingRecurringSavings = activeRecurringSavings.filter(
+    rs => !recordedSavingsNames.has(rs.name)
+  );
+
+  // Build combined activity items (same as SavingsMonthlyActivity)
+  const activityItems = [
+    ...savingsUpToDate
+      .filter(s => (s.action_amount && s.action_amount > 0) || (s.monthly_deposit && s.monthly_deposit > 0))
+      .map(s => ({
+        id: s.id,
+        name: s.name,
+        action: (s.action || 'deposit') as 'deposit' | 'withdrawal',
+        amount: (s.action_amount && s.action_amount > 0) ? Number(s.action_amount) : Number(s.monthly_deposit),
+        date: s.updated_at,
+        currency: s.currency || 'ILS',
+        isRecurring: false,
+      })),
+    ...pendingRecurringSavings.map(rs => ({
+      id: `recurring-${rs.id}`,
+      name: rs.name,
+      action: rs.action_type as 'deposit' | 'withdrawal',
+      amount: Number(rs.default_amount),
+      date: `${currentMonth}-${String(rs.day_of_month).padStart(2, '0')}`,
+      currency: rs.currency || 'ILS',
+      isRecurring: true,
+    })),
+  ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+  // Calculate totals in ILS (matching SavingsMonthlyActivity)
+  const totalDeposits = activityItems
+    .filter(item => item.action === 'deposit')
+    .reduce((sum, item) => sum + convertToILS(item.amount, item.currency), 0);
+
+  const totalWithdrawals = activityItems
+    .filter(item => item.action === 'withdrawal')
+    .reduce((sum, item) => sum + convertToILS(item.amount, item.currency), 0);
+
   const netSavings = totalDeposits - totalWithdrawals;
 
   // Future savings not yet counted
@@ -34,7 +81,7 @@ const SavingsActivity = () => {
         <PiggyBank className="h-4 w-4 text-muted-foreground" />
       </div>
 
-      {/* Summary Stats - Horizontal layout for full width */}
+      {/* Summary Stats */}
       <div className="grid grid-cols-3 md:grid-cols-6 gap-3 mb-4">
         <div className="p-3 rounded-lg bg-success/10 text-center md:col-span-2">
           <div className="flex items-center justify-center gap-2 mb-1">
@@ -70,43 +117,38 @@ const SavingsActivity = () => {
         </div>
       </div>
 
-      {/* Recent Activity List - Grid layout for full width */}
+      {/* Activity List */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
-        {savingsUpToDate.length === 0 ? (
+        {activityItems.length === 0 ? (
           <p className="text-sm text-muted-foreground text-center py-4 col-span-full">
             No savings activity this month
           </p>
         ) : (
-          savingsUpToDate.map((saving) => (
+          activityItems.map((item) => (
             <div
-              key={saving.id}
+              key={item.id}
               className="flex items-center justify-between p-3 rounded-lg bg-secondary/30"
             >
               <div className="flex items-center gap-2">
                 <div className={cn(
                   "p-1.5 rounded-lg",
-                  saving.action === 'withdrawal' 
+                  item.action === 'withdrawal' 
                     ? "bg-destructive/20 text-destructive" 
                     : "bg-success/20 text-success"
                 )}>
-                  {saving.action === 'withdrawal' 
+                  {item.action === 'withdrawal' 
                     ? <ArrowDownRight className="h-3 w-3" />
                     : <ArrowUpRight className="h-3 w-3" />
                   }
                 </div>
-                <div>
-                  <p className="text-sm font-medium">{saving.name}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {saving.updated_at ? formatDate(saving.updated_at.split('T')[0]) : ''}
-                  </p>
-                </div>
+                <p className="text-sm font-medium">{item.name}</p>
               </div>
               <p className={cn(
                 "text-sm font-semibold",
-                saving.action === 'withdrawal' ? "text-destructive" : "text-success"
+                item.action === 'withdrawal' ? "text-destructive" : "text-success"
               )}>
-                {saving.action === 'withdrawal' ? '-' : '+'}
-                {formatCurrency(Number(saving.action_amount || saving.monthly_deposit || 0))}
+                {item.action === 'withdrawal' ? '-' : '+'}
+                {formatCurrency(item.amount, item.currency)}
               </p>
             </div>
           ))
