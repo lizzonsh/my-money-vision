@@ -88,16 +88,16 @@ const Dashboard = () => {
       .filter((e) => e.month === prevMonth)
       .reduce((sum, e) => sum + Number(e.amount), 0);
 
-    // Current month savings deposits (filtered by date for current month)
+    // Current month savings deposits (filtered by date for current month) - convert to ILS
     const monthlySavingsDeposits = savings
       .filter((s) => s.month === currentMonth && s.action === 'deposit')
       .filter((s) => !shouldFilterByDate || isDateUpToToday(s.updated_at))
-      .reduce((sum, s) => sum + Number(s.action_amount || s.monthly_deposit || 0), 0);
+      .reduce((sum, s) => sum + convertToILS(Number(s.action_amount || s.monthly_deposit || 0), s.currency || 'ILS'), 0);
 
-    // Previous month savings deposits
+    // Previous month savings deposits - convert to ILS
     const prevMonthSavingsDeposits = savings
       .filter((s) => s.month === prevMonth && s.action === 'deposit')
-      .reduce((sum, s) => sum + Number(s.action_amount || s.monthly_deposit || 0), 0);
+      .reduce((sum, s) => sum + convertToILS(Number(s.action_amount || s.monthly_deposit || 0), s.currency || 'ILS'), 0);
 
     // Total savings portfolio - get latest record per account name UP TO selected month
     // Match the same logic as SavingsCurrentStatus for consistency
