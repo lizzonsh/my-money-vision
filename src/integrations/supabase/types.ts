@@ -526,6 +526,7 @@ export type Database = {
           created_at: string
           currency: string | null
           id: string
+          is_completed: boolean
           month: string
           monthly_deposit: number | null
           name: string
@@ -544,6 +545,7 @@ export type Database = {
           created_at?: string
           currency?: string | null
           id?: string
+          is_completed?: boolean
           month: string
           monthly_deposit?: number | null
           name: string
@@ -562,6 +564,7 @@ export type Database = {
           created_at?: string
           currency?: string | null
           id?: string
+          is_completed?: boolean
           month?: string
           monthly_deposit?: number | null
           name?: string

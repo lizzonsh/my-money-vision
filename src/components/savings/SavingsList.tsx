@@ -139,6 +139,7 @@ const SavingsList = () => {
       recurring_type: isDeposit && actionAmount ? 'monthly' as const : null,
       recurring_day_of_month: isDeposit && actionAmount ? 15 : null,
       closed_at: null,
+      is_completed: false,
     };
 
     if (editingSaving) {

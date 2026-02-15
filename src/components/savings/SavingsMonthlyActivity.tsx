@@ -3,7 +3,7 @@ import { useFinance, Savings } from '@/contexts/FinanceContext';
 import { formatCurrency } from '@/lib/formatters';
 import { convertToILS, convertFromILS, SUPPORTED_CURRENCIES } from '@/lib/currencyUtils';
 import { isDateUpToToday, isCurrentMonth } from '@/lib/dateUtils';
-import { ArrowUpRight, ArrowDownRight, TrendingUp, TrendingDown, Minus, Plus, Pencil, Trash2, RotateCcw } from 'lucide-react';
+import { ArrowUpRight, ArrowDownRight, TrendingUp, TrendingDown, Minus, Plus, Pencil, Trash2, RotateCcw, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -34,6 +34,7 @@ interface ActivityItem {
   dayOfMonth?: number;
   originalSaving?: Savings;
   currency?: string;
+  isCompleted?: boolean;
 }
 
 const SavingsMonthlyActivity = ({ highlightId }: { highlightId?: string }) => {
@@ -115,6 +116,7 @@ const SavingsMonthlyActivity = ({ highlightId }: { highlightId?: string }) => {
           isRecurring: false,
           originalSaving: s,
           currency: s.currency || 'ILS',
+          isCompleted: !!(s as any).is_completed,
         };
       }),
     // Only show recurring savings that haven't been recorded yet (pending)
@@ -210,6 +212,7 @@ const SavingsMonthlyActivity = ({ highlightId }: { highlightId?: string }) => {
       recurring_type: null,
       recurring_day_of_month: null,
       closed_at: null,
+      is_completed: false,
     };
 
     if (editingActivity) {
@@ -433,31 +436,50 @@ const SavingsMonthlyActivity = ({ highlightId }: { highlightId?: string }) => {
                 ref={item.id === highlightedId ? highlightRef : undefined}
                 className={cn(
                   "flex items-center justify-between p-3 rounded-lg group transition-all",
-                  item.action === 'withdrawal'
-                    ? "bg-destructive/10 border border-destructive/20"
-                    : "bg-success/10 border border-success/20",
+                  item.isCompleted
+                    ? "bg-muted/30 border border-muted/50 opacity-60"
+                    : item.action === 'withdrawal'
+                      ? "bg-destructive/10 border border-destructive/20"
+                      : "bg-success/10 border border-success/20",
                   item.id === highlightedId && "ring-2 ring-primary animate-pulse"
                 )}
               >
                 <div className="flex items-center gap-3">
-                  <div className={cn(
-                    "p-2 rounded-lg",
-                    item.action === 'withdrawal'
-                      ? "bg-destructive/20 text-destructive"
-                      : "bg-success/20 text-success"
-                  )}>
-                    {item.action === 'withdrawal' ? (
-                      <ArrowDownRight className="h-4 w-4" />
-                    ) : (
-                      <ArrowUpRight className="h-4 w-4" />
-                    )}
-                  </div>
-                  <p className="text-sm font-medium">{item.name}</p>
+                  {/* Completion toggle for non-recurring items */}
+                  {!item.isRecurring ? (
+                    <button
+                      onClick={() => updateSavings({ id: item.id, is_completed: !item.isCompleted } as any)}
+                      className={cn(
+                        "h-7 w-7 rounded-full border-2 flex items-center justify-center transition-all shrink-0",
+                        item.isCompleted
+                          ? "bg-success border-success text-success-foreground"
+                          : "border-muted-foreground/30 hover:border-success/60"
+                      )}
+                    >
+                      {item.isCompleted && <Check className="h-4 w-4" />}
+                    </button>
+                  ) : (
+                    <div className={cn(
+                      "p-2 rounded-lg",
+                      item.action === 'withdrawal'
+                        ? "bg-destructive/20 text-destructive"
+                        : "bg-success/20 text-success"
+                    )}>
+                      {item.action === 'withdrawal' ? (
+                        <ArrowDownRight className="h-4 w-4" />
+                      ) : (
+                        <ArrowUpRight className="h-4 w-4" />
+                      )}
+                    </div>
+                  )}
+                  <p className={cn("text-sm font-medium", item.isCompleted && "line-through")}>{item.name}</p>
                 </div>
                 <div className="flex items-center gap-3">
                   <p className={cn(
                     "text-sm font-semibold",
-                    item.action === 'withdrawal' ? "text-destructive" : "text-success"
+                    item.isCompleted
+                      ? "text-muted-foreground"
+                      : item.action === 'withdrawal' ? "text-destructive" : "text-success"
                   )}>
                     {item.action === 'withdrawal' ? '-' : '+'}
                     {formatCurrency(item.amount, item.currency || 'ILS')}
