@@ -1,3 +1,5 @@
+import { useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import SavingsCurrentStatus from '@/components/savings/SavingsCurrentStatus';
 import SavingsMonthlyActivity from '@/components/savings/SavingsMonthlyActivity';
 import RecurringSavingsPanel from '@/components/savings/RecurringSavingsPanel';
@@ -6,6 +8,18 @@ import { SavingsGrowthChart } from '@/components/charts/FinanceCharts';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const SavingsPage = () => {
+  const location = useLocation();
+  const navState = location.state as { tab?: string; highlightId?: string } | null;
+  const [activeTab, setActiveTab] = useState(navState?.tab === 'activity' ? 'overview' : 'overview');
+
+  // Reset highlight after navigating away
+  useEffect(() => {
+    if (navState?.highlightId) {
+      // Clear navigation state so it doesn't persist on refresh
+      window.history.replaceState({}, document.title);
+    }
+  }, [navState]);
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -16,7 +30,7 @@ const SavingsPage = () => {
         <MonthNavigation />
       </div>
 
-      <Tabs defaultValue="overview" className="space-y-6">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TabsList>
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="recurring">Recurring Savings</TabsTrigger>
@@ -27,7 +41,7 @@ const SavingsPage = () => {
             {/* Left side - stacked panels */}
             <div className="lg:col-span-3 space-y-6">
               <SavingsCurrentStatus />
-              <SavingsMonthlyActivity />
+              <SavingsMonthlyActivity highlightId={navState?.highlightId} />
             </div>
             
             {/* Right side - Growth Chart */}

@@ -592,7 +592,8 @@ const ExpensesList = () => {
               return (
                 <div
                   key={`deposit-${deposit.id}`}
-                  className="flex items-center justify-between p-3 rounded-lg bg-chart-5/10 border border-chart-5/20 interactive-card group"
+                  onClick={() => navigate('/savings', { state: { tab: 'activity', highlightId: deposit.id } })}
+                  className="flex items-center justify-between p-3 rounded-lg bg-chart-5/10 border border-chart-5/20 interactive-card group cursor-pointer hover:bg-chart-5/20 transition-colors"
                 >
                   <div className="flex items-center gap-3">
                     <div className="p-2 rounded-lg bg-chart-5/20">
@@ -605,7 +606,7 @@ const ExpensesList = () => {
                           Planned
                         </span>
                         <span className="text-xs px-2 py-0.5 rounded-full bg-chart-5/20 text-chart-5">
-                          Deposit
+                          Deposit → Savings
                         </span>
                         <span className={cn(
                           'text-xs px-2 py-0.5 rounded-full',
