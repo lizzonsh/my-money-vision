@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useFinance, Savings } from '@/contexts/FinanceContext';
 import { formatCurrency } from '@/lib/formatters';
 import { convertToILS, convertFromILS, SUPPORTED_CURRENCIES } from '@/lib/currencyUtils';
@@ -36,10 +36,12 @@ interface ActivityItem {
   currency?: string;
 }
 
-const SavingsMonthlyActivity = () => {
+const SavingsMonthlyActivity = ({ highlightId }: { highlightId?: string }) => {
   const { savings, recurringSavings, currentMonth, addSavings, updateSavings, deleteSavings } = useFinance();
   const [isOpen, setIsOpen] = useState(false);
   const [editingActivity, setEditingActivity] = useState<Savings | null>(null);
+  const highlightRef = useRef<HTMLDivElement>(null);
+  const [highlightedId, setHighlightedId] = useState<string | null>(highlightId || null);
   const [formData, setFormData] = useState({
     name: '',
     action: 'deposit',
@@ -48,6 +50,24 @@ const SavingsMonthlyActivity = () => {
     cardId: '',
     inputCurrency: 'ILS',
   });
+
+  // Auto-scroll and open edit for highlighted deposit
+  useEffect(() => {
+    if (highlightId) {
+      setHighlightedId(highlightId);
+      const saving = savings.find(s => s.id === highlightId);
+      if (saving) {
+        // Auto-open edit dialog
+        setTimeout(() => {
+          handleOpenEdit(saving);
+          highlightRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 300);
+      }
+      // Clear highlight after a few seconds
+      const timer = setTimeout(() => setHighlightedId(null), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [highlightId]);
 
   // Filter savings for current month only
   const currentMonthDate = new Date(currentMonth + '-01');
@@ -410,11 +430,13 @@ const SavingsMonthlyActivity = () => {
             {activityItems.map((item) => (
               <div
                 key={item.id}
+                ref={item.id === highlightedId ? highlightRef : undefined}
                 className={cn(
-                  "flex items-center justify-between p-3 rounded-lg group",
+                  "flex items-center justify-between p-3 rounded-lg group transition-all",
                   item.action === 'withdrawal'
                     ? "bg-destructive/10 border border-destructive/20"
-                    : "bg-success/10 border border-success/20"
+                    : "bg-success/10 border border-success/20",
+                  item.id === highlightedId && "ring-2 ring-primary animate-pulse"
                 )}
               >
                 <div className="flex items-center gap-3">
