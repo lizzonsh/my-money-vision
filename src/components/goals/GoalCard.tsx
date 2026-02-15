@@ -70,27 +70,28 @@ const generateMonthOptions = () => {
   return months;
 };
 
- const GoalCard = ({
-   goal,
-   items,
-   onEditGoal,
-   onDeleteGoal,
-   onAddItem,
-   onUpdateItem,
-   onDeleteItem,
-   onPurchaseItem,
-   onUnpurchaseItem,
- }: GoalCardProps) => {
-   const [isExpanded, setIsExpanded] = useState(true);
-   const [isAddItemOpen, setIsAddItemOpen] = useState(false);
-   const [itemFormData, setItemFormData] = useState({
-     name: '',
-     estimatedCost: '',
-     plannedMonth: '',
-     paymentMethod: 'credit_card',
-     cardId: '',
-     notes: '',
-   });
+const GoalCard = ({
+  goal,
+  items,
+  onEditGoal,
+  onDeleteGoal,
+  onAddItem,
+  onUpdateItem,
+  onDeleteItem,
+  onPurchaseItem,
+  onUnpurchaseItem,
+}: GoalCardProps) => {
+  const [isExpanded, setIsExpanded] = useState(true);
+  const [isAddItemOpen, setIsAddItemOpen] = useState(false);
+  const [editingItem, setEditingItem] = useState<GoalItem | null>(null);
+  const [itemFormData, setItemFormData] = useState({
+    name: '',
+    estimatedCost: '',
+    plannedMonth: '',
+    paymentMethod: 'credit_card',
+    cardId: '',
+    notes: '',
+  });
   const [monthPickerOpen, setMonthPickerOpen] = useState(false);
  
    const purchasedItems = items.filter(i => i.is_purchased);
@@ -99,31 +100,57 @@ const generateMonthOptions = () => {
    const purchasedCost = purchasedItems.reduce((sum, i) => sum + Number(i.estimated_cost), 0);
    const progressPercent = items.length > 0 ? (purchasedItems.length / items.length) * 100 : 0;
  
-   const resetItemForm = () => {
-     setItemFormData({
-       name: '',
-       estimatedCost: '',
-       plannedMonth: '',
-       paymentMethod: 'credit_card',
-       cardId: '',
-       notes: '',
-     });
-   };
- 
-   const handleAddItem = (e: React.FormEvent) => {
-     e.preventDefault();
-     onAddItem({
-       goal_id: goal.id,
-       name: itemFormData.name,
-       estimated_cost: parseFloat(itemFormData.estimatedCost) || 0,
-       planned_month: itemFormData.plannedMonth,
-       payment_method: itemFormData.paymentMethod,
-       card_id: itemFormData.cardId || null,
-       notes: itemFormData.notes || null,
-     });
-     resetItemForm();
-     setIsAddItemOpen(false);
-   };
+  const resetItemForm = () => {
+    setItemFormData({
+      name: '',
+      estimatedCost: '',
+      plannedMonth: '',
+      paymentMethod: 'credit_card',
+      cardId: '',
+      notes: '',
+    });
+    setEditingItem(null);
+  };
+
+  const handleOpenEditItem = (item: GoalItem) => {
+    setEditingItem(item);
+    setItemFormData({
+      name: item.name,
+      estimatedCost: String(item.estimated_cost),
+      plannedMonth: item.planned_month,
+      paymentMethod: item.payment_method,
+      cardId: item.card_id || '',
+      notes: item.notes || '',
+    });
+    setIsAddItemOpen(true);
+  };
+
+  const handleSubmitItem = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (editingItem) {
+      onUpdateItem({
+        id: editingItem.id,
+        name: itemFormData.name,
+        estimated_cost: parseFloat(itemFormData.estimatedCost) || 0,
+        planned_month: itemFormData.plannedMonth,
+        payment_method: itemFormData.paymentMethod,
+        card_id: itemFormData.cardId || null,
+        notes: itemFormData.notes || null,
+      });
+    } else {
+      onAddItem({
+        goal_id: goal.id,
+        name: itemFormData.name,
+        estimated_cost: parseFloat(itemFormData.estimatedCost) || 0,
+        planned_month: itemFormData.plannedMonth,
+        payment_method: itemFormData.paymentMethod,
+        card_id: itemFormData.cardId || null,
+        notes: itemFormData.notes || null,
+      });
+    }
+    resetItemForm();
+    setIsAddItemOpen(false);
+  };
  
    return (
     <div className={cn('glass rounded-xl border-l-4 shadow-card overflow-hidden hover-glow', priorityStyles[goal.priority])}>
@@ -169,7 +196,7 @@ const generateMonthOptions = () => {
                  {isExpanded ? 'Hide items' : 'Show items'}
                </Button>
              </CollapsibleTrigger>
-             <Dialog open={isAddItemOpen} onOpenChange={setIsAddItemOpen}>
+             <Dialog open={isAddItemOpen} onOpenChange={(open) => { setIsAddItemOpen(open); if (!open) resetItemForm(); }}>
                <DialogTrigger asChild>
                  <Button size="sm" variant="outline" className="gap-1">
                    <Plus className="h-4 w-4" />
@@ -178,9 +205,9 @@ const generateMonthOptions = () => {
                </DialogTrigger>
                <DialogContent className="glass max-w-md">
                  <DialogHeader>
-                   <DialogTitle>Add Item to "{goal.name}"</DialogTitle>
-                 </DialogHeader>
-                 <form onSubmit={handleAddItem} className="space-y-4">
+                    <DialogTitle>{editingItem ? 'Edit Item' : `Add Item to "${goal.name}"`}</DialogTitle>
+                  </DialogHeader>
+                  <form onSubmit={handleSubmitItem} className="space-y-4">
                    <div className="space-y-2">
                      <Label htmlFor="itemName">Item Name</Label>
                      <Input
@@ -277,7 +304,7 @@ const generateMonthOptions = () => {
                        </div>
                      )}
                    </div>
-                   <Button type="submit" className="w-full">Add Item</Button>
+                   <Button type="submit" className="w-full">{editingItem ? 'Save Changes' : 'Add Item'}</Button>
                  </form>
                </DialogContent>
              </Dialog>
@@ -308,24 +335,33 @@ const generateMonthOptions = () => {
                            </p>
                          </div>
                        </div>
-                       <div className="flex items-center gap-2">
-                         <span className="font-semibold text-sm">{formatCurrency(Number(item.estimated_cost))}</span>
-                         <Button
-                           size="sm"
-                           variant="ghost"
-                            className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 hover:bg-success/20 hover:text-success"
-                           onClick={() => onPurchaseItem(item)}
-                           title="Mark as purchased"
-                         >
-                           <Check className="h-4 w-4 text-success" />
-                         </Button>
-                         <button
-                           onClick={() => onDeleteItem(item.id)}
-                           className="p-1.5 opacity-0 group-hover:opacity-100 hover:bg-destructive/10 rounded transition-all"
-                         >
-                           <Trash2 className="h-3 w-3 text-destructive" />
-                         </button>
-                       </div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-semibold text-sm">{formatCurrency(Number(item.estimated_cost))}</span>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 hover:bg-secondary"
+                            onClick={() => handleOpenEditItem(item)}
+                            title="Edit item"
+                          >
+                            <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                             className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 hover:bg-success/20 hover:text-success"
+                            onClick={() => onPurchaseItem(item)}
+                            title="Mark as purchased"
+                          >
+                            <Check className="h-4 w-4 text-success" />
+                          </Button>
+                          <button
+                            onClick={() => onDeleteItem(item.id)}
+                            className="p-1.5 opacity-0 group-hover:opacity-100 hover:bg-destructive/10 rounded transition-all"
+                          >
+                            <Trash2 className="h-3 w-3 text-destructive" />
+                          </button>
+                        </div>
                      </div>
                    ))}
                    
