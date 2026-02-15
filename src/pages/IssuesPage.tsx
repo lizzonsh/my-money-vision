@@ -15,8 +15,8 @@ import { format } from 'date-fns';
 const IssuesPage = () => {
   const { issues, isLoading, addIssue, updateIssue, deleteIssue } = useUserIssues();
 
-  const handleStatusChange = (id: string, newStatus: string) => {
-    updateIssue({ id, status: newStatus });
+  const handleStatusChange = (id: string, value: string, field: 'status' | 'priority') => {
+    updateIssue({ id, [field]: value });
   };
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [editingIssue, setEditingIssue] = useState<UserIssue | null>(null);
@@ -314,7 +314,7 @@ interface IssueCardProps {
   issue: UserIssue;
   onEdit: (issue: UserIssue) => void;
   onDelete: (id: string) => void;
-  onStatusChange: (id: string, status: string) => void;
+  onStatusChange: (id: string, value: string, field: 'status' | 'priority') => void;
   getStatusColor: (status: string) => string;
   getPriorityColor: (priority: string) => string;
   getStatusIcon: (status: string) => React.ReactNode;
@@ -360,10 +360,19 @@ const IssueCard = ({ issue, onEdit, onDelete, onStatusChange, getStatusColor, ge
           <p className="text-sm text-muted-foreground mb-3 line-clamp-2">{issue.description}</p>
         )}
         <div className="flex items-center gap-2">
-          <Badge variant="outline" className={getPriorityColor(issue.priority)}>
-            {issue.priority}
-          </Badge>
-          <Select value={issue.status} onValueChange={(value) => onStatusChange(issue.id, value)}>
+          <Select value={issue.priority} onValueChange={(value) => onStatusChange(issue.id, value, 'priority')}>
+            <SelectTrigger className="h-6 w-auto gap-1 border-0 px-2 py-0 text-xs font-medium [&>svg]:h-3 [&>svg]:w-3">
+              <div className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 ${getPriorityColor(issue.priority)}`}>
+                <span>{issue.priority}</span>
+              </div>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="low">Low</SelectItem>
+              <SelectItem value="medium">Medium</SelectItem>
+              <SelectItem value="high">High</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={issue.status} onValueChange={(value) => onStatusChange(issue.id, value, 'status')}>
             <SelectTrigger className="h-6 w-auto gap-1 border-0 px-2 py-0 text-xs font-medium [&>svg]:h-3 [&>svg]:w-3">
               <div className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 ${getStatusColor(issue.status)}`}>
                 {getStatusIcon(issue.status)}
