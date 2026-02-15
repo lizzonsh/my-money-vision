@@ -4,9 +4,11 @@ import { convertToILS } from '@/lib/currencyUtils';
 import { isDateUpToToday, isCurrentMonth } from '@/lib/dateUtils';
 import { PiggyBank, ArrowUpRight, ArrowDownRight, TrendingUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useNavigate } from 'react-router-dom';
 
 const SavingsActivity = () => {
   const { savings, recurringSavings, currentMonth } = useFinance();
+  const navigate = useNavigate();
 
   // Filter savings for current month (same logic as SavingsMonthlyActivity)
   const currentMonthDate = new Date(currentMonth + '-01');
@@ -78,7 +80,12 @@ const SavingsActivity = () => {
     <div className="glass rounded-xl p-5 shadow-card animate-slide-up">
       <div className="flex items-center justify-between mb-4">
         <h3 className="font-semibold">Savings Activity</h3>
-        <PiggyBank className="h-4 w-4 text-muted-foreground" />
+        <button
+          onClick={() => navigate('/savings')}
+          className="text-xs text-primary hover:underline transition-colors"
+        >
+          View All
+        </button>
       </div>
 
       {/* Summary Stats */}
