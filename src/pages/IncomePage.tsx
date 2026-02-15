@@ -4,6 +4,7 @@ import RecurringIncomesPanel from '@/components/income/RecurringIncomesPanel';
 import NetWorthProjection from '@/components/predictions/NetWorthProjection';
 import MonthNavigation from '@/components/navigation/MonthNavigation';
 import { useFinance } from '@/contexts/FinanceContext';
+import { convertToILS } from '@/lib/currencyUtils';
 import { formatCurrency } from '@/lib/formatters';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
@@ -17,7 +18,7 @@ import {
 } from 'recharts';
 
 const IncomeTrendChart = () => {
-  const { incomes, currentMonth } = useFinance();
+  const { incomes, savings, currentMonth } = useFinance();
   
   const incomeTrendData = useMemo(() => {
     const [currentYear, currentMonthNum] = currentMonth.split('-').map(Number);
@@ -32,11 +33,16 @@ const IncomeTrendChart = () => {
         .filter((inc) => inc.month === monthKey)
         .reduce((sum, inc) => sum + Number(inc.amount), 0);
       
-      months.push({ month: monthLabel, monthKey, income: monthIncome });
+      // Include savings withdrawals as income
+      const monthWithdrawals = savings
+        .filter(s => s.month === monthKey && s.action === 'withdrawal' && s.action_amount && s.action_amount > 0)
+        .reduce((sum, s) => sum + convertToILS(Number(s.action_amount), s.currency || 'ILS'), 0);
+      
+      months.push({ month: monthLabel, monthKey, income: monthIncome + monthWithdrawals });
     }
     
     return months;
-  }, [incomes, currentMonth]);
+  }, [incomes, savings, currentMonth]);
 
   return (
     <div className="glass rounded-xl p-5 shadow-card animate-slide-up">
