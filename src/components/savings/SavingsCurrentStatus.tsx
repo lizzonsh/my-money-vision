@@ -101,6 +101,7 @@ const SavingsCurrentStatus = () => {
       recurring_type: null,
       recurring_day_of_month: null,
       closed_at: null,
+      is_completed: false,
     };
 
     if (editingSaving) {
