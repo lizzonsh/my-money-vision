@@ -37,8 +37,10 @@ const PlannedGoalsPanel = () => {
      return cardNames[cardId] || cardId;
    };
  
+   if (plannedGoalItems.length === 0) return null;
+
    return (
-     <div className="glass rounded-xl p-5 shadow-card animate-slide-up h-full">
+     <div className="glass rounded-xl p-5 shadow-card animate-slide-up">
        <div className="flex items-center justify-between mb-4">
          <div>
            <h3 className="font-semibold flex items-center gap-2">
@@ -58,12 +60,7 @@ const PlannedGoalsPanel = () => {
        </div>
  
        <div className="space-y-2 overflow-y-auto custom-scrollbar">
-         {plannedGoalItems.length === 0 ? (
-           <p className="text-sm text-muted-foreground text-center py-4">
-             No planned goals for this month
-           </p>
-         ) : (
-           plannedGoalItems.map((item) => (
+          {plannedGoalItems.map((item) => (
               <div
                 key={item.id}
                 onClick={() => navigate('/goals')}
@@ -99,8 +96,7 @@ const PlannedGoalsPanel = () => {
                </div>
                <span className="font-semibold text-primary">{formatCurrency(Number(item.estimated_cost))}</span>
              </div>
-           ))
-         )}
+          ))}
        </div>
      </div>
    );
