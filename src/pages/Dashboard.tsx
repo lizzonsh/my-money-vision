@@ -41,7 +41,7 @@ const calcPercentChange = (current: number, previous: number): { value: number; 
 };
 
 const Dashboard = () => {
-  const { incomes, expenses, savings, totalBankBalance, currentMonth, isLoading, getTotalBalanceForMonth } = useFinance();
+  const { incomes, expenses, savings, recurringSavings, totalBankBalance, currentMonth, isLoading, getTotalBalanceForMonth } = useFinance();
   
   // Get bank balance for the selected month (from history or current)
   const monthlyBankBalance = getTotalBalanceForMonth(currentMonth) || totalBankBalance;
@@ -88,11 +88,39 @@ const Dashboard = () => {
       .filter((e) => e.month === prevMonth)
       .reduce((sum, e) => sum + Number(e.amount), 0);
 
-    // Current month savings deposits (filtered by date for current month) - convert to ILS
-    const monthlySavingsDeposits = savings
-      .filter((s) => s.month === currentMonth && s.action === 'deposit')
-      .filter((s) => !shouldFilterByDate || isDateUpToToday(s.updated_at))
+    // Current month savings deposits - sync with SavingsActivity/SavingsMonthlyActivity logic
+    // Include actual deposits + pending recurring deposits
+    const currentMonthDate = new Date(currentMonth + '-01');
+    const monthlySavingsFiltered = savings.filter(s => {
+      if (s.month !== currentMonth) return false;
+      if (!s.closed_at) return true;
+      return new Date(s.closed_at) > currentMonthDate;
+    });
+    const savingsUpToDate = monthlySavingsFiltered.filter(s => 
+      !shouldFilterByDate || isDateUpToToday(s.updated_at)
+    );
+    
+    // Get active recurring savings
+    const activeRecurringSavingsItems = recurringSavings.filter(rs => rs.is_active);
+    const recordedSavingsNames = new Set(
+      savingsUpToDate
+        .filter(s => (s.action_amount && s.action_amount > 0) || (s.monthly_deposit && s.monthly_deposit > 0))
+        .map(s => s.name)
+    );
+    const pendingRecurringSavingsItems = activeRecurringSavingsItems.filter(
+      rs => !recordedSavingsNames.has(rs.name)
+    );
+    
+    // Total deposits = actual + pending recurring
+    const actualDeposits = savingsUpToDate
+      .filter(s => (s.action === 'deposit') && ((s.action_amount && s.action_amount > 0) || (s.monthly_deposit && s.monthly_deposit > 0)))
       .reduce((sum, s) => sum + convertToILS(Number(s.action_amount || s.monthly_deposit || 0), s.currency || 'ILS'), 0);
+    
+    const pendingDeposits = pendingRecurringSavingsItems
+      .filter(rs => rs.action_type === 'deposit')
+      .reduce((sum, rs) => sum + convertToILS(Number(rs.default_amount), rs.currency || 'ILS'), 0);
+    
+    const monthlySavingsDeposits = actualDeposits + pendingDeposits;
 
     // Previous month savings deposits - convert to ILS
     const prevMonthSavingsDeposits = savings
@@ -101,14 +129,14 @@ const Dashboard = () => {
 
     // Total savings portfolio - get latest record per account name UP TO selected month
     // Match the same logic as SavingsCurrentStatus for consistency
-    const currentMonthDate = new Date(currentMonth + '-01');
+    const portfolioMonthDate = new Date(currentMonth + '-01');
     const latestSavingsPerName = savings
       .filter(s => s.month <= currentMonth) // Only include entries up to selected month
       .filter(s => {
         // Show if not closed, OR if closed after the selected month
         if (!s.closed_at) return true;
         const closedDate = new Date(s.closed_at);
-        return closedDate > currentMonthDate;
+        return closedDate > portfolioMonthDate;
       })
       .reduce((acc, saving) => {
         const existing = acc.get(saving.name);
@@ -141,7 +169,7 @@ const Dashboard = () => {
       expenseTrend,
       savingsTrend,
     };
-  }, [incomes, expenses, savings, monthlyBankBalance, currentMonth]);
+  }, [incomes, expenses, savings, recurringSavings, monthlyBankBalance, currentMonth]);
 
   if (isLoading) {
     return (
