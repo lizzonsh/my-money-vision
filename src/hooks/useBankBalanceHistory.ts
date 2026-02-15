@@ -97,9 +97,16 @@ export const useBankBalanceHistory = () => {
     },
   });
 
-  // Get balance for a specific account and month
+  // Get balance for a specific account and month, falling back to previous months
   const getBalanceForMonth = (bankAccountId: string, month: string) => {
-    return balanceHistory.find(h => h.bank_account_id === bankAccountId && h.month === month);
+    const exact = balanceHistory.find(h => h.bank_account_id === bankAccountId && h.month === month);
+    if (exact) return exact;
+    
+    // Fall back to the most recent previous month's entry
+    const previous = balanceHistory
+      .filter(h => h.bank_account_id === bankAccountId && h.month < month)
+      .sort((a, b) => b.month.localeCompare(a.month));
+    return previous.length > 0 ? previous[0] : undefined;
   };
 
   // Get total balance across all accounts for a specific month
