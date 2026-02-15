@@ -6,7 +6,8 @@ import { useExpenseCategories } from '@/hooks/useExpenseCategories';
 import { useGoalItems } from '@/hooks/useGoalItems';
 import { formatCurrency, formatDate } from '@/lib/formatters';
 import { isDateUpToToday, isCurrentMonth } from '@/lib/dateUtils';
-import { Plus, Trash2, CreditCard, Building2, Repeat, Pencil, CalendarIcon, Tag, Target } from 'lucide-react';
+import { convertToILS } from '@/lib/currencyUtils';
+import { Plus, Trash2, CreditCard, Building2, Repeat, Pencil, CalendarIcon, Tag, Target, PiggyBank } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -30,7 +31,7 @@ import { cn } from '@/lib/utils';
 
 const ExpensesList = () => {
   const navigate = useNavigate();
-  const { expenses, currentMonth, addExpense, updateExpense, deleteExpense } = useFinance();
+  const { expenses, savings, currentMonth, addExpense, updateExpense, deleteExpense } = useFinance();
   const { categories, addCategory, isAddingCategory } = useExpenseCategories();
   const { goalItems, unmarkAsPurchased } = useGoalItems();
   const [isOpen, setIsOpen] = useState(false);
@@ -51,6 +52,16 @@ const ExpensesList = () => {
 
   const monthlyExpenses = expenses.filter((e) => e.month === currentMonth);
   
+  // Get savings deposits for current month (blink deposits)
+  const monthlySavingsDeposits = savings.filter(
+    s => s.month === currentMonth && s.action === 'deposit' && Number(s.action_amount || 0) > 0
+  );
+  
+  // Calculate blink deposits total (convert to ILS)
+  const blinkDepositsTotal = monthlySavingsDeposits.reduce(
+    (sum, s) => sum + convertToILS(Number(s.action_amount || 0), s.currency || 'ILS'), 0
+  );
+  
   // Get unpurchased goal items planned for current month
   const plannedGoalItems = goalItems.filter(
     item => !item.is_purchased && item.planned_month === currentMonth
@@ -58,6 +69,12 @@ const ExpensesList = () => {
   
   // Calculate planned goal expenses total
   const plannedGoalExpenses = plannedGoalItems.reduce((sum, item) => sum + Number(item.estimated_cost), 0);
+  
+  // Calculate paid goal expenses total (purchased goal items for current month)
+  const paidGoalItems = goalItems.filter(
+    item => item.is_purchased && item.planned_month === currentMonth
+  );
+  const paidGoalExpenses = paidGoalItems.reduce((sum, item) => sum + Number(item.estimated_cost), 0);
   
   // For current month, only count items up to today's date
   const shouldFilterByDate = isCurrentMonth(currentMonth);
@@ -68,7 +85,6 @@ const ExpensesList = () => {
   const creditCardDebitTotal = creditCardDebits.reduce((sum, e) => sum + Number(e.amount), 0);
   
   // Regular expenses (excluding credit card debits and planned credit card expenses to avoid double counting)
-  // Credit card planned expenses will be counted when they become debit_from_credit_card next month
   const regularExpenses = expensesUpToDate.filter(e => 
     e.category !== 'debit_from_credit_card' && 
     !(e.payment_method === 'credit_card' && e.kind === 'planned')
@@ -82,8 +98,7 @@ const ExpensesList = () => {
     .filter(e => e.payment_method === 'credit_card' && e.kind === 'payed')
     .reduce((sum, e) => sum + Number(e.amount), 0);
   
-  // Planned credit card expenses (for display only, not counted in totals)
-  // Use all monthly expenses (not filtered by date) to match FinanceContext calculation
+  // Planned credit card expenses (for display only)
   const plannedCreditCardExpenses = monthlyExpenses
     .filter(e => e.payment_method === 'credit_card' && e.kind === 'planned' && e.category !== 'debit_from_credit_card')
     .reduce((sum, e) => sum + Number(e.amount), 0);
@@ -98,10 +113,10 @@ const ExpensesList = () => {
     .filter(e => e.payment_method === 'bank_transfer' && e.kind === 'payed')
     .reduce((sum, e) => sum + Number(e.amount), 0);
   
-  // Total that affects current month = bank transfers + credit card debits (actual withdrawals)
+  // Total that affects current month
   const effectiveTotal = bankTransferExpenses + creditCardDebitTotal + creditCardPaidExpenses;
   
-  // For display purposes - all expenses
+  // For display purposes
   const totalExpenses = expensesUpToDate.reduce((sum, e) => sum + Number(e.amount), 0);
   const predictedExpenses = monthlyExpenses.filter(e => e.kind === 'predicted').reduce((sum, e) => sum + Number(e.amount), 0);
 
@@ -243,10 +258,16 @@ const ExpensesList = () => {
         <div>
           <h3 className="font-semibold">Expenses</h3>
           <p className="text-lg font-bold">{formatCurrency(effectiveTotal + plannedGoalExpenses)}</p>
-          <p className="text-xs text-muted-foreground">(incl. {formatCurrency(plannedGoalExpenses)} in goals)</p>
+          <p className="text-xs text-muted-foreground">(incl. {formatCurrency(plannedGoalExpenses)} in planned goals)</p>
           <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground mt-1">
             <span className="text-success">Bank Paid: {formatCurrency(paidBankTransferExpenses)}</span>
             <span className="text-warning">CC Debit: {formatCurrency(creditCardDebitTotal)}</span>
+            {paidGoalExpenses > 0 && (
+              <span className="text-chart-4">Paid Goals: {formatCurrency(paidGoalExpenses)}</span>
+            )}
+            {blinkDepositsTotal > 0 && (
+              <span className="text-chart-5">Deposits: {formatCurrency(blinkDepositsTotal)}</span>
+            )}
           </div>
           <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs mt-1 p-2 rounded bg-secondary/50">
             <span className="font-medium text-muted-foreground">Planned:</span>
@@ -434,98 +455,145 @@ const ExpensesList = () => {
       </div>
 
       <div className="space-y-2 max-h-80 overflow-y-auto custom-scrollbar">
-        {monthlyExpenses.length === 0 ? (
+        {monthlyExpenses.length === 0 && monthlySavingsDeposits.length === 0 ? (
           <p className="text-sm text-muted-foreground text-center py-4">
             No expenses this month
           </p>
         ) : (
-          monthlyExpenses.map((expense) => {
-            const isFromGoal = isGoalExpense(expense);
-            return (
-            <div
-              key={expense.id}
-              onClick={() => handleExpenseClick(expense)}
-              className={cn(
-                "flex items-center justify-between p-3 rounded-lg bg-secondary/30 interactive-card group",
-                isFromGoal && "cursor-pointer hover:bg-secondary/50"
-              )}
-            >
-              <div className="flex items-center gap-3">
-                <div className={cn(
-                  "p-2 rounded-lg",
-                  isFromGoal ? "bg-chart-4/20" : "bg-secondary"
-                )}>
-                  {isFromGoal ? (
-                    <Target className="h-4 w-4 text-chart-4" />
-                  ) : expense.payment_method === 'credit_card' ? (
-                    <CreditCard className="h-4 w-4 text-muted-foreground" />
-                  ) : (
-                    <Building2 className="h-4 w-4 text-muted-foreground" />
-                  )}
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <p className="text-sm font-medium">{expense.description}</p>
-                    {expense.recurring_type && (
-                      <Repeat className="h-3 w-3 text-muted-foreground" />
-                    )}
-                    {isFromGoal && (
-                      <span className="text-xs text-chart-4">→ Goals</span>
+          <>
+            {monthlyExpenses.map((expense) => {
+              const isFromGoal = isGoalExpense(expense);
+              return (
+              <div
+                key={expense.id}
+                onClick={() => handleExpenseClick(expense)}
+                className={cn(
+                  "flex items-center justify-between p-3 rounded-lg bg-secondary/30 interactive-card group",
+                  isFromGoal && "cursor-pointer hover:bg-secondary/50"
+                )}
+              >
+                <div className="flex items-center gap-3">
+                  <div className={cn(
+                    "p-2 rounded-lg",
+                    isFromGoal ? "bg-chart-4/20" : "bg-secondary"
+                  )}>
+                    {isFromGoal ? (
+                      <Target className="h-4 w-4 text-chart-4" />
+                    ) : expense.payment_method === 'credit_card' ? (
+                      <CreditCard className="h-4 w-4 text-muted-foreground" />
+                    ) : (
+                      <Building2 className="h-4 w-4 text-muted-foreground" />
                     )}
                   </div>
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span
-                      className={cn(
-                        'text-xs px-2 py-0.5 rounded-full',
-                        categoryColors[expense.category] || categoryColors.other
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-medium">{expense.description}</p>
+                      {expense.recurring_type && (
+                        <Repeat className="h-3 w-3 text-muted-foreground" />
                       )}
-                    >
-                      {expense.category.replace(/_/g, ' ')}
-                    </span>
-                    <span className={cn(
-                      'text-xs px-2 py-0.5 rounded-full',
-                      expense.payment_method === 'credit_card' 
-                        ? 'bg-primary/20 text-primary' 
-                        : 'bg-success/20 text-success'
-                    )}>
-                      {expense.payment_method === 'credit_card' 
-                        ? (expense.card_id ? formatCardName(expense.card_id) : 'Credit Card')
-                        : 'Bank Transfer'}
-                    </span>
-                    <span className={cn(
-                      'text-xs px-2 py-0.5 rounded-full',
-                      expense.kind === 'planned' 
-                        ? 'bg-warning/20 text-warning' 
-                        : 'bg-muted text-muted-foreground'
-                    )}>
-                      {expense.kind === 'planned' ? 'Planned' : ''}
-                    </span>
+                      {isFromGoal && (
+                        <span className="text-xs text-chart-4">→ Goals</span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span
+                        className={cn(
+                          'text-xs px-2 py-0.5 rounded-full',
+                          categoryColors[expense.category] || categoryColors.other
+                        )}
+                      >
+                        {expense.category.replace(/_/g, ' ')}
+                      </span>
+                      <span className={cn(
+                        'text-xs px-2 py-0.5 rounded-full',
+                        expense.payment_method === 'credit_card' 
+                          ? 'bg-primary/20 text-primary' 
+                          : 'bg-success/20 text-success'
+                      )}>
+                        {expense.payment_method === 'credit_card' 
+                          ? (expense.card_id ? formatCardName(expense.card_id) : 'Credit Card')
+                          : 'Bank Transfer'}
+                      </span>
+                      <span className={cn(
+                        'text-xs px-2 py-0.5 rounded-full',
+                        expense.kind === 'planned' 
+                          ? 'bg-warning/20 text-warning' 
+                          : 'bg-muted text-muted-foreground'
+                      )}>
+                        {expense.kind === 'planned' ? 'Planned' : ''}
+                      </span>
+                    </div>
                   </div>
                 </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="text-right">
-                  <p className="text-sm font-semibold">{formatCurrency(Number(expense.amount))}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {formatDate(expense.expense_date)}
-                  </p>
+                <div className="flex items-center gap-2">
+                  <div className="text-right">
+                    <p className="text-sm font-semibold">{formatCurrency(Number(expense.amount))}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {formatDate(expense.expense_date)}
+                    </p>
+                  </div>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); handleOpenEdit(expense); }}
+                    className="p-1.5 opacity-0 group-hover:opacity-100 hover:bg-secondary rounded transition-all"
+                  >
+                    <Pencil className="h-4 w-4 text-muted-foreground" />
+                  </button>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); handleDeleteExpense(expense); }}
+                    className="p-1.5 opacity-0 group-hover:opacity-100 hover:bg-destructive/10 rounded transition-all"
+                  >
+                    <Trash2 className="h-4 w-4 text-destructive" />
+                  </button>
                 </div>
-                <button
-                  onClick={(e) => { e.stopPropagation(); handleOpenEdit(expense); }}
-                  className="p-1.5 opacity-0 group-hover:opacity-100 hover:bg-secondary rounded transition-all"
-                >
-                  <Pencil className="h-4 w-4 text-muted-foreground" />
-                </button>
-                <button
-                  onClick={(e) => { e.stopPropagation(); handleDeleteExpense(expense); }}
-                  className="p-1.5 opacity-0 group-hover:opacity-100 hover:bg-destructive/10 rounded transition-all"
-                >
-                  <Trash2 className="h-4 w-4 text-destructive" />
-                </button>
               </div>
-            </div>
-            );
-          })
+              );
+            })}
+            
+            {/* Blink deposits (savings deposits for this month) */}
+            {monthlySavingsDeposits.map((deposit) => {
+              const amountInILS = convertToILS(Number(deposit.action_amount || 0), deposit.currency || 'ILS');
+              const isUSD = deposit.currency === 'USD';
+              return (
+                <div
+                  key={`deposit-${deposit.id}`}
+                  className="flex items-center justify-between p-3 rounded-lg bg-chart-5/10 border border-chart-5/20 interactive-card group"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-lg bg-chart-5/20">
+                      <PiggyBank className="h-4 w-4 text-chart-5" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium">{deposit.name}</p>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-xs px-2 py-0.5 rounded-full bg-warning/20 text-warning">
+                          Planned
+                        </span>
+                        <span className="text-xs px-2 py-0.5 rounded-full bg-chart-5/20 text-chart-5">
+                          Deposit
+                        </span>
+                        <span className={cn(
+                          'text-xs px-2 py-0.5 rounded-full',
+                          deposit.transfer_method === 'credit_card' 
+                            ? 'bg-primary/20 text-primary' 
+                            : 'bg-success/20 text-success'
+                        )}>
+                          {deposit.transfer_method === 'credit_card' 
+                            ? (deposit.card_id ? formatCardName(deposit.card_id) : 'Credit Card')
+                            : 'Bank Transfer'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm font-semibold text-chart-5">{formatCurrency(amountInILS)}</p>
+                    {isUSD && (
+                      <p className="text-xs text-muted-foreground">${Number(deposit.action_amount).toLocaleString()}</p>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </>
         )}
       </div>
     </div>

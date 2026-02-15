@@ -26,7 +26,7 @@ const BudgetProgress = () => {
   const budget = getBudgetForMonth(currentMonth);
   const totalBudget = budget ? Number(budget.total_budget) : 0;
 
-  const { spentBudget, leftBudget, dailyLimit, plannedCreditCardExpenses, plannedGoalCreditCardExpenses } = calculatedBudget;
+  const { spentBudget, leftBudget, dailyLimit, plannedCreditCardExpenses, plannedGoalCreditCardExpenses, paidGoalExpenses, blinkDepositsTotal } = calculatedBudget;
   
   // Progress shows total spent against the defined budget
   const percentage = totalBudget > 0 ? Math.min((spentBudget / totalBudget) * 100, 100) : 0;
@@ -156,13 +156,25 @@ const BudgetProgress = () => {
           </div>
         </div>
 
-        {(plannedCreditCardExpenses > 0 || plannedGoalCreditCardExpenses > 0) && (
-          <div className="text-xs text-muted-foreground text-center pt-2 p-2 rounded bg-warning/10 border border-warning/20">
-            <span className="text-warning font-medium">
+        {(plannedCreditCardExpenses > 0 || plannedGoalCreditCardExpenses > 0 || paidGoalExpenses > 0 || blinkDepositsTotal > 0) && (
+          <div className="text-xs text-muted-foreground text-center pt-2 p-2 rounded bg-warning/10 border border-warning/20 space-y-1">
+            <span className="text-warning font-medium block">
               Budget: {formatCurrency(totalBudget)}
-              {plannedCreditCardExpenses > 0 && ` + Planned CC: ${formatCurrency(plannedCreditCardExpenses)}`}
-              {plannedGoalCreditCardExpenses > 0 && ` + Goals CC: ${formatCurrency(plannedGoalCreditCardExpenses)}`}
             </span>
+            <div className="flex flex-wrap justify-center gap-x-2 gap-y-1">
+              {plannedCreditCardExpenses > 0 && (
+                <span className="text-primary">Planned CC: {formatCurrency(plannedCreditCardExpenses)}</span>
+              )}
+              {plannedGoalCreditCardExpenses > 0 && (
+                <span className="text-primary">Goals CC: {formatCurrency(plannedGoalCreditCardExpenses)}</span>
+              )}
+              {paidGoalExpenses > 0 && (
+                <span className="text-chart-4">Paid Goals: {formatCurrency(paidGoalExpenses)}</span>
+              )}
+              {blinkDepositsTotal > 0 && (
+                <span className="text-chart-5">Deposits: {formatCurrency(blinkDepositsTotal)}</span>
+              )}
+            </div>
           </div>
         )}
 
