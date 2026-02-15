@@ -1,10 +1,12 @@
 import { useFinance } from '@/contexts/FinanceContext';
 import { formatCurrency, formatDate } from '@/lib/formatters';
-import { ArrowUpRight, ArrowDownRight, MoreHorizontal } from 'lucide-react';
+import { ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useNavigate } from 'react-router-dom';
 
 const RecentTransactions = () => {
-  const { expenses, incomes, currentMonth } = useFinance();
+  const { expenses, incomes, currentMonth, setCurrentMonth } = useFinance();
+  const navigate = useNavigate();
 
   // Combine and sort transactions
   const transactions = [
@@ -31,12 +33,19 @@ const RecentTransactions = () => {
   ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
     .slice(0, 5);
 
+  const handleViewAll = () => {
+    navigate('/expenses');
+  };
+
   return (
     <div className="glass rounded-xl p-5 shadow-card animate-slide-up">
       <div className="flex items-center justify-between mb-4">
         <h3 className="font-semibold">Recent Transactions</h3>
-        <button className="p-1.5 hover:bg-secondary rounded-lg transition-colors">
-          <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
+        <button 
+          onClick={handleViewAll}
+          className="text-xs text-primary hover:underline transition-colors"
+        >
+          View All
         </button>
       </div>
 
