@@ -57,7 +57,7 @@ const PlannedGoalsPanel = () => {
          </div>
        </div>
  
-       <div className="space-y-2 max-h-64 overflow-y-auto custom-scrollbar">
+       <div className="space-y-2 overflow-y-auto custom-scrollbar">
          {plannedGoalItems.length === 0 ? (
            <p className="text-sm text-muted-foreground text-center py-4">
              No planned goals for this month
