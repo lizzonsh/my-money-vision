@@ -385,18 +385,27 @@ const GoalCard = ({
                                </p>
                              </div>
                            </div>
-                           <div className="flex items-center gap-2">
-                             <span className="font-semibold text-sm text-success">{formatCurrency(Number(item.estimated_cost))}</span>
-                             <Button
-                               size="sm"
-                               variant="ghost"
-                               className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100"
-                               onClick={() => onUnpurchaseItem(item.id)}
-                               title="Undo purchase"
-                             >
-                               <X className="h-4 w-4 text-muted-foreground" />
-                             </Button>
-                           </div>
+                            <div className="flex items-center gap-2">
+                              <span className="font-semibold text-sm text-success">{formatCurrency(Number(item.estimated_cost))}</span>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 hover:bg-secondary"
+                                onClick={() => handleOpenEditItem(item)}
+                                title="Edit item"
+                              >
+                                <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100"
+                                onClick={() => onUnpurchaseItem(item.id)}
+                                title="Undo purchase"
+                              >
+                                <X className="h-4 w-4 text-muted-foreground" />
+                              </Button>
+                            </div>
                          </div>
                        ))}
                      </div>
