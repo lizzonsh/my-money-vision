@@ -440,14 +440,16 @@ const SavingsMonthlyActivity = () => {
                     {item.action === 'withdrawal' ? '-' : '+'}
                     {formatCurrency(item.amount, item.currency || 'ILS')}
                   </p>
-                  {!item.isRecurring && item.originalSaving && (
+                  {!item.isRecurring && (
                     <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button
-                        onClick={() => handleOpenEdit(item.originalSaving!)}
-                        className="p-1.5 hover:bg-secondary rounded"
-                      >
-                        <Pencil className="h-3 w-3 text-muted-foreground" />
-                      </button>
+                      {item.originalSaving && (
+                        <button
+                          onClick={() => handleOpenEdit(item.originalSaving!)}
+                          className="p-1.5 hover:bg-secondary rounded"
+                        >
+                          <Pencil className="h-3 w-3 text-muted-foreground" />
+                        </button>
+                      )}
                       <button
                         onClick={() => deleteSavings(item.id)}
                         className="p-1.5 hover:bg-destructive/10 rounded"
