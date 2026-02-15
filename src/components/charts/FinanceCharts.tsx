@@ -63,13 +63,18 @@ const formatMonth = (monthKey: string): string => {
 };
 
 export const IncomeExpenseChart = () => {
-  const { incomes, expenses, savings, setCurrentMonth } = useFinance();
+  const { incomes, expenses, savings, currentMonth, setCurrentMonth } = useFinance();
   const navigate = useNavigate();
 
   const chartData = useMemo(() => {
-    const last6Months = getLastNMonths(6);
+    const [year, month] = currentMonth.split('-').map(Number);
+    const months: string[] = [];
+    for (let i = 5; i >= 0; i--) {
+      const date = new Date(year, month - 1 - i, 1);
+      months.push(`${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`);
+    }
     
-    return last6Months.map(monthKey => {
+    return months.map(monthKey => {
       const monthIncome = incomes
         .filter(i => i.month === monthKey)
         .reduce((sum, i) => sum + Number(i.amount), 0);
@@ -90,7 +95,7 @@ export const IncomeExpenseChart = () => {
         expenses: monthExpenses,
       };
     });
-  }, [incomes, expenses, savings]);
+  }, [incomes, expenses, savings, currentMonth]);
 
   const handleBarClick = (data: any, dataKey: 'income' | 'expenses') => {
     if (data?.monthKey) {
@@ -221,12 +226,17 @@ export const SpendingByCategoryChart = () => {
 };
 
 export const SavingsGrowthChart = () => {
-  const { savings } = useFinance();
+  const { savings, currentMonth } = useFinance();
 
   const chartData = useMemo(() => {
-    const last6Months = getLastNMonths(6);
+    const [year, month] = currentMonth.split('-').map(Number);
+    const months: string[] = [];
+    for (let i = 5; i >= 0; i--) {
+      const date = new Date(year, month - 1 - i, 1);
+      months.push(`${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`);
+    }
     
-    return last6Months.map(monthKey => {
+    return months.map(monthKey => {
       // Get latest savings per account for this month or earlier,
       // excluding accounts that were closed before this month
       const monthDate = new Date(monthKey + '-01');
@@ -256,7 +266,7 @@ export const SavingsGrowthChart = () => {
         total,
       };
     });
-  }, [savings]);
+  }, [savings, currentMonth]);
 
   return (
     <div className="glass rounded-xl p-5 shadow-card animate-slide-up">
