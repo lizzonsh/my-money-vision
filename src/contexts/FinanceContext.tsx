@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, ReactNode, useMemo } from 'react';
 // Finance Context - manages all financial data and operations
+import { convertToILS } from '@/lib/currencyUtils';
 import { useBudgets, Budget } from '@/hooks/useBudgets';
 import { useExpenses, Expense } from '@/hooks/useExpenses';
 import { useIncomes, Income } from '@/hooks/useIncomes';
@@ -95,6 +96,8 @@ interface FinanceContextType {
     dailyLimit: number;
     plannedCreditCardExpenses: number;
     plannedGoalCreditCardExpenses: number;
+    paidGoalExpenses: number;
+    blinkDepositsTotal: number;
   };
 }
 
@@ -148,12 +151,12 @@ export const FinanceProvider = ({ children }: { children: ReactNode }) => {
       e.month === currentMonth && isDateUpToToday(e.expense_date)
     );
     
-    // Credit card debits (debit_from_credit_card category) - this is "Spent"
+    // Credit card debits (debit_from_credit_card category)
     const creditCardDebits = monthExpenses
       .filter(e => e.category === 'debit_from_credit_card')
       .reduce((sum, e) => sum + Number(e.amount), 0);
     
-    // Planned expenses paid via credit card (not bank transfer, excluding debit_from_credit_card)
+    // Planned expenses paid via credit card
     const plannedCreditCardExpenses = expensesHook.expenses
       .filter(e => 
         e.month === currentMonth && 
@@ -172,9 +175,21 @@ export const FinanceProvider = ({ children }: { children: ReactNode }) => {
       )
       .reduce((sum, item) => sum + Number(item.estimated_cost), 0);
     
-    // Spent = CC debits - planned CC expenses
-    // If negative, it means not all planned payments were included in the debit yet
-    const spentBudget = creditCardDebits - plannedCreditCardExpenses - plannedGoalCreditCardExpenses;
+    // Paid goal expenses for current month
+    const paidGoalExpenses = goalItemsHook.goalItems
+      .filter(item => 
+        item.is_purchased && 
+        item.planned_month === currentMonth
+      )
+      .reduce((sum, item) => sum + Number(item.estimated_cost), 0);
+    
+    // Blink deposits (savings deposits for current month) - convert to ILS
+    const blinkDepositsTotal = savingsHook.savings
+      .filter(s => s.month === currentMonth && s.action === 'deposit' && Number(s.action_amount || 0) > 0)
+      .reduce((sum, s) => sum + convertToILS(Number(s.action_amount || 0), s.currency || 'ILS'), 0);
+    
+    // Spent = CC debits + paid goals + planned payments + blink deposits
+    const spentBudget = creditCardDebits + paidGoalExpenses + plannedCreditCardExpenses + plannedGoalCreditCardExpenses + blinkDepositsTotal;
 
     // Remaining = Budget - Spent
     const leftBudget = totalBudget - spentBudget;
@@ -183,10 +198,10 @@ export const FinanceProvider = ({ children }: { children: ReactNode }) => {
     const [year, month] = currentMonth.split('-').map(Number);
     const daysInMonth = budget?.days_in_month || new Date(year, month, 0).getDate();
     const daysRemaining = Math.max(1, daysInMonth - today.getDate() + 1);
-     const dailyLimit = leftBudget / daysRemaining;
+    const dailyLimit = leftBudget / daysRemaining;
 
-    return { spentBudget, leftBudget, dailyLimit, plannedCreditCardExpenses, plannedGoalCreditCardExpenses };
-  }, [budgetsHook.budgets, budgetsHook.getBudgetForMonth, expensesHook.expenses, goalItemsHook.goalItems, currentMonth]);
+    return { spentBudget, leftBudget, dailyLimit, plannedCreditCardExpenses, plannedGoalCreditCardExpenses, paidGoalExpenses, blinkDepositsTotal };
+  }, [budgetsHook.budgets, budgetsHook.getBudgetForMonth, expensesHook.expenses, goalItemsHook.goalItems, savingsHook.savings, currentMonth]);
 
   return (
     <FinanceContext.Provider
