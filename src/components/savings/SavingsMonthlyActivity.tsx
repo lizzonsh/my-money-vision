@@ -495,7 +495,7 @@ const SavingsMonthlyActivity = ({ highlightId }: { highlightId?: string }) => {
                         </button>
                       )}
                       <button
-                        onClick={() => deleteSavings(item.id)}
+                        onClick={() => updateSavings({ id: item.id, action: null, action_amount: null, monthly_deposit: null } as any)}
                         className="p-1.5 hover:bg-destructive/10 rounded"
                       >
                         <Trash2 className="h-3 w-3 text-destructive" />
