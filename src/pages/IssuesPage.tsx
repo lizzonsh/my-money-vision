@@ -186,6 +186,19 @@ const IssuesPage = () => {
                     </Select>
                   </div>
                 )}
+              </div>
+              
+              <div className="flex justify-end gap-2">
+                <Button type="button" variant="outline" onClick={() => handleDialogClose(false)}>
+                  Cancel
+                </Button>
+                <Button type="submit">
+                  {editingIssue ? 'Save Changes' : 'Report Issue'}
+                </Button>
+              </div>
+            </form>
+          </DialogContent>
+        </Dialog>
       </div>
 
       {/* Priority Filter */}
@@ -203,19 +216,6 @@ const IssuesPage = () => {
             {p === 'all' ? 'All' : p}
           </Button>
         ))}
-      </div>
-              
-              <div className="flex justify-end gap-2">
-                <Button type="button" variant="outline" onClick={() => handleDialogClose(false)}>
-                  Cancel
-                </Button>
-                <Button type="submit">
-                  {editingIssue ? 'Save Changes' : 'Report Issue'}
-                </Button>
-              </div>
-            </form>
-          </DialogContent>
-        </Dialog>
       </div>
 
       {isLoading ? (
