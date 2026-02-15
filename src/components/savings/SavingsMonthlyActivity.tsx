@@ -87,11 +87,10 @@ const SavingsMonthlyActivity = ({ highlightId }: { highlightId?: string }) => {
   // Get active recurring savings
   const activeRecurringSavings = recurringSavings.filter(rs => rs.is_active);
 
-  // Get names of savings that have already been recorded this month
-  // (synced by edge function or manually added)
+  // Get names of savings that have already been recorded or dismissed this month
   const recordedSavingsNames = new Set(
     savingsUpToDate
-      .filter(s => (s.action_amount && s.action_amount > 0) || (s.monthly_deposit && s.monthly_deposit > 0))
+      .filter(s => (s.action_amount && s.action_amount > 0) || (s.monthly_deposit && s.monthly_deposit > 0) || (s as any).is_completed)
       .map(s => s.name)
   );
 
@@ -222,6 +221,29 @@ const SavingsMonthlyActivity = ({ highlightId }: { highlightId?: string }) => {
     }
     resetForm();
     setIsOpen(false);
+  };
+
+  // Dismiss a recurring item for the current month (creates a zero-amount "skipped" record)
+  const handleDismissRecurring = (item: ActivityItem) => {
+    const latestForAccount = savings
+      .filter(s => s.name === item.name && !s.closed_at)
+      .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())[0];
+
+    addSavings({
+      month: currentMonth,
+      name: item.name,
+      amount: latestForAccount ? Number(latestForAccount.amount) : 0,
+      currency: item.currency || 'ILS',
+      transfer_method: 'bank_account',
+      card_id: null,
+      action: item.action as 'deposit' | 'withdrawal',
+      action_amount: 0,
+      monthly_deposit: null,
+      recurring_type: null,
+      recurring_day_of_month: null,
+      closed_at: null,
+      is_completed: true,
+    });
   };
 
   // Get selected account's currency for display
@@ -484,7 +506,7 @@ const SavingsMonthlyActivity = ({ highlightId }: { highlightId?: string }) => {
                     {item.action === 'withdrawal' ? '-' : '+'}
                     {formatCurrency(item.amount, item.currency || 'ILS')}
                   </p>
-                  {!item.isRecurring && (
+                  {!item.isRecurring ? (
                     <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                       {item.originalSaving && (
                         <button
@@ -501,6 +523,14 @@ const SavingsMonthlyActivity = ({ highlightId }: { highlightId?: string }) => {
                         <Trash2 className="h-3 w-3 text-destructive" />
                       </button>
                     </div>
+                  ) : (
+                    <button
+                      onClick={() => handleDismissRecurring(item)}
+                      className="p-1.5 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive/10 rounded"
+                      title="Skip this month"
+                    >
+                      <Trash2 className="h-3 w-3 text-destructive" />
+                    </button>
                   )}
                 </div>
               </div>
