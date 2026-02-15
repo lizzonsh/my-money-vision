@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Pencil } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import {
   Dialog,
   DialogContent,
@@ -16,6 +17,7 @@ import {
 
 const BudgetProgress = () => {
   const { budgets, addBudget, updateBudget, calculatedBudget, currentMonth, getBudgetForMonth } = useFinance();
+  const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const [editBudget, setEditBudget] = useState({
     totalBudget: '',
@@ -78,8 +80,13 @@ const BudgetProgress = () => {
     <div className="glass rounded-xl p-5 shadow-card animate-slide-up">
       <div className="flex items-center justify-between mb-4">
         <h3 className="font-semibold">Monthly Budget</h3>
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-muted-foreground">{budget?.month || currentMonth}</span>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => navigate('/expenses')}
+            className="text-xs text-primary hover:underline transition-colors"
+          >
+            View All
+          </button>
           <Dialog open={isOpen} onOpenChange={setIsOpen}>
             <DialogTrigger asChild>
               <button 

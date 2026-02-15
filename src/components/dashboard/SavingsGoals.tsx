@@ -3,9 +3,11 @@ import { formatCurrency, getProgressPercentage, calculateMonthsToGoal } from '@/
 import { Progress } from '@/components/ui/progress';
 import { Target, Calendar } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useNavigate } from 'react-router-dom';
 
 const SavingsGoals = () => {
   const { bigPurchases } = useFinance();
+  const navigate = useNavigate();
 
   const priorityColors = {
     high: 'border-l-destructive',
@@ -17,7 +19,12 @@ const SavingsGoals = () => {
     <div className="glass rounded-xl p-5 shadow-card animate-slide-up">
       <div className="flex items-center justify-between mb-4">
         <h3 className="font-semibold">Savings Goals</h3>
-        <Target className="h-4 w-4 text-muted-foreground" />
+        <button
+          onClick={() => navigate('/goals')}
+          className="text-xs text-primary hover:underline transition-colors"
+        >
+          View All
+        </button>
       </div>
 
       <div className="space-y-4">
