@@ -55,6 +55,17 @@ const MonthNavigation = () => {
 
   return (
     <div className="flex items-center gap-1.5 sm:gap-2">
+      {!isCurrentMonth() && (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={goToCurrentMonth}
+          className="text-xs text-muted-foreground h-8 px-2"
+        >
+          Today
+        </Button>
+      )}
+
       <Button
         variant="outline"
         size="icon"
@@ -86,17 +97,6 @@ const MonthNavigation = () => {
       >
         <ChevronRight className="h-4 w-4" />
       </Button>
-
-      {!isCurrentMonth() && (
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={goToCurrentMonth}
-          className="text-xs text-muted-foreground h-8 px-2"
-        >
-          Today
-        </Button>
-      )}
     </div>
   );
 };
