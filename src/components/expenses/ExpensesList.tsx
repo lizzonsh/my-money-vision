@@ -53,8 +53,9 @@ const ExpensesList = () => {
   const monthlyExpenses = expenses.filter((e) => e.month === currentMonth);
   
   // Get savings deposits for current month (blink deposits)
+  // Get savings deposits via credit card for current month (blink deposits)
   const monthlySavingsDeposits = savings.filter(
-    s => s.month === currentMonth && s.action === 'deposit' && Number(s.action_amount || 0) > 0
+    s => s.month === currentMonth && s.action === 'deposit' && s.transfer_method === 'credit_card' && Number(s.action_amount || 0) > 0
   );
   
   // Calculate blink deposits total (convert to ILS)

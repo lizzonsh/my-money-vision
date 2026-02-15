@@ -183,9 +183,9 @@ export const FinanceProvider = ({ children }: { children: ReactNode }) => {
       )
       .reduce((sum, item) => sum + Number(item.estimated_cost), 0);
     
-    // Blink deposits (savings deposits for current month) - convert to ILS
+    // Blink deposits (savings deposits via credit card for current month) - convert to ILS
     const blinkDepositsTotal = savingsHook.savings
-      .filter(s => s.month === currentMonth && s.action === 'deposit' && Number(s.action_amount || 0) > 0)
+      .filter(s => s.month === currentMonth && s.action === 'deposit' && s.transfer_method === 'credit_card' && Number(s.action_amount || 0) > 0)
       .reduce((sum, s) => sum + convertToILS(Number(s.action_amount || 0), s.currency || 'ILS'), 0);
     
     // Left Budget = (Defined Budget + Paid Goals + Planned CC + Blink Deposits) - CC Debits
