@@ -86,6 +86,26 @@ export const useBigPurchases = () => {
     },
   });
 
+  const archiveBigPurchase = useMutation({
+    mutationFn: async ({ id, is_archived }: { id: string; is_archived: boolean }) => {
+      const { data, error } = await supabase
+        .from('big_purchase_goals')
+        .update({ is_archived })
+        .eq('id', id)
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['big_purchases'] });
+      toast({ title: data.is_archived ? 'Goal archived' : 'Goal unarchived' });
+    },
+    onError: (error) => {
+      toast({ title: 'Failed to archive goal', description: error.message, variant: 'destructive' });
+    },
+  });
+
   return {
     bigPurchases,
     isLoading,
@@ -93,5 +113,6 @@ export const useBigPurchases = () => {
     addBigPurchase: addBigPurchase.mutate,
     updateBigPurchase: updateBigPurchase.mutate,
     deleteBigPurchase: deleteBigPurchase.mutate,
+    archiveBigPurchase: archiveBigPurchase.mutate,
   };
 };
