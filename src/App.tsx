@@ -12,7 +12,7 @@ import ExpensesPage from "@/pages/ExpensesPage";
 import IncomePage from "@/pages/IncomePage";
 import SavingsPage from "@/pages/SavingsPage";
 import GoalsPage from "@/pages/GoalsPage";
-import AnalyticsPage from "@/pages/AnalyticsPage";
+
 import SettingsPage from "@/pages/SettingsPage";
 import IssuesPage from "@/pages/IssuesPage";
 import LoginPage from "@/pages/LoginPage";
@@ -81,16 +81,6 @@ const App = () => (
                   <ProtectedRoute>
                     <Sidebar>
                       <GoalsPage />
-                    </Sidebar>
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/analytics"
-                element={
-                  <ProtectedRoute>
-                    <Sidebar>
-                      <AnalyticsPage />
                     </Sidebar>
                   </ProtectedRoute>
                 }
