@@ -234,7 +234,6 @@ const Dashboard = () => {
           icon={stats.netFlow >= 0 ? <TrendingUp className="h-5 w-5" /> : <TrendingDown className="h-5 w-5" />}
           subtitle={`Net flow: ${stats.netFlow >= 0 ? '+' : ''}${formatCurrency(stats.netFlow)}`}
           variant={stats.netFlow >= 0 ? 'success' : 'danger'}
-          href="/analytics"
         />
       </div>
 

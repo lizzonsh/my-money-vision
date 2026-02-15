@@ -6,7 +6,7 @@ import {
   Wallet,
   PiggyBank,
   Target,
-  BarChart3,
+  
   Menu,
   X,
   ChevronLeft,
@@ -25,7 +25,7 @@ const navigation = [
   { name: 'Income', href: '/income', icon: Wallet },
   { name: 'Savings', href: '/savings', icon: PiggyBank },
   { name: 'Goals', href: '/goals', icon: Target },
-  { name: 'Analytics', href: '/analytics', icon: BarChart3 },
+  
   { name: 'Issues', href: '/issues', icon: Bug },
   { name: 'Settings', href: '/settings', icon: Settings },
 ];
