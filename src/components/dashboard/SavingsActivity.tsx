@@ -27,7 +27,7 @@ const SavingsActivity = () => {
   // Get names already recorded this month
   const recordedSavingsNames = new Set(
     savingsUpToDate
-      .filter(s => (s.action_amount && s.action_amount > 0) || (s.monthly_deposit && s.monthly_deposit > 0))
+      .filter(s => (s.action_amount && s.action_amount > 0) || (s.monthly_deposit && s.monthly_deposit > 0) || (s as any).is_completed)
       .map(s => s.name)
   );
 
