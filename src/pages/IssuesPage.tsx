@@ -14,6 +14,10 @@ import { format } from 'date-fns';
 
 const IssuesPage = () => {
   const { issues, isLoading, addIssue, updateIssue, deleteIssue } = useUserIssues();
+
+  const handleStatusChange = (id: string, newStatus: string) => {
+    updateIssue({ id, status: newStatus });
+  };
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [editingIssue, setEditingIssue] = useState<UserIssue | null>(null);
   const [priorityFilter, setPriorityFilter] = useState<string>('all');
@@ -244,6 +248,7 @@ const IssuesPage = () => {
                 issue={issue}
                 onEdit={handleEdit}
                 onDelete={deleteIssue}
+                onStatusChange={handleStatusChange}
                 getStatusColor={getStatusColor}
                 getPriorityColor={getPriorityColor}
                 getStatusIcon={getStatusIcon}
@@ -266,6 +271,7 @@ const IssuesPage = () => {
                 issue={issue}
                 onEdit={handleEdit}
                 onDelete={deleteIssue}
+                onStatusChange={handleStatusChange}
                 getStatusColor={getStatusColor}
                 getPriorityColor={getPriorityColor}
                 getStatusIcon={getStatusIcon}
@@ -288,6 +294,7 @@ const IssuesPage = () => {
                 issue={issue}
                 onEdit={handleEdit}
                 onDelete={deleteIssue}
+                onStatusChange={handleStatusChange}
                 getStatusColor={getStatusColor}
                 getPriorityColor={getPriorityColor}
                 getStatusIcon={getStatusIcon}
@@ -307,12 +314,13 @@ interface IssueCardProps {
   issue: UserIssue;
   onEdit: (issue: UserIssue) => void;
   onDelete: (id: string) => void;
+  onStatusChange: (id: string, status: string) => void;
   getStatusColor: (status: string) => string;
   getPriorityColor: (priority: string) => string;
   getStatusIcon: (status: string) => React.ReactNode;
 }
 
-const IssueCard = ({ issue, onEdit, onDelete, getStatusColor, getPriorityColor, getStatusIcon }: IssueCardProps) => {
+const IssueCard = ({ issue, onEdit, onDelete, onStatusChange, getStatusColor, getPriorityColor, getStatusIcon }: IssueCardProps) => {
   return (
     <Card className="group">
       <CardHeader className="pb-2">
@@ -351,14 +359,29 @@ const IssueCard = ({ issue, onEdit, onDelete, getStatusColor, getPriorityColor, 
         {issue.description && (
           <p className="text-sm text-muted-foreground mb-3 line-clamp-2">{issue.description}</p>
         )}
-        <div className="flex gap-2">
+        <div className="flex items-center gap-2">
           <Badge variant="outline" className={getPriorityColor(issue.priority)}>
             {issue.priority}
           </Badge>
-          <Badge variant="outline" className={getStatusColor(issue.status)}>
-            {getStatusIcon(issue.status)}
-            <span className="ml-1">{issue.status.replace('_', ' ')}</span>
-          </Badge>
+          <Select value={issue.status} onValueChange={(value) => onStatusChange(issue.id, value)}>
+            <SelectTrigger className="h-6 w-auto gap-1 border-0 px-2 py-0 text-xs font-medium [&>svg]:h-3 [&>svg]:w-3">
+              <div className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 ${getStatusColor(issue.status)}`}>
+                {getStatusIcon(issue.status)}
+                <span>{issue.status.replace('_', ' ')}</span>
+              </div>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="open">
+                <span className="flex items-center gap-1.5"><AlertCircle className="h-3 w-3 text-yellow-400" /> Open</span>
+              </SelectItem>
+              <SelectItem value="in_progress">
+                <span className="flex items-center gap-1.5"><Clock className="h-3 w-3 text-blue-400" /> In Progress</span>
+              </SelectItem>
+              <SelectItem value="resolved">
+                <span className="flex items-center gap-1.5"><CheckCircle className="h-3 w-3 text-green-400" /> Resolved</span>
+              </SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </CardContent>
     </Card>
