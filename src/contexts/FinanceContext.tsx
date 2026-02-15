@@ -188,9 +188,10 @@ export const FinanceProvider = ({ children }: { children: ReactNode }) => {
       .filter(s => s.month === currentMonth && s.action === 'deposit' && s.transfer_method === 'credit_card' && Number(s.action_amount || 0) > 0)
       .reduce((sum, s) => sum + convertToILS(Number(s.action_amount || 0), s.currency || 'ILS'), 0);
     
-    // Left Budget = (Defined Budget + Paid Goals + Planned CC + Blink Deposits) - CC Debits
-    const spentBudget = creditCardDebits; // "Spent" is just the CC debits for progress display
-    const leftBudget = (totalBudget + paidGoalExpenses + plannedCreditCardExpenses + blinkDepositsTotal) - creditCardDebits;
+    // Spent = CC Debits - Paid Goals - Deposits - Planned CC
+    const spentBudget = creditCardDebits - paidGoalExpenses - blinkDepositsTotal - plannedCreditCardExpenses;
+    // Left Budget = Defined Budget - Spent
+    const leftBudget = totalBudget - spentBudget;
     
     const today = new Date();
     const [year, month] = currentMonth.split('-').map(Number);
