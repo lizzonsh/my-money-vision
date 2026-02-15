@@ -124,13 +124,11 @@ const BankBalanceCard = () => {
   const monthlyExpensesPaid = creditCardDebit + currentMonthBankTransfers;
 
   // Calculate savings deposits and withdrawals (bank account transfers)
-  // Get all savings entries for the current month
-  const monthlySavings = savings.filter(s => 
-    s.month === currentMonth
-  );
+  // Sync with Dashboard stats and SavingsMonthlyActivity logic
+  const monthlySavings = savings.filter(s => s.month === currentMonth);
   
-  // Savings deposits - include entries with action='deposit' OR entries with action_amount but no action
-  const savingsDeposits = monthlySavings
+  // Actual savings deposits
+  const actualSavingsDeposits = monthlySavings
     .filter(s => s.action === 'deposit' || (!s.action && (s.action_amount || s.monthly_deposit)))
     .reduce(
       (sum, s) =>
@@ -142,9 +140,32 @@ const BankBalanceCard = () => {
       0
     );
   
-  const savingsWithdrawals = monthlySavings
+  // Pending recurring savings not yet recorded
+  const activeRecurringSavingsItems = recurringSavings.filter(rs => rs.is_active);
+  const recordedSavingsNames = new Set(
+    monthlySavings
+      .filter(s => (s.action_amount && s.action_amount > 0) || (s.monthly_deposit && s.monthly_deposit > 0))
+      .map(s => s.name)
+  );
+  const pendingRecurringSavingsItems = activeRecurringSavingsItems.filter(
+    rs => !recordedSavingsNames.has(rs.name)
+  );
+  
+  const pendingSavingsDeposits = pendingRecurringSavingsItems
+    .filter(rs => rs.action_type === 'deposit')
+    .reduce((sum, rs) => sum + convertToILS(Number(rs.default_amount), rs.currency || 'ILS'), 0);
+  
+  const pendingSavingsWithdrawals = pendingRecurringSavingsItems
+    .filter(rs => rs.action_type === 'withdrawal')
+    .reduce((sum, rs) => sum + convertToILS(Number(rs.default_amount), rs.currency || 'ILS'), 0);
+  
+  const savingsDeposits = actualSavingsDeposits + pendingSavingsDeposits;
+  
+  const actualWithdrawals = monthlySavings
     .filter(s => s.action === 'withdrawal')
     .reduce((sum, s) => sum + convertToILS(Number(s.action_amount || 0), s.currency || 'ILS'), 0);
+  
+  const savingsWithdrawals = actualWithdrawals + pendingSavingsWithdrawals;
 
   // Calculate projected balance using current month incomes
   const netChange = currentMonthIncomes - monthlyExpensesPaid - savingsDeposits + savingsWithdrawals;
