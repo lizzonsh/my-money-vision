@@ -63,7 +63,7 @@ const formatMonth = (monthKey: string): string => {
 };
 
 export const IncomeExpenseChart = () => {
-  const { incomes, expenses, setCurrentMonth } = useFinance();
+  const { incomes, expenses, savings, setCurrentMonth } = useFinance();
   const navigate = useNavigate();
 
   const chartData = useMemo(() => {
@@ -74,6 +74,11 @@ export const IncomeExpenseChart = () => {
         .filter(i => i.month === monthKey)
         .reduce((sum, i) => sum + Number(i.amount), 0);
       
+      // Include savings withdrawals as income
+      const monthWithdrawals = savings
+        .filter(s => s.month === monthKey && s.action === 'withdrawal' && s.action_amount && s.action_amount > 0)
+        .reduce((sum, s) => sum + convertToILS(Number(s.action_amount), s.currency || 'ILS'), 0);
+
       const monthExpenses = expenses
         .filter(e => e.month === monthKey)
         .reduce((sum, e) => sum + Number(e.amount), 0);
@@ -81,11 +86,11 @@ export const IncomeExpenseChart = () => {
       return {
         month: formatMonth(monthKey),
         monthKey,
-        income: monthIncome,
+        income: monthIncome + monthWithdrawals,
         expenses: monthExpenses,
       };
     });
-  }, [incomes, expenses]);
+  }, [incomes, expenses, savings]);
 
   const handleBarClick = (data: any, dataKey: 'income' | 'expenses') => {
     if (data?.monthKey) {
