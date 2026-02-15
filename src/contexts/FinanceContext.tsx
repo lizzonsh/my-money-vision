@@ -59,6 +59,7 @@ interface FinanceContextType {
   addBigPurchase: (goal: Omit<BigPurchaseGoal, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => void;
   updateBigPurchase: (data: { id: string } & Partial<BigPurchaseGoal>) => void;
   deleteBigPurchase: (id: string) => void;
+  archiveBigPurchase: (data: { id: string; is_archived: boolean }) => void;
   
   // Recurring payment operations
   addRecurringPayment: (payment: Omit<RecurringPayment, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => void;
@@ -235,6 +236,7 @@ export const FinanceProvider = ({ children }: { children: ReactNode }) => {
         addBigPurchase: bigPurchasesHook.addBigPurchase,
         updateBigPurchase: bigPurchasesHook.updateBigPurchase,
         deleteBigPurchase: bigPurchasesHook.deleteBigPurchase,
+        archiveBigPurchase: bigPurchasesHook.archiveBigPurchase,
         
         // Recurring payment operations
         addRecurringPayment: recurringPaymentsHook.addRecurringPayment,

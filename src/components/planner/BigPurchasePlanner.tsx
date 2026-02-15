@@ -4,7 +4,7 @@ import { useGoalItems, GoalItem } from '@/hooks/useGoalItems';
 import {
   formatCurrency,
 } from '@/lib/formatters';
-import { Plus, Target } from 'lucide-react';
+import { Plus, Target, Archive } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -27,11 +27,12 @@ import GoalCard from '@/components/goals/GoalCard';
 import { useToast } from '@/hooks/use-toast';
 
 const BigPurchasePlanner = () => {
-  const { bigPurchases, addBigPurchase, updateBigPurchase, deleteBigPurchase, addExpense, deleteExpense, expenses } = useFinance();
+  const { bigPurchases, addBigPurchase, updateBigPurchase, deleteBigPurchase, archiveBigPurchase, addExpense, deleteExpense, expenses } = useFinance();
   const { goalItems, addGoalItem, updateGoalItem, deleteGoalItem, markAsPurchased, unmarkAsPurchased } = useGoalItems();
   const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
   const [editingGoal, setEditingGoal] = useState<BigPurchaseGoal | null>(null);
+  const [showArchived, setShowArchived] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     priority: 'medium',
@@ -64,13 +65,14 @@ const BigPurchasePlanner = () => {
     e.preventDefault();
     const goalData = {
       name: formData.name,
-      target_amount: 0, // Will be calculated from items
+      target_amount: 0,
       current_saved: 0,
       monthly_contribution: 0,
       target_date: null,
       priority: formData.priority as 'high' | 'medium' | 'low',
       category: formData.category as 'furniture' | 'electronics' | 'education' | 'vehicle' | 'property' | 'vacation' | 'other',
       notes: formData.notes || null,
+      is_archived: false,
     };
 
     if (editingGoal) {
@@ -127,11 +129,17 @@ const BigPurchasePlanner = () => {
 
   const getItemsForGoal = (goalId: string) => goalItems.filter(item => item.goal_id === goalId);
 
-  // Calculate total stats
-  const totalItems = goalItems.length;
-  const purchasedItems = goalItems.filter(i => i.is_purchased).length;
-  const totalCost = goalItems.reduce((sum, i) => sum + Number(i.estimated_cost), 0);
-  const purchasedCost = goalItems.filter(i => i.is_purchased).reduce((sum, i) => sum + Number(i.estimated_cost), 0);
+  const activeGoals = bigPurchases.filter(g => !g.is_archived);
+  const archivedGoals = bigPurchases.filter(g => g.is_archived);
+  const displayedGoals = showArchived ? archivedGoals : activeGoals;
+
+  // Calculate total stats (active goals only)
+  const activeGoalIds = new Set(activeGoals.map(g => g.id));
+  const activeGoalItems = goalItems.filter(i => activeGoalIds.has(i.goal_id));
+  const totalItems = activeGoalItems.length;
+  const purchasedItems = activeGoalItems.filter(i => i.is_purchased).length;
+  const totalCost = activeGoalItems.reduce((sum, i) => sum + Number(i.estimated_cost), 0);
+  const purchasedCost = activeGoalItems.filter(i => i.is_purchased).reduce((sum, i) => sum + Number(i.estimated_cost), 0);
 
   return (
     <div className="space-y-6 animate-slide-up">
@@ -213,16 +221,33 @@ const BigPurchasePlanner = () => {
         </div>
       )}
 
+      {/* Archive Toggle */}
+      {archivedGoals.length > 0 && (
+        <div className="flex items-center gap-2">
+          <Button
+            variant={showArchived ? 'default' : 'outline'}
+            size="sm"
+            className="gap-2"
+            onClick={() => setShowArchived(!showArchived)}
+          >
+            <Archive className="h-4 w-4" />
+            {showArchived ? 'Show Active' : `Archived (${archivedGoals.length})`}
+          </Button>
+        </div>
+      )}
+
       <div className="grid gap-4 md:grid-cols-1 lg:grid-cols-2">
-        {bigPurchases.length === 0 ? (
+        {displayedGoals.length === 0 ? (
           <div className="col-span-2 glass rounded-xl p-8 text-center">
             <Target className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="font-semibold mb-2">No goals yet</h3>
-            <p className="text-sm text-muted-foreground mb-4">Create a goal to start tracking your purchases</p>
-            <Button onClick={() => setIsOpen(true)}>Create Your First Goal</Button>
+            <h3 className="font-semibold mb-2">{showArchived ? 'No archived goals' : 'No goals yet'}</h3>
+            <p className="text-sm text-muted-foreground mb-4">
+              {showArchived ? 'Archived goals will appear here' : 'Create a goal to start tracking your purchases'}
+            </p>
+            {!showArchived && <Button onClick={() => setIsOpen(true)}>Create Your First Goal</Button>}
           </div>
         ) : (
-          bigPurchases.map((goal) => (
+          displayedGoals.map((goal) => (
             <GoalCard
               key={goal.id}
               goal={goal}
@@ -234,6 +259,8 @@ const BigPurchasePlanner = () => {
               onDeleteItem={deleteGoalItem}
               onPurchaseItem={handlePurchaseItem}
               onUnpurchaseItem={handleUnpurchaseItem}
+              onArchiveGoal={(id) => archiveBigPurchase({ id, is_archived: !goal.is_archived })}
+              isArchived={goal.is_archived}
             />
           ))
         )}

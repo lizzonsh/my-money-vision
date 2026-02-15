@@ -94,6 +94,7 @@ export type Database = {
           created_at: string
           current_saved: number
           id: string
+          is_archived: boolean
           monthly_contribution: number
           name: string
           notes: string | null
@@ -108,6 +109,7 @@ export type Database = {
           created_at?: string
           current_saved?: number
           id?: string
+          is_archived?: boolean
           monthly_contribution: number
           name: string
           notes?: string | null
@@ -122,6 +124,7 @@ export type Database = {
           created_at?: string
           current_saved?: number
           id?: string
+          is_archived?: boolean
           monthly_contribution?: number
           name?: string
           notes?: string | null

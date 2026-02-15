@@ -2,7 +2,7 @@
  import { BigPurchaseGoal } from '@/contexts/FinanceContext';
  import { GoalItem, GoalItemInsert } from '@/hooks/useGoalItems';
  import { formatCurrency, formatMonth } from '@/lib/formatters';
-import { Trash2, Pencil, Plus, ChevronDown, ChevronUp, ShoppingCart, Check, X, CalendarDays } from 'lucide-react';
+import { Trash2, Pencil, Plus, ChevronDown, ChevronUp, ShoppingCart, Check, X, CalendarDays, Archive, ArchiveRestore } from 'lucide-react';
  import { Button } from '@/components/ui/button';
  import { Input } from '@/components/ui/input';
  import { Label } from '@/components/ui/label';
@@ -29,17 +29,19 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
  } from '@/components/ui/collapsible';
  import { cn } from '@/lib/utils';
  
- interface GoalCardProps {
-   goal: BigPurchaseGoal;
-   items: GoalItem[];
-   onEditGoal: (goal: BigPurchaseGoal) => void;
-   onDeleteGoal: (id: string) => void;
-   onAddItem: (item: GoalItemInsert) => void;
-   onUpdateItem: (item: { id: string } & Partial<GoalItem>) => void;
-   onDeleteItem: (id: string) => void;
-   onPurchaseItem: (item: GoalItem) => void;
-   onUnpurchaseItem: (id: string) => void;
- }
+interface GoalCardProps {
+  goal: BigPurchaseGoal;
+  items: GoalItem[];
+  onEditGoal: (goal: BigPurchaseGoal) => void;
+  onDeleteGoal: (id: string) => void;
+  onAddItem: (item: GoalItemInsert) => void;
+  onUpdateItem: (item: { id: string } & Partial<GoalItem>) => void;
+  onDeleteItem: (id: string) => void;
+  onPurchaseItem: (item: GoalItem) => void;
+  onUnpurchaseItem: (id: string) => void;
+  onArchiveGoal: (id: string) => void;
+  isArchived: boolean;
+}
  
  const categoryIcons: Record<string, string> = {
    furniture: '🪑',
@@ -80,8 +82,10 @@ const GoalCard = ({
   onDeleteItem,
   onPurchaseItem,
   onUnpurchaseItem,
+  onArchiveGoal,
+  isArchived,
 }: GoalCardProps) => {
-  const [isExpanded, setIsExpanded] = useState(true);
+  const [isExpanded, setIsExpanded] = useState(!isArchived);
   const [isAddItemOpen, setIsAddItemOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<GoalItem | null>(null);
   const [itemFormData, setItemFormData] = useState({
@@ -164,14 +168,17 @@ const GoalCard = ({
                <p className="text-sm text-muted-foreground capitalize">{goal.priority} priority</p>
              </div>
            </div>
-           <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1">
+              <button onClick={() => onArchiveGoal(goal.id)} className="p-1.5 hover:bg-secondary hover:scale-110 rounded transition-all" title={isArchived ? 'Unarchive' : 'Archive'}>
+                {isArchived ? <ArchiveRestore className="h-4 w-4 text-muted-foreground" /> : <Archive className="h-4 w-4 text-muted-foreground" />}
+              </button>
               <button onClick={() => onEditGoal(goal)} className="p-1.5 hover:bg-secondary hover:scale-110 rounded transition-all">
-               <Pencil className="h-4 w-4 text-muted-foreground" />
-             </button>
+                <Pencil className="h-4 w-4 text-muted-foreground" />
+              </button>
               <button onClick={() => onDeleteGoal(goal.id)} className="p-1.5 hover:bg-destructive/10 hover:scale-110 rounded transition-all">
-               <Trash2 className="h-4 w-4 text-destructive" />
-             </button>
-           </div>
+                <Trash2 className="h-4 w-4 text-destructive" />
+              </button>
+            </div>
          </div>
  
          {/* Progress Section */}
