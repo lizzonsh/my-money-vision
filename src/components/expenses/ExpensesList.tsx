@@ -7,8 +7,9 @@ import { useGoalItems } from '@/hooks/useGoalItems';
 import { formatCurrency, formatDate } from '@/lib/formatters';
 import { isDateUpToToday, isCurrentMonth } from '@/lib/dateUtils';
 import { convertToILS } from '@/lib/currencyUtils';
-import { Plus, Trash2, CreditCard, Building2, Repeat, Pencil, CalendarIcon, Tag, Target, PiggyBank } from 'lucide-react';
+import { Plus, Trash2, CreditCard, Building2, Repeat, Pencil, CalendarIcon, Tag, Target, PiggyBank, Filter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Calendar } from '@/components/ui/calendar';
@@ -38,6 +39,7 @@ const ExpensesList = () => {
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
   const [showNewCategory, setShowNewCategory] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState('');
+  const [activeFilter, setActiveFilter] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     description: '',
     amount: '',
@@ -254,7 +256,7 @@ const ExpensesList = () => {
   };
 
   return (
-    <div className="glass rounded-xl p-5 shadow-card animate-slide-up">
+    <div className="glass rounded-xl p-5 shadow-card animate-slide-up h-full flex flex-col">
       <div className="flex items-center justify-between mb-4">
         <div>
           <h3 className="font-semibold">Expenses</h3>
@@ -455,14 +457,47 @@ const ExpensesList = () => {
         </Dialog>
       </div>
 
-      <div className="space-y-2 max-h-80 overflow-y-auto custom-scrollbar">
-        {monthlyExpenses.length === 0 && monthlySavingsDeposits.length === 0 ? (
+      {/* Tag filters */}
+      {(() => {
+        const allTags = Array.from(new Set(monthlyExpenses.map(e => e.category)));
+        if (monthlySavingsDeposits.length > 0) allTags.push('deposit');
+        return allTags.length > 0 ? (
+          <div className="flex flex-wrap gap-1.5 mb-3">
+            <Badge
+              variant={activeFilter === null ? "default" : "outline"}
+              className="cursor-pointer text-xs"
+              onClick={() => setActiveFilter(null)}
+            >
+              All
+            </Badge>
+            {allTags.map(tag => (
+              <Badge
+                key={tag}
+                variant={activeFilter === tag ? "default" : "outline"}
+                className="cursor-pointer text-xs"
+                onClick={() => setActiveFilter(activeFilter === tag ? null : tag)}
+              >
+                {tag.replace(/_/g, ' ')}
+              </Badge>
+            ))}
+          </div>
+        ) : null;
+      })()}
+
+      <div className="space-y-2 flex-1 overflow-y-auto custom-scrollbar">
+        {(() => {
+          const filteredExpenses = activeFilter && activeFilter !== 'deposit'
+            ? monthlyExpenses.filter(e => e.category === activeFilter)
+            : activeFilter === 'deposit' ? [] : monthlyExpenses;
+          const filteredDeposits = activeFilter === null || activeFilter === 'deposit'
+            ? monthlySavingsDeposits : [];
+          return filteredExpenses.length === 0 && filteredDeposits.length === 0 ? (
           <p className="text-sm text-muted-foreground text-center py-4">
-            No expenses this month
+            No expenses found
           </p>
         ) : (
           <>
-            {monthlyExpenses.map((expense) => {
+            {filteredExpenses.map((expense) => {
               const isFromGoal = isGoalExpense(expense);
               return (
               <div
@@ -551,7 +586,7 @@ const ExpensesList = () => {
             })}
             
             {/* Blink deposits (savings deposits for this month) */}
-            {monthlySavingsDeposits.map((deposit) => {
+            {filteredDeposits.map((deposit) => {
               const amountInILS = convertToILS(Number(deposit.action_amount || 0), deposit.currency || 'ILS');
               const isUSD = deposit.currency === 'USD';
               return (
@@ -595,7 +630,8 @@ const ExpensesList = () => {
               );
             })}
           </>
-        )}
+        );
+        })()}
       </div>
     </div>
   );
