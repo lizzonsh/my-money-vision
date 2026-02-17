@@ -1,0 +1,1 @@
+ALTER TABLE public.incomes ADD COLUMN is_verified boolean NOT NULL DEFAULT false;

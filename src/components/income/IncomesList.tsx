@@ -3,7 +3,7 @@ import { format } from 'date-fns';
 import { useFinance, Income } from '@/contexts/FinanceContext';
 import { formatCurrency, formatDate } from '@/lib/formatters';
 import { isDateUpToToday, isCurrentMonth } from '@/lib/dateUtils';
-import { Plus, Trash2, Briefcase, Gift, Heart, Pencil, CalendarIcon, PiggyBank } from 'lucide-react';
+import { Plus, Trash2, Briefcase, Gift, Heart, Pencil, CalendarIcon, PiggyBank, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -37,6 +37,10 @@ interface IncomeItem {
 
 const IncomesList = () => {
   const { incomes, savings, currentMonth, addIncome, updateIncome, deleteIncome } = useFinance();
+
+  const toggleChecked = (income: Income) => {
+    updateIncome({ id: income.id, is_verified: !(income as any).is_verified });
+  };
   const [isOpen, setIsOpen] = useState(false);
   const [editingIncome, setEditingIncome] = useState<Income | null>(null);
   const [formData, setFormData] = useState({
@@ -121,6 +125,7 @@ const IncomesList = () => {
       description: formData.description || null,
       recurring_day_of_month: null,
       recurring_type: null,
+      is_verified: false,
     };
 
     if (editingIncome) {
@@ -257,10 +262,16 @@ const IncomesList = () => {
             No income this month
           </p>
         ) : (
-          sortedIncomes.map((income) => (
+          sortedIncomes.map((income) => {
+            const originalIncome = incomesUpToDate.find(i => i.id === income.id);
+            const isVerified = originalIncome ? (originalIncome as any).is_verified : false;
+            return (
             <div
               key={income.id}
-              className="flex items-center justify-between p-3 rounded-lg bg-secondary/30 hover:bg-secondary/50 transition-colors group"
+              className={cn(
+                "flex items-center justify-between p-3 rounded-lg hover:bg-secondary/50 transition-colors group",
+                isVerified ? "bg-success/10 border border-success/30" : "bg-secondary/30"
+              )}
             >
               <div className="flex items-center gap-3">
                 <div className={`p-2 rounded-lg ${incomeColors[income.name] || incomeColors.other}`}>
@@ -286,7 +297,19 @@ const IncomesList = () => {
                   <>
                     <button
                       onClick={() => {
-                        const originalIncome = incomesUpToDate.find(i => i.id === income.id);
+                        if (originalIncome) toggleChecked(originalIncome);
+                      }}
+                      className={cn(
+                        "p-1.5 rounded transition-all",
+                        isVerified
+                          ? "bg-success/20 text-success"
+                          : "opacity-0 group-hover:opacity-100 hover:bg-success/10 text-muted-foreground"
+                      )}
+                    >
+                      <Check className="h-4 w-4" />
+                    </button>
+                    <button
+                      onClick={() => {
                         if (originalIncome) handleOpenEdit(originalIncome);
                       }}
                       className="p-1.5 opacity-0 group-hover:opacity-100 hover:bg-secondary rounded transition-all"
@@ -308,7 +331,8 @@ const IncomesList = () => {
                 )}
               </div>
             </div>
-          ))
+          );})
+
         )}
       </div>
     </div>

@@ -343,6 +343,7 @@ export type Database = {
           description: string | null
           id: string
           income_date: string | null
+          is_verified: boolean
           month: string
           name: string
           recurring_day_of_month: number | null
@@ -356,6 +357,7 @@ export type Database = {
           description?: string | null
           id?: string
           income_date?: string | null
+          is_verified?: boolean
           month: string
           name: string
           recurring_day_of_month?: number | null
@@ -369,6 +371,7 @@ export type Database = {
           description?: string | null
           id?: string
           income_date?: string | null
+          is_verified?: boolean
           month?: string
           name?: string
           recurring_day_of_month?: number | null
