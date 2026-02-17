@@ -7,7 +7,7 @@ import { useGoalItems } from '@/hooks/useGoalItems';
 import { formatCurrency, formatDate } from '@/lib/formatters';
 import { isDateUpToToday, isCurrentMonth } from '@/lib/dateUtils';
 import { convertToILS } from '@/lib/currencyUtils';
-import { Plus, Trash2, CreditCard, Building2, Repeat, Pencil, CalendarIcon, Tag, Target, PiggyBank, Filter } from 'lucide-react';
+import { Plus, Trash2, CreditCard, Building2, Repeat, Pencil, CalendarIcon, Tag, Target, PiggyBank, Filter, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -40,6 +40,7 @@ const ExpensesList = () => {
   const [showNewCategory, setShowNewCategory] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState('');
   const [activeFilter, setActiveFilter] = useState<string | null>(null);
+  const [checkedExpenses, setCheckedExpenses] = useState<Set<string>>(new Set());
   const [formData, setFormData] = useState({
     description: '',
     amount: '',
@@ -253,6 +254,15 @@ const ExpensesList = () => {
       }
     }
     deleteExpense(expense.id);
+  };
+
+  const toggleChecked = (id: string) => {
+    setCheckedExpenses(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
   };
 
   return (
@@ -503,10 +513,13 @@ const ExpensesList = () => {
               <div
                 key={expense.id}
                 onClick={() => handleExpenseClick(expense)}
-                className={cn(
-                  "flex items-center justify-between p-3 rounded-lg bg-secondary/30 interactive-card group",
-                  isFromGoal && "cursor-pointer hover:bg-secondary/50"
-                )}
+                 className={cn(
+                   "flex items-center justify-between p-3 rounded-lg interactive-card group",
+                   isFromGoal && "cursor-pointer hover:bg-secondary/50",
+                   checkedExpenses.has(expense.id)
+                     ? "bg-success/10 border border-success/30"
+                     : "bg-secondary/30"
+                 )}
               >
                 <div className="flex items-center gap-3">
                   <div className={cn(
@@ -568,10 +581,21 @@ const ExpensesList = () => {
                       {formatDate(expense.expense_date)}
                     </p>
                   </div>
-                  <button
-                    onClick={(e) => { e.stopPropagation(); handleOpenEdit(expense); }}
-                    className="p-1.5 opacity-0 group-hover:opacity-100 hover:bg-secondary rounded transition-all"
-                  >
+                   <button
+                     onClick={(e) => { e.stopPropagation(); toggleChecked(expense.id); }}
+                     className={cn(
+                       "p-1.5 rounded transition-all",
+                       checkedExpenses.has(expense.id)
+                         ? "bg-success/20 text-success opacity-100"
+                         : "opacity-0 group-hover:opacity-100 hover:bg-success/10 text-muted-foreground"
+                     )}
+                   >
+                     <Check className="h-4 w-4" />
+                   </button>
+                   <button
+                     onClick={(e) => { e.stopPropagation(); handleOpenEdit(expense); }}
+                     className="p-1.5 opacity-0 group-hover:opacity-100 hover:bg-secondary rounded transition-all"
+                   >
                     <Pencil className="h-4 w-4 text-muted-foreground" />
                   </button>
                   <button
