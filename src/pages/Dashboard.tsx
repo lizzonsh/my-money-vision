@@ -149,8 +149,8 @@ const Dashboard = () => {
     const totalSavings = Array.from(latestSavingsPerName.values())
       .reduce((sum, s) => sum + convertToILS(Number(s.amount), s.currency || 'ILS'), 0);
 
-    // Net worth = savings + incomes + bank balance - monthly expenses
-    const netWorth = totalSavings + monthlyIncome + monthlyBankBalance - monthlyExpenses;
+    // Net worth = savings + bank balance
+    const netWorth = totalSavings + monthlyBankBalance;
     const netFlow = monthlyIncome - monthlyExpenses;
 
     // Calculate trends
