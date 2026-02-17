@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import SavingsCurrentStatus from '@/components/savings/SavingsCurrentStatus';
+import SavingsPredictionPortfolio from '@/components/savings/SavingsPredictionPortfolio';
 import SavingsMonthlyActivity from '@/components/savings/SavingsMonthlyActivity';
 import RecurringSavingsPanel from '@/components/savings/RecurringSavingsPanel';
 import MonthNavigation from '@/components/navigation/MonthNavigation';
@@ -37,14 +38,17 @@ const SavingsPage = () => {
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
+          {/* Portfolio panels side by side */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <SavingsCurrentStatus />
+            <SavingsPredictionPortfolio />
+          </div>
+
+          {/* Activity and Growth Chart */}
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-            {/* Left side - stacked panels */}
-            <div className="lg:col-span-3 space-y-6">
-              <SavingsCurrentStatus />
+            <div className="lg:col-span-3">
               <SavingsMonthlyActivity highlightId={navState?.highlightId} />
             </div>
-            
-            {/* Right side - Growth Chart */}
             <div className="lg:col-span-2">
               <SavingsGrowthChart />
             </div>
