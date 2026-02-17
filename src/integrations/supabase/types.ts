@@ -227,6 +227,7 @@ export type Database = {
           expense_date: string
           expense_month: string | null
           id: string
+          is_verified: boolean
           kind: Database["public"]["Enums"]["expense_kind"]
           month: string
           month_of_expense: string | null
@@ -245,6 +246,7 @@ export type Database = {
           expense_date: string
           expense_month?: string | null
           id?: string
+          is_verified?: boolean
           kind?: Database["public"]["Enums"]["expense_kind"]
           month: string
           month_of_expense?: string | null
@@ -263,6 +265,7 @@ export type Database = {
           expense_date?: string
           expense_month?: string | null
           id?: string
+          is_verified?: boolean
           kind?: Database["public"]["Enums"]["expense_kind"]
           month?: string
           month_of_expense?: string | null
