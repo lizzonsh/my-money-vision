@@ -30,7 +30,7 @@ export const useExpenses = () => {
   });
 
   const addExpense = useMutation({
-    mutationFn: async (expense: Omit<ExpenseInsert, 'user_id'>) => {
+    mutationFn: async (expense: Omit<ExpenseInsert, 'user_id' | 'is_verified'>) => {
       if (!user) throw new Error('Not authenticated');
       const { data, error } = await supabase
         .from('expenses')

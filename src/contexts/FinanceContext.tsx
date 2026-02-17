@@ -41,7 +41,7 @@ interface FinanceContextType {
   getBudgetForMonth: (month: string) => Budget | undefined;
   
   // Expense operations
-  addExpense: (expense: Omit<Expense, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => void;
+  addExpense: (expense: Omit<Expense, 'id' | 'user_id' | 'created_at' | 'updated_at' | 'is_verified'>) => void;
   updateExpense: (data: { id: string } & Partial<Expense>) => void;
   deleteExpense: (id: string) => void;
   

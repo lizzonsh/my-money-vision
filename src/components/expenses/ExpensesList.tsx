@@ -40,7 +40,7 @@ const ExpensesList = () => {
   const [showNewCategory, setShowNewCategory] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState('');
   const [activeFilter, setActiveFilter] = useState<string | null>(null);
-  const [checkedExpenses, setCheckedExpenses] = useState<Set<string>>(new Set());
+  
   const [formData, setFormData] = useState({
     description: '',
     amount: '',
@@ -256,13 +256,8 @@ const ExpensesList = () => {
     deleteExpense(expense.id);
   };
 
-  const toggleChecked = (id: string) => {
-    setCheckedExpenses(prev => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
+  const toggleChecked = (expense: Expense) => {
+    updateExpense({ id: expense.id, is_verified: !expense.is_verified });
   };
 
   return (
@@ -516,9 +511,9 @@ const ExpensesList = () => {
                  className={cn(
                    "flex items-center justify-between p-3 rounded-lg interactive-card group",
                    isFromGoal && "cursor-pointer hover:bg-secondary/50",
-                   checkedExpenses.has(expense.id)
-                     ? "bg-success/10 border border-success/30"
-                     : "bg-secondary/30"
+                    expense.is_verified
+                      ? "bg-success/10 border border-success/30"
+                      : "bg-secondary/30"
                  )}
               >
                 <div className="flex items-center gap-3">
@@ -582,12 +577,12 @@ const ExpensesList = () => {
                     </p>
                   </div>
                    <button
-                     onClick={(e) => { e.stopPropagation(); toggleChecked(expense.id); }}
-                     className={cn(
-                       "p-1.5 rounded transition-all",
-                       checkedExpenses.has(expense.id)
-                         ? "bg-success/20 text-success opacity-100"
-                         : "opacity-0 group-hover:opacity-100 hover:bg-success/10 text-muted-foreground"
+                     onClick={(e) => { e.stopPropagation(); toggleChecked(expense); }}
+                      className={cn(
+                        "p-1.5 rounded transition-all",
+                        expense.is_verified
+                          ? "bg-success/20 text-success opacity-100"
+                          : "opacity-0 group-hover:opacity-100 hover:bg-success/10 text-muted-foreground"
                      )}
                    >
                      <Check className="h-4 w-4" />
