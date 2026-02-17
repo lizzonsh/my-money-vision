@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useUserIssues, UserIssue } from '@/hooks/useUserIssues';
+import { useIssueComments, useIssueCommentCounts } from '@/hooks/useIssueComments';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,15 +10,37 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { Plus, Bug, Trash2, Edit, CheckCircle, Clock, AlertCircle, Filter } from 'lucide-react';
+import { Plus, Bug, Trash2, Edit, CheckCircle, Clock, AlertCircle, Filter, MessageSquare, Send } from 'lucide-react';
 import { format } from 'date-fns';
+import { useToast } from '@/hooks/use-toast';
 
 const IssuesPage = () => {
   const { issues, isLoading, addIssue, updateIssue, deleteIssue } = useUserIssues();
+  const { toast } = useToast();
+
+  // Comment counts for all issues
+  const issueIds = issues.map(i => i.id);
+  const { data: commentCounts = {} } = useIssueCommentCounts(issueIds);
+
+  // Resolve dialog state
+  const [resolveDialogIssue, setResolveDialogIssue] = useState<UserIssue | null>(null);
+  const [resolveComment, setResolveComment] = useState('');
+
+  // Comments panel state
+  const [commentsPanelIssue, setCommentsPanelIssue] = useState<UserIssue | null>(null);
 
   const handleStatusChange = (id: string, value: string, field: 'status' | 'priority') => {
+    if (field === 'status' && value === 'resolved') {
+      const issue = issues.find(i => i.id === id);
+      if (issue) {
+        setResolveDialogIssue(issue);
+        setResolveComment('');
+        return;
+      }
+    }
     updateIssue({ id, [field]: value });
   };
+
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [editingIssue, setEditingIssue] = useState<UserIssue | null>(null);
   const [priorityFilter, setPriorityFilter] = useState<string>('all');
@@ -65,44 +88,31 @@ const IssuesPage = () => {
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'open':
-        return <AlertCircle className="h-4 w-4" />;
-      case 'in_progress':
-        return <Clock className="h-4 w-4" />;
-      case 'resolved':
-        return <CheckCircle className="h-4 w-4" />;
-      default:
-        return <AlertCircle className="h-4 w-4" />;
+      case 'open': return <AlertCircle className="h-4 w-4" />;
+      case 'in_progress': return <Clock className="h-4 w-4" />;
+      case 'resolved': return <CheckCircle className="h-4 w-4" />;
+      default: return <AlertCircle className="h-4 w-4" />;
     }
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'open':
-        return 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30';
-      case 'in_progress':
-        return 'bg-blue-500/20 text-blue-400 border-blue-500/30';
-      case 'resolved':
-        return 'bg-green-500/20 text-green-400 border-green-500/30';
-      default:
-        return 'bg-muted text-muted-foreground';
+      case 'open': return 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30';
+      case 'in_progress': return 'bg-blue-500/20 text-blue-400 border-blue-500/30';
+      case 'resolved': return 'bg-green-500/20 text-green-400 border-green-500/30';
+      default: return 'bg-muted text-muted-foreground';
     }
   };
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case 'high':
-        return 'bg-red-500/20 text-red-400 border-red-500/30';
-      case 'medium':
-        return 'bg-orange-500/20 text-orange-400 border-orange-500/30';
-      case 'low':
-        return 'bg-gray-500/20 text-gray-400 border-gray-500/30';
-      default:
-        return 'bg-muted text-muted-foreground';
+      case 'high': return 'bg-red-500/20 text-red-400 border-red-500/30';
+      case 'medium': return 'bg-orange-500/20 text-orange-400 border-orange-500/30';
+      case 'low': return 'bg-gray-500/20 text-gray-400 border-gray-500/30';
+      default: return 'bg-muted text-muted-foreground';
     }
   };
 
-  // Apply priority filter
   const filteredIssues = priorityFilter === 'all' 
     ? issues 
     : issues.filter(i => i.priority === priorityFilter);
@@ -246,9 +256,11 @@ const IssuesPage = () => {
               <IssueCard
                 key={issue.id}
                 issue={issue}
+                commentCount={commentCounts[issue.id] || 0}
                 onEdit={handleEdit}
                 onDelete={deleteIssue}
                 onStatusChange={handleStatusChange}
+                onOpenComments={setCommentsPanelIssue}
                 getStatusColor={getStatusColor}
                 getPriorityColor={getPriorityColor}
                 getStatusIcon={getStatusIcon}
@@ -269,9 +281,11 @@ const IssuesPage = () => {
               <IssueCard
                 key={issue.id}
                 issue={issue}
+                commentCount={commentCounts[issue.id] || 0}
                 onEdit={handleEdit}
                 onDelete={deleteIssue}
                 onStatusChange={handleStatusChange}
+                onOpenComments={setCommentsPanelIssue}
                 getStatusColor={getStatusColor}
                 getPriorityColor={getPriorityColor}
                 getStatusIcon={getStatusIcon}
@@ -292,9 +306,11 @@ const IssuesPage = () => {
               <IssueCard
                 key={issue.id}
                 issue={issue}
+                commentCount={commentCounts[issue.id] || 0}
                 onEdit={handleEdit}
                 onDelete={deleteIssue}
                 onStatusChange={handleStatusChange}
+                onOpenComments={setCommentsPanelIssue}
                 getStatusColor={getStatusColor}
                 getPriorityColor={getPriorityColor}
                 getStatusIcon={getStatusIcon}
@@ -306,27 +322,151 @@ const IssuesPage = () => {
           </div>
         </div>
       )}
+
+      {/* Resolve Dialog - requires comment */}
+      <Dialog open={!!resolveDialogIssue} onOpenChange={(open) => { if (!open) setResolveDialogIssue(null); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Resolve Issue</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            Please leave a comment explaining the resolution before marking this issue as resolved.
+          </p>
+          <div className="space-y-2">
+            <Label htmlFor="resolve-comment">Resolution Comment</Label>
+            <Textarea
+              id="resolve-comment"
+              placeholder="Describe how this issue was resolved..."
+              value={resolveComment}
+              onChange={(e) => setResolveComment(e.target.value)}
+              rows={3}
+            />
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setResolveDialogIssue(null)}>Cancel</Button>
+            <ResolveButton
+              issueId={resolveDialogIssue?.id || ''}
+              comment={resolveComment}
+              onDone={() => {
+                updateIssue({ id: resolveDialogIssue!.id, status: 'resolved' });
+                setResolveDialogIssue(null);
+                setResolveComment('');
+              }}
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Comments Panel Dialog */}
+      <Dialog open={!!commentsPanelIssue} onOpenChange={(open) => { if (!open) setCommentsPanelIssue(null); }}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <MessageSquare className="h-5 w-5" />
+              Comments: {commentsPanelIssue?.title}
+            </DialogTitle>
+          </DialogHeader>
+          {commentsPanelIssue && <CommentsSection issueId={commentsPanelIssue.id} />}
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+};
+
+// Resolve button that adds comment then resolves
+const ResolveButton = ({ issueId, comment, onDone }: { issueId: string; comment: string; onDone: () => void }) => {
+  const { addComment } = useIssueComments(issueId);
+
+  const handleResolve = () => {
+    if (!comment.trim()) return;
+    addComment({ issueId, content: comment }, { onSuccess: () => onDone() });
+  };
+
+  return (
+    <Button onClick={handleResolve} disabled={!comment.trim()}>
+      <CheckCircle className="h-4 w-4 mr-2" />
+      Resolve
+    </Button>
+  );
+};
+
+// Comments section for the dialog
+const CommentsSection = ({ issueId }: { issueId: string }) => {
+  const { comments, isLoading, addComment, deleteComment } = useIssueComments(issueId);
+  const [newComment, setNewComment] = useState('');
+
+  const handleAdd = () => {
+    if (!newComment.trim()) return;
+    addComment({ issueId, content: newComment }, {
+      onSuccess: () => setNewComment(''),
+    });
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="max-h-64 overflow-y-auto space-y-3">
+        {isLoading ? (
+          <p className="text-sm text-muted-foreground">Loading comments...</p>
+        ) : comments.length === 0 ? (
+          <p className="text-sm text-muted-foreground text-center py-4">No comments yet</p>
+        ) : (
+          comments.map((comment) => (
+            <div key={comment.id} className="bg-muted/50 rounded-lg p-3 group">
+              <div className="flex items-start justify-between gap-2">
+                <p className="text-sm">{comment.content}</p>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
+                  onClick={() => deleteComment(comment.id)}
+                >
+                  <Trash2 className="h-3 w-3" />
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                {format(new Date(comment.created_at), 'MMM d, yyyy h:mm a')}
+              </p>
+            </div>
+          ))
+        )}
+      </div>
+      <div className="flex gap-2">
+        <Input
+          placeholder="Add a comment..."
+          value={newComment}
+          onChange={(e) => setNewComment(e.target.value)}
+          onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleAdd(); } }}
+        />
+        <Button size="icon" onClick={handleAdd} disabled={!newComment.trim()}>
+          <Send className="h-4 w-4" />
+        </Button>
+      </div>
     </div>
   );
 };
 
 interface IssueCardProps {
   issue: UserIssue;
+  commentCount: number;
   onEdit: (issue: UserIssue) => void;
   onDelete: (id: string) => void;
   onStatusChange: (id: string, value: string, field: 'status' | 'priority') => void;
+  onOpenComments: (issue: UserIssue) => void;
   getStatusColor: (status: string) => string;
   getPriorityColor: (priority: string) => string;
   getStatusIcon: (status: string) => React.ReactNode;
 }
 
-const IssueCard = ({ issue, onEdit, onDelete, onStatusChange, getStatusColor, getPriorityColor, getStatusIcon }: IssueCardProps) => {
+const IssueCard = ({ issue, commentCount, onEdit, onDelete, onStatusChange, onOpenComments, getStatusColor, getPriorityColor, getStatusIcon }: IssueCardProps) => {
   return (
     <Card className="group">
       <CardHeader className="pb-2">
         <div className="flex items-start justify-between gap-2">
           <CardTitle className="text-base">{issue.title}</CardTitle>
           <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onOpenComments(issue)}>
+              <MessageSquare className="h-4 w-4" />
+            </Button>
             <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onEdit(issue)}>
               <Edit className="h-4 w-4" />
             </Button>
@@ -391,6 +531,15 @@ const IssueCard = ({ issue, onEdit, onDelete, onStatusChange, getStatusColor, ge
               </SelectItem>
             </SelectContent>
           </Select>
+          {commentCount > 0 && (
+            <button
+              onClick={() => onOpenComments(issue)}
+              className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors ml-auto"
+            >
+              <MessageSquare className="h-3 w-3" />
+              {commentCount}
+            </button>
+          )}
         </div>
       </CardContent>
     </Card>
