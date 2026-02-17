@@ -194,14 +194,11 @@ const SavingsMonthlyActivity = ({ highlightId }: { highlightId?: string }) => {
       actionAmountInAccountCurrency = convertFromILS(amountInILS, accountCurrency);
     }
     
-    const newAmount = formData.action === 'deposit' 
-      ? currentAmount + actionAmountInAccountCurrency 
-      : currentAmount - actionAmountInAccountCurrency;
-
+    // Don't change balance on creation — balance updates only when crossed over
     const activityData = {
       month: currentMonth,
       name: formData.name,
-      amount: Math.max(0, newAmount),
+      amount: currentAmount,
       currency: accountCurrency,
       transfer_method: formData.transferMethod as 'bank_account' | 'credit_card',
       card_id: formData.cardId || null,
@@ -475,13 +472,21 @@ const SavingsMonthlyActivity = ({ highlightId }: { highlightId?: string }) => {
                         if (!saving) return;
                         
                         if (!item.isCompleted) {
-                          // Marking as complete — balance already applied on creation, just confirm
+                          // Crossing over — apply the transaction to the balance
+                          const actionAmount = Number(saving.action_amount || saving.monthly_deposit || 0);
+                          const currentAmount = Number(saving.amount);
+                          const isDeposit = item.action === 'deposit';
+                          const newAmount = isDeposit 
+                            ? currentAmount + actionAmount 
+                            : currentAmount - actionAmount;
+                          
                           updateSavings({ 
                             id: item.id, 
                             is_completed: true,
+                            amount: Math.max(0, newAmount),
                           } as any);
                         } else {
-                          // Un-marking (regretting) — reverse the transaction
+                          // Un-crossing — reverse the transaction from the balance
                           const actionAmount = Number(saving.action_amount || saving.monthly_deposit || 0);
                           const currentAmount = Number(saving.amount);
                           const isDeposit = item.action === 'deposit';
