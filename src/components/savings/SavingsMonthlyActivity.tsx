@@ -470,7 +470,32 @@ const SavingsMonthlyActivity = ({ highlightId }: { highlightId?: string }) => {
                   {/* Completion toggle for non-recurring items */}
                   {!item.isRecurring ? (
                     <button
-                      onClick={() => updateSavings({ id: item.id, is_completed: !item.isCompleted } as any)}
+                      onClick={() => {
+                        const saving = item.originalSaving;
+                        if (!saving) return;
+                        const actionAmount = Number(saving.action_amount || saving.monthly_deposit || 0);
+                        const currentAmount = Number(saving.amount);
+                        const isDeposit = item.action === 'deposit';
+                        
+                        let newAmount: number;
+                        if (item.isCompleted) {
+                          // Re-checking: re-apply the transaction
+                          newAmount = isDeposit 
+                            ? currentAmount + actionAmount 
+                            : currentAmount - actionAmount;
+                        } else {
+                          // Unchecking: reverse the transaction
+                          newAmount = isDeposit 
+                            ? currentAmount - actionAmount 
+                            : currentAmount + actionAmount;
+                        }
+                        
+                        updateSavings({ 
+                          id: item.id, 
+                          is_completed: !item.isCompleted,
+                          amount: Math.max(0, newAmount),
+                        } as any);
+                      }}
                       className={cn(
                         "h-7 w-7 rounded-full border-2 flex items-center justify-center transition-all shrink-0",
                         item.isCompleted
