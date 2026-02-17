@@ -22,28 +22,32 @@
 
 @import url("https://fonts.googleapis.com/css2?family=Source+Code+Pro&display=swap");
 
+@import url("https://fonts.googleapis.com/css2?family=Lora&display=swap");
+
+@import url("https://fonts.googleapis.com/css2?family=Fira+Code&display=swap");
+
 @layer base {
   :root {
-    --background: 23 46% 94%;
-    --foreground: 23 48% 20%;
+    --background: 176 31% 92%;
+    --foreground: 176 63% 20%;
 
-    --card: 23 46% 91%;
-    --card-foreground: 23 48% 20%;
+    --card: 176 31% 91%;
+    --card-foreground: 176 63% 20%;
 
-    --popover: 23 46% 94%;
-    --popover-foreground: 23 48% 20%;
+    --popover: 176 31% 92%;
+    --popover-foreground: 176 63% 20%;
 
-    --primary: 23 48% 13%;
-    --primary-foreground: 23 46% 94%;
+    --primary: 176 63% 19%;
+    --primary-foreground: 176 31% 92%;
 
-    --secondary: 143 54% 90%;
-    --secondary-foreground: 23 48% 20%;
+    --secondary: 296 45% 93%;
+    --secondary-foreground: 176 63% 20%;
 
-    --muted: 143 44% 90%;
-    --muted-foreground: 23 8% 37%;
+    --muted: 296 35% 93%;
+    --muted-foreground: 176 23% 37%;
 
-    --accent: 263 69% 91%;
-    --accent-foreground: 263 69% 20%;
+    --accent: 56 51% 87%;
+    --accent-foreground: 56 51% 20%;
 
     --destructive: 0 76% 90%;
     --destructive-foreground: 0 63% 31%;
@@ -54,17 +58,17 @@
     --warning: 40 50% 65%;
     --warning-foreground: 40 40% 10%;
 
-    --border: 143 34% 91%;
-    --input: 143 34% 91%;
-    --ring: 23 48% 13%;
+    --border: 296 25% 91%;
+    --input: 296 25% 91%;
+    --ring: 176 63% 19%;
 
-    --radius: 0.75rem;
+    --radius: 0.5rem;
 
-    --chart-1: 23 58% 39%;
-    --chart-2: 53 76% 61%;
-    --chart-3: 83 37% 24%;
-    --chart-4: 113 74% 66%;
-    --chart-5: 143 87% 67%;
+    --chart-1: 176 58% 39%;
+    --chart-2: 206 76% 61%;
+    --chart-3: 236 37% 24%;
+    --chart-4: 266 74% 66%;
+    --chart-5: 296 87% 67%;
 
     --gradient-primary: linear-gradient(135deg, hsl(270 50% 72%) 0%, hsl(330 40% 65%) 100%);
     --gradient-card: linear-gradient(180deg, hsl(250 20% 14%) 0%, hsl(250 25% 10%) 100%);
@@ -73,14 +77,14 @@
     --shadow-card: 0 4px 24px -8px hsl(270 30% 5% / 0.5);
     --shadow-glow: 0 0 40px -10px hsl(270 50% 72% / 0.25);
 
-    --sidebar-background: 23 46% 94%;
-    --sidebar-foreground: 23 48% 25%;
-    --sidebar-primary: 23 48% 13%;
-    --sidebar-primary-foreground: 23 46% 94%;
-    --sidebar-accent: 143 54% 90%;
-    --sidebar-accent-foreground: 23 48% 20%;
-    --sidebar-border: 143 34% 91%;
-    --sidebar-ring: 143 24% 75%;
+    --sidebar-background: 176 31% 92%;
+    --sidebar-foreground: 176 63% 25%;
+    --sidebar-primary: 176 63% 19%;
+    --sidebar-primary-foreground: 176 31% 92%;
+    --sidebar-accent: 296 45% 93%;
+    --sidebar-accent-foreground: 176 63% 20%;
+    --sidebar-border: 296 25% 91%;
+    --sidebar-ring: 296 15% 75%;
     --sidebar: 248 0.3% 98.4%;
     --font-sans: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
     --font-serif: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
@@ -98,38 +102,38 @@
   }
 
   .dark {
-    --background: 23 7% 10%;
-    --foreground: 23 28% 70%;
-    --card: 23 7% 8%;
-    --card-foreground: 23 28% 70%;
-    --popover: 23 7% 10%;
-    --popover-foreground: 23 28% 70%;
-    --primary: 23 28% 87%;
-    --primary-foreground: 23 7% 10%;
-    --secondary: 143 24% 13%;
-    --secondary-foreground: 23 28% 70%;
-    --muted: 143 19% 13%;
-    --muted-foreground: 143 24% 75%;
-    --accent: 263 29% 21%;
-    --accent-foreground: 263 69% 70%;
+    --background: 176 3% 9%;
+    --foreground: 176 43% 70%;
+    --card: 176 3% 4%;
+    --card-foreground: 176 43% 70%;
+    --popover: 176 3% 9%;
+    --popover-foreground: 176 43% 70%;
+    --primary: 176 43% 87%;
+    --primary-foreground: 176 3% 9%;
+    --secondary: 296 15% 14%;
+    --secondary-foreground: 176 43% 70%;
+    --muted: 296 10% 14%;
+    --muted-foreground: 296 15% 75%;
+    --accent: 56 11% 22%;
+    --accent-foreground: 56 51% 70%;
     --destructive: 0 33% 20%;
     --destructive-foreground: 0 91% 71%;
-    --border: 143 19% 13%;
-    --input: 143 14% 25%;
-    --ring: 143 24% 83%;
-    --sidebar-background: 23 7% 10%;
-    --sidebar-foreground: 143 54% 95%;
-    --sidebar-primary: 263 69% 55%;
-    --sidebar-primary-foreground: 23 28% 70%;
-    --sidebar-accent: 143 19% 13%;
-    --sidebar-accent-foreground: 143 54% 95%;
-    --sidebar-border: 143 19% 13%;
-    --sidebar-ring: 143 24% 83%;
-    --chart-1: 23 70% 50%;
-    --chart-2: 143 75% 55%;
-    --chart-3: 53 80% 55%;
-    --chart-4: 303 65% 60%;
-    --chart-5: 183 60% 45%;
+    --border: 296 10% 14%;
+    --input: 296 5% 25%;
+    --ring: 296 15% 83%;
+    --sidebar-background: 176 3% 9%;
+    --sidebar-foreground: 296 45% 95%;
+    --sidebar-primary: 56 51% 55%;
+    --sidebar-primary-foreground: 176 43% 70%;
+    --sidebar-accent: 296 10% 14%;
+    --sidebar-accent-foreground: 296 45% 95%;
+    --sidebar-border: 296 10% 14%;
+    --sidebar-ring: 296 15% 83%;
+    --chart-1: 176 70% 50%;
+    --chart-2: 296 75% 55%;
+    --chart-3: 206 80% 55%;
+    --chart-4: 96 65% 60%;
+    --chart-5: 336 60% 45%;
     --sidebar: 266 4% 20.8%;
     --shadow-2xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
     --shadow-xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
@@ -139,7 +143,7 @@
     --shadow-lg: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 4px 6px -1px hsl(0 0% 0% / 0.1);
     --shadow-xl: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 8px 10px -1px hsl(0 0% 0% / 0.1);
     --shadow-2xl: 0 1px 3px 0px hsl(0 0% 0% / 0.25);
-    --radius: 0.75rem;
+    --radius: 0.5rem;
   }
 }
 
