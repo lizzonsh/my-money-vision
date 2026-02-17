@@ -139,6 +139,11 @@ const SavingsPredictionPortfolio = () => {
                   <p className="font-medium">{name}</p>
                   <p className="text-xs text-muted-foreground">
                     {entry.currency}
+                    {entry.currency !== 'ILS' && (
+                      <span className="ml-1">
+                        ≈ {formatCurrency(convertToILS(entry.predicted, entry.currency))}
+                      </span>
+                    )}
                     {entry.pendingItems.length > 0 && (
                       <span className="ml-1 text-primary">
                         • {entry.pendingItems.length} pending
