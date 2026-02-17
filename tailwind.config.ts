@@ -15,7 +15,7 @@ export default {
   	extend: {
   		fontFamily: {
   			sans: [
-  				'Montserrat',
+  				'Poppins',
   				'ui-sans-serif',
   				'system-ui',
   				'sans-serif',
@@ -34,7 +34,7 @@ export default {
   				'serif'
   			],
   			mono: [
-  				'Roboto Mono',
+  				'Source Code Pro',
   				'ui-monospace',
   				'SFMono-Regular',
   				'Menlo',
