@@ -473,28 +473,28 @@ const SavingsMonthlyActivity = ({ highlightId }: { highlightId?: string }) => {
                       onClick={() => {
                         const saving = item.originalSaving;
                         if (!saving) return;
-                        const actionAmount = Number(saving.action_amount || saving.monthly_deposit || 0);
-                        const currentAmount = Number(saving.amount);
-                        const isDeposit = item.action === 'deposit';
                         
-                        let newAmount: number;
-                        if (item.isCompleted) {
-                          // Re-checking: re-apply the transaction
-                          newAmount = isDeposit 
-                            ? currentAmount + actionAmount 
-                            : currentAmount - actionAmount;
+                        if (!item.isCompleted) {
+                          // Marking as complete — balance already applied on creation, just confirm
+                          updateSavings({ 
+                            id: item.id, 
+                            is_completed: true,
+                          } as any);
                         } else {
-                          // Unchecking: reverse the transaction
-                          newAmount = isDeposit 
+                          // Un-marking (regretting) — reverse the transaction
+                          const actionAmount = Number(saving.action_amount || saving.monthly_deposit || 0);
+                          const currentAmount = Number(saving.amount);
+                          const isDeposit = item.action === 'deposit';
+                          const newAmount = isDeposit 
                             ? currentAmount - actionAmount 
                             : currentAmount + actionAmount;
+                          
+                          updateSavings({ 
+                            id: item.id, 
+                            is_completed: false,
+                            amount: Math.max(0, newAmount),
+                          } as any);
                         }
-                        
-                        updateSavings({ 
-                          id: item.id, 
-                          is_completed: !item.isCompleted,
-                          amount: Math.max(0, newAmount),
-                        } as any);
                       }}
                       className={cn(
                         "h-7 w-7 rounded-full border-2 flex items-center justify-center transition-all shrink-0",
