@@ -4,6 +4,8 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
+@import url("https://fonts.googleapis.com/css2?family=Inter&display=swap");
+
 @layer base {
   :root {
     --background: 222 47% 6%;
@@ -15,11 +17,11 @@
     --popover: 222 47% 10%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 160 84% 39%;
-    --primary-foreground: 222 47% 6%;
+    --primary: 15 79.0698% 33.7255%;
+    --primary-foreground: 13 81.0811% 14.5098%;
 
-    --secondary: 222 47% 12%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 15 74.6479% 27.8431%;
+    --secondary-foreground: 215 16.318% 46.8627%;
 
     --muted: 222 47% 14%;
     --muted-foreground: 215 20% 55%;
@@ -196,24 +198,24 @@
     scrollbar-width: thin;
     scrollbar-color: hsl(var(--border)) transparent;
   }
-  
+
   .custom-scrollbar::-webkit-scrollbar {
     width: 8px;
     height: 8px;
   }
-  
+
   .custom-scrollbar::-webkit-scrollbar-track {
     background: transparent;
     border-radius: 10px;
   }
-  
+
   .custom-scrollbar::-webkit-scrollbar-thumb {
     background: hsl(var(--border));
     border-radius: 10px;
     border: 2px solid transparent;
     background-clip: content-box;
   }
-  
+
   .custom-scrollbar::-webkit-scrollbar-thumb:hover {
     background: hsl(var(--muted-foreground));
     border: 2px solid transparent;
@@ -224,23 +226,23 @@
   .hover-lift {
     @apply transition-all duration-200 ease-out;
   }
-  
+
   .hover-lift:hover {
     @apply -translate-y-0.5 shadow-lg;
   }
-  
+
   .hover-glow {
     @apply transition-all duration-200;
   }
-  
+
   .hover-glow:hover {
     box-shadow: 0 0 20px -5px hsl(var(--primary) / 0.3);
   }
-  
+
   .interactive-card {
     @apply transition-all duration-200 ease-out cursor-pointer;
   }
-  
+
   .interactive-card:hover {
     @apply bg-secondary/60 -translate-y-0.5;
   }
