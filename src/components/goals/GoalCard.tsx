@@ -2,7 +2,7 @@
  import { BigPurchaseGoal } from '@/contexts/FinanceContext';
  import { GoalItem, GoalItemInsert } from '@/hooks/useGoalItems';
  import { formatCurrency, formatMonth } from '@/lib/formatters';
-import { Trash2, Pencil, Plus, ChevronDown, ChevronUp, ShoppingCart, Check, X, CalendarDays, Archive, ArchiveRestore } from 'lucide-react';
+import { Trash2, Pencil, Plus, ChevronDown, ChevronUp, ShoppingCart, Check, X, CalendarDays, Archive, ArchiveRestore, ExternalLink } from 'lucide-react';
  import { Button } from '@/components/ui/button';
  import { Input } from '@/components/ui/input';
  import { Label } from '@/components/ui/label';
@@ -95,6 +95,7 @@ const GoalCard = ({
     paymentMethod: 'credit_card',
     cardId: '',
     notes: '',
+    link: '',
   });
   const [monthPickerOpen, setMonthPickerOpen] = useState(false);
  
@@ -112,6 +113,7 @@ const GoalCard = ({
       paymentMethod: 'credit_card',
       cardId: '',
       notes: '',
+      link: '',
     });
     setEditingItem(null);
   };
@@ -125,6 +127,7 @@ const GoalCard = ({
       paymentMethod: item.payment_method,
       cardId: item.card_id || '',
       notes: item.notes || '',
+      link: (item as any).link || '',
     });
     setIsAddItemOpen(true);
   };
@@ -140,7 +143,8 @@ const GoalCard = ({
         payment_method: itemFormData.paymentMethod,
         card_id: itemFormData.cardId || null,
         notes: itemFormData.notes || null,
-      });
+        ...(itemFormData.link ? { link: itemFormData.link } : { link: null }),
+      } as any);
     } else {
       onAddItem({
         goal_id: goal.id,
@@ -150,7 +154,8 @@ const GoalCard = ({
         payment_method: itemFormData.paymentMethod,
         card_id: itemFormData.cardId || null,
         notes: itemFormData.notes || null,
-      });
+        ...(itemFormData.link ? { link: itemFormData.link } : {}),
+      } as any);
     }
     resetItemForm();
     setIsAddItemOpen(false);
@@ -310,8 +315,27 @@ const GoalCard = ({
                          </Select>
                        </div>
                      )}
-                   </div>
-                   <Button type="submit" className="w-full">{editingItem ? 'Save Changes' : 'Add Item'}</Button>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="itemLink">Link <span className="text-muted-foreground font-normal">(optional)</span></Label>
+                      <Input
+                        id="itemLink"
+                        type="url"
+                        value={itemFormData.link}
+                        onChange={(e) => setItemFormData({ ...itemFormData, link: e.target.value })}
+                        placeholder="https://..."
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="itemNotes">Notes <span className="text-muted-foreground font-normal">(optional)</span></Label>
+                      <Input
+                        id="itemNotes"
+                        value={itemFormData.notes}
+                        onChange={(e) => setItemFormData({ ...itemFormData, notes: e.target.value })}
+                        placeholder="Any notes..."
+                      />
+                    </div>
+                    <Button type="submit" className="w-full">{editingItem ? 'Save Changes' : 'Add Item'}</Button>
                  </form>
                </DialogContent>
              </Dialog>
@@ -335,12 +359,27 @@ const GoalCard = ({
                           <div className="p-2 rounded-lg bg-warning/20 text-warning group-hover:scale-110 transition-transform">
                            <ShoppingCart className="h-4 w-4" />
                          </div>
-                         <div>
-                           <p className="font-medium text-sm">{item.name}</p>
-                           <p className="text-xs text-muted-foreground">
-                             {formatMonth(item.planned_month)} • {item.card_id || 'Bank Transfer'}
-                           </p>
-                         </div>
+                          <div>
+                            <div className="flex items-center gap-1.5">
+                              <p className="font-medium text-sm">{item.name}</p>
+                              {(item as any).link && (
+                                <a
+                                  href={(item as any).link}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  onClick={(e) => e.stopPropagation()}
+                                  className="text-primary hover:text-primary/80 transition-colors"
+                                  title={(item as any).link}
+                                >
+                                  <ExternalLink className="h-3 w-3" />
+                                </a>
+                              )}
+                            </div>
+                            <p className="text-xs text-muted-foreground">
+                              {formatMonth(item.planned_month)} • {item.card_id || 'Bank Transfer'}
+                              {item.notes && <span className="ml-1">• {item.notes}</span>}
+                            </p>
+                          </div>
                        </div>
                         <div className="flex items-center gap-2">
                           <span className="font-semibold text-sm">{formatCurrency(Number(item.estimated_cost))}</span>
@@ -385,12 +424,27 @@ const GoalCard = ({
                               <div className="p-2 rounded-lg bg-success/20 text-success group-hover:scale-110 transition-transform">
                                <Check className="h-4 w-4" />
                              </div>
-                             <div>
-                               <p className="font-medium text-sm line-through opacity-70">{item.name}</p>
-                               <p className="text-xs text-muted-foreground">
-                                 Purchased {item.purchased_at ? new Date(item.purchased_at).toLocaleDateString() : ''}
-                               </p>
-                             </div>
+                              <div>
+                                <div className="flex items-center gap-1.5">
+                                  <p className="font-medium text-sm line-through opacity-70">{item.name}</p>
+                                  {(item as any).link && (
+                                    <a
+                                      href={(item as any).link}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      onClick={(e) => e.stopPropagation()}
+                                      className="text-primary hover:text-primary/80 transition-colors opacity-70"
+                                      title={(item as any).link}
+                                    >
+                                      <ExternalLink className="h-3 w-3" />
+                                    </a>
+                                  )}
+                                </div>
+                                <p className="text-xs text-muted-foreground">
+                                  Purchased {item.purchased_at ? new Date(item.purchased_at).toLocaleDateString() : ''}
+                                  {item.notes && <span className="ml-1">• {item.notes}</span>}
+                                </p>
+                              </div>
                            </div>
                             <div className="flex items-center gap-2">
                               <span className="font-semibold text-sm text-success">{formatCurrency(Number(item.estimated_cost))}</span>

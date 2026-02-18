@@ -1,0 +1,1 @@
+ALTER TABLE public.goal_items ADD COLUMN IF NOT EXISTS link text;
