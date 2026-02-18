@@ -286,6 +286,7 @@ export type Database = {
           goal_id: string
           id: string
           is_purchased: boolean
+          link: string | null
           name: string
           notes: string | null
           payment_method: string
@@ -302,6 +303,7 @@ export type Database = {
           goal_id: string
           id?: string
           is_purchased?: boolean
+          link?: string | null
           name: string
           notes?: string | null
           payment_method?: string
@@ -318,6 +320,7 @@ export type Database = {
           goal_id?: string
           id?: string
           is_purchased?: boolean
+          link?: string | null
           name?: string
           notes?: string | null
           payment_method?: string
