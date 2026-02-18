@@ -63,7 +63,7 @@ const SavingsPredictionPortfolio = () => {
   const predictedPerAccount = useMemo(() => {
     const accountMap = new Map<string, { current: number; predicted: number; currency: string; pendingItems: Array<{ action: string; amount: number }> }>();
 
-    // Initialize with current balances
+    // Initialize with current balances (only includes already crossed-over transactions)
     latestSavingsPerName.forEach((saving, name) => {
       accountMap.set(name, {
         current: Number(saving.amount),
@@ -73,12 +73,23 @@ const SavingsPredictionPortfolio = () => {
       });
     });
 
-    // Add uncompleted actual transactions (these amounts are already in the balance from creation,
-    // but they haven't been "confirmed" yet — however, the balance already reflects them.
-    // So uncompleted transactions don't need adding; they're already in the current balance.)
-    // Actually, the pending items we want to show are the PENDING RECURRING ones — amounts not yet applied.
+    // Add uncompleted manual/actual transactions (not yet crossed over, so not in balance yet)
+    uncompletedTransactions.forEach(s => {
+      const entry = accountMap.get(s.name);
+      if (entry) {
+        const amount = Number(s.action_amount || s.monthly_deposit || 0);
+        const action = s.action || 'deposit';
+        if (action === 'deposit') {
+          entry.predicted += amount;
+          entry.pendingItems.push({ action: 'deposit', amount });
+        } else {
+          entry.predicted -= amount;
+          entry.pendingItems.push({ action: 'withdrawal', amount });
+        }
+      }
+    });
 
-    // Add pending recurring savings
+    // Add pending recurring savings (no record at all yet for this month)
     pendingRecurring.forEach(rs => {
       const entry = accountMap.get(rs.name);
       if (entry) {
@@ -94,7 +105,7 @@ const SavingsPredictionPortfolio = () => {
     });
 
     return accountMap;
-  }, [latestSavingsPerName, pendingRecurring]);
+  }, [latestSavingsPerName, uncompletedTransactions, pendingRecurring]);
 
   const totalCurrentILS = Array.from(latestSavingsPerName.values())
     .reduce((sum, s) => sum + convertToILS(Number(s.amount), s.currency || 'ILS'), 0);
