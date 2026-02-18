@@ -166,30 +166,13 @@ export const FinanceProvider = ({ children }: { children: ReactNode }) => {
       )
       .reduce((sum, e) => sum + Number(e.amount), 0);
     
-    // Planned goal items paid via credit card for current month
-    const plannedGoalCreditCardExpenses = goalItemsHook.goalItems
-      .filter(item => 
-        !item.is_purchased && 
-        item.planned_month === currentMonth &&
-        item.payment_method === 'credit_card'
-      )
-      .reduce((sum, item) => sum + Number(item.estimated_cost), 0);
-    
-    // Paid goal expenses for current month
-    const paidGoalExpenses = goalItemsHook.goalItems
-      .filter(item => 
-        item.is_purchased && 
-        item.planned_month === currentMonth
-      )
-      .reduce((sum, item) => sum + Number(item.estimated_cost), 0);
-    
     // Blink deposits (savings deposits via credit card for current month) - convert to ILS
     const blinkDepositsTotal = savingsHook.savings
       .filter(s => s.month === currentMonth && s.action === 'deposit' && s.transfer_method === 'credit_card' && Number(s.action_amount || 0) > 0)
       .reduce((sum, s) => sum + convertToILS(Number(s.action_amount || 0), s.currency || 'ILS'), 0);
     
-    // Spent = CC Debits - Paid Goals - Deposits - Planned CC
-    const spentBudget = creditCardDebits - paidGoalExpenses - blinkDepositsTotal - plannedCreditCardExpenses;
+    // Spent = CC Debits - Deposits - Planned CC (goals excluded)
+    const spentBudget = creditCardDebits - blinkDepositsTotal - plannedCreditCardExpenses;
     // Left Budget = Defined Budget - Spent
     const leftBudget = totalBudget - spentBudget;
     
@@ -199,8 +182,8 @@ export const FinanceProvider = ({ children }: { children: ReactNode }) => {
     const daysRemaining = Math.max(1, daysInMonth - today.getDate() + 1);
     const dailyLimit = leftBudget / daysRemaining;
 
-    return { spentBudget, leftBudget, dailyLimit, plannedCreditCardExpenses, plannedGoalCreditCardExpenses, paidGoalExpenses, blinkDepositsTotal };
-  }, [budgetsHook.budgets, budgetsHook.getBudgetForMonth, expensesHook.expenses, goalItemsHook.goalItems, savingsHook.savings, currentMonth]);
+    return { spentBudget, leftBudget, dailyLimit, plannedCreditCardExpenses, plannedGoalCreditCardExpenses: 0, paidGoalExpenses: 0, blinkDepositsTotal };
+  }, [budgetsHook.budgets, budgetsHook.getBudgetForMonth, expensesHook.expenses, savingsHook.savings, currentMonth]);
 
   return (
     <FinanceContext.Provider

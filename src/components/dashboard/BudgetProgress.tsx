@@ -163,7 +163,7 @@ const BudgetProgress = () => {
           </div>
         </div>
 
-        {(plannedCreditCardExpenses > 0 || plannedGoalCreditCardExpenses > 0 || paidGoalExpenses > 0 || blinkDepositsTotal > 0) && (
+        {(plannedCreditCardExpenses > 0 || blinkDepositsTotal > 0) && (
           <div className="text-xs text-muted-foreground text-center pt-2 p-2 rounded bg-warning/10 border border-warning/20 space-y-1">
             <span className="text-warning font-medium block">
               Budget: {formatCurrency(totalBudget)}
@@ -171,12 +171,6 @@ const BudgetProgress = () => {
             <div className="flex flex-wrap justify-center gap-x-2 gap-y-1">
               {plannedCreditCardExpenses > 0 && (
                 <span className="text-primary">Planned CC: {formatCurrency(plannedCreditCardExpenses)}</span>
-              )}
-              {plannedGoalCreditCardExpenses > 0 && (
-                <span className="text-primary">Goals CC: {formatCurrency(plannedGoalCreditCardExpenses)}</span>
-              )}
-              {paidGoalExpenses > 0 && (
-                <span className="text-chart-4">Paid Goals: {formatCurrency(paidGoalExpenses)}</span>
               )}
               {blinkDepositsTotal > 0 && (
                 <span className="text-chart-5">Deposits: {formatCurrency(blinkDepositsTotal)}</span>
