@@ -101,11 +101,11 @@ const SavingsMonthlyActivity = ({ highlightId }: { highlightId?: string }) => {
 
   // Create combined activity list
   const activityItems: ActivityItem[] = [
-    // Actual savings transactions - include entries with action_amount OR monthly_deposit
+    // Actual savings transactions - include entries with action_amount OR monthly_deposit (> 0), or is_completed skipped items
     ...savingsUpToDate
-      .filter(s => (s.action_amount && s.action_amount > 0) || (s.monthly_deposit && s.monthly_deposit > 0))
+      .filter(s => (s.action_amount != null && s.action_amount > 0) || (s.monthly_deposit != null && s.monthly_deposit > 0))
       .map(s => {
-        const hasActionAmount = s.action_amount && s.action_amount > 0;
+        const hasActionAmount = s.action_amount != null && s.action_amount > 0;
         return {
           id: s.id,
           name: s.name,
@@ -163,10 +163,12 @@ const SavingsMonthlyActivity = ({ highlightId }: { highlightId?: string }) => {
 
   const handleOpenEdit = (activity: Savings) => {
     setEditingActivity(activity);
+    // Use action_amount if present, otherwise fall back to monthly_deposit
+    const displayAmount = activity.action_amount ?? activity.monthly_deposit ?? '';
     setFormData({
       name: activity.name,
       action: activity.action || 'deposit',
-      actionAmount: (activity.action_amount || '').toString(),
+      actionAmount: displayAmount.toString(),
       transferMethod: activity.transfer_method,
       cardId: activity.card_id || '',
       inputCurrency: activity.currency || 'ILS',
@@ -182,7 +184,8 @@ const SavingsMonthlyActivity = ({ highlightId }: { highlightId?: string }) => {
     if (editingActivity) {
       // When editing, preserve is_completed and recalculate amount only if needed
       const wasCompleted = !!(editingActivity as any).is_completed;
-      const oldActionAmount = Number(editingActivity.action_amount || editingActivity.monthly_deposit || 0);
+      // Read from action_amount first, fall back to monthly_deposit
+      const oldActionAmount = Number(editingActivity.action_amount ?? editingActivity.monthly_deposit ?? 0);
       const accountCurrency = editingActivity.currency || 'ILS';
 
       // Convert input amount to account currency if different
@@ -206,6 +209,9 @@ const SavingsMonthlyActivity = ({ highlightId }: { highlightId?: string }) => {
         newAmount = Math.max(0, newAmount);
       }
 
+      // Migrate monthly_deposit → action_amount if the record used the old field
+      const hadMonthlyDeposit = editingActivity.monthly_deposit && !editingActivity.action_amount;
+
       updateSavings({
         id: editingActivity.id,
         name: formData.name,
@@ -215,7 +221,8 @@ const SavingsMonthlyActivity = ({ highlightId }: { highlightId?: string }) => {
         transfer_method: formData.transferMethod as 'bank_account' | 'credit_card',
         card_id: formData.cardId || null,
         is_completed: wasCompleted,
-        monthly_deposit: null,
+        // Null out monthly_deposit only when migrating from it (set action_amount instead)
+        monthly_deposit: hadMonthlyDeposit ? null : editingActivity.monthly_deposit,
         recurring_type: null,
         recurring_day_of_month: null,
       } as any);
