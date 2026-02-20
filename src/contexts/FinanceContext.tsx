@@ -151,29 +151,12 @@ export const FinanceProvider = ({ children }: { children: ReactNode }) => {
       e.month === currentMonth && isDateUpToToday(e.expense_date)
     );
     
-    // Mirror ExpensesList effectiveTotal logic:
-    // effectiveTotal = bankTransferExpenses + creditCardDebitTotal + creditCardPaidExpenses
-    
-    // CC debits (debit_from_credit_card category)
-    const creditCardDebitTotal = monthExpenses
+    // Credit card debits (debit_from_credit_card category)
+    const creditCardDebits = monthExpenses
       .filter(e => e.category === 'debit_from_credit_card')
       .reduce((sum, e) => sum + Number(e.amount), 0);
-
-    // Regular expenses (excluding CC debits and planned CC to avoid double counting)
-    const regularExpenses = monthExpenses.filter(e =>
-      e.category !== 'debit_from_credit_card' &&
-      !(e.payment_method === 'credit_card' && e.kind === 'planned')
-    );
-
-    const bankTransferExpenses = regularExpenses
-      .filter(e => e.payment_method === 'bank_transfer')
-      .reduce((sum, e) => sum + Number(e.amount), 0);
-
-    const creditCardPaidExpenses = regularExpenses
-      .filter(e => e.payment_method === 'credit_card' && e.kind === 'payed')
-      .reduce((sum, e) => sum + Number(e.amount), 0);
-
-    // Planned expenses paid via credit card (for display only)
+    
+    // Planned expenses paid via credit card
     const plannedCreditCardExpenses = expensesHook.expenses
       .filter(e => 
         e.month === currentMonth && 
@@ -188,8 +171,8 @@ export const FinanceProvider = ({ children }: { children: ReactNode }) => {
       .filter(s => s.month === currentMonth && s.action === 'deposit' && s.transfer_method === 'credit_card' && Number(s.action_amount || 0) > 0)
       .reduce((sum, s) => sum + convertToILS(Number(s.action_amount || 0), s.currency || 'ILS'), 0);
     
-    // Spent = same as ExpensesList effectiveTotal (bank paid + CC debit + CC paid)
-    const spentBudget = bankTransferExpenses + creditCardDebitTotal + creditCardPaidExpenses;
+    // Spent = CC Debits - Deposits - Planned CC (goals excluded)
+    const spentBudget = creditCardDebits - blinkDepositsTotal - plannedCreditCardExpenses;
     // Left Budget = Defined Budget - Spent
     const leftBudget = totalBudget - spentBudget;
     
