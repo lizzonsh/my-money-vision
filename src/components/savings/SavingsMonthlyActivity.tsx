@@ -177,45 +177,80 @@ const SavingsMonthlyActivity = ({ highlightId }: { highlightId?: string }) => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Find the latest balance for this account to calculate new amount
-    const latestForAccount = savings
-      .filter(s => s.name === formData.name && !s.closed_at)
-      .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())[0];
-    
-    const currentAmount = latestForAccount ? Number(latestForAccount.amount) : 0;
-    const accountCurrency = latestForAccount?.currency || 'ILS';
     const inputAmount = parseFloat(formData.actionAmount) || 0;
-    
-    // Convert input amount to account currency if different
-    let actionAmountInAccountCurrency = inputAmount;
-    if (formData.inputCurrency !== accountCurrency) {
-      // First convert input to ILS, then to account currency
-      const amountInILS = convertToILS(inputAmount, formData.inputCurrency);
-      actionAmountInAccountCurrency = convertFromILS(amountInILS, accountCurrency);
-    }
-    
-    // Don't change balance on creation — balance updates only when crossed over
-    const activityData = {
-      month: currentMonth,
-      name: formData.name,
-      amount: currentAmount,
-      currency: accountCurrency,
-      transfer_method: formData.transferMethod as 'bank_account' | 'credit_card',
-      card_id: formData.cardId || null,
-      action: formData.action as 'deposit' | 'withdrawal',
-      action_amount: actionAmountInAccountCurrency,
-      monthly_deposit: null,
-      recurring_type: null,
-      recurring_day_of_month: null,
-      closed_at: null,
-      is_completed: false,
-    };
 
     if (editingActivity) {
-      updateSavings({ id: editingActivity.id, ...activityData });
+      // When editing, preserve is_completed and recalculate amount only if needed
+      const wasCompleted = !!(editingActivity as any).is_completed;
+      const oldActionAmount = Number(editingActivity.action_amount || editingActivity.monthly_deposit || 0);
+      const accountCurrency = editingActivity.currency || 'ILS';
+
+      // Convert input amount to account currency if different
+      let newActionAmount = inputAmount;
+      if (formData.inputCurrency !== accountCurrency) {
+        const amountInILS = convertToILS(inputAmount, formData.inputCurrency);
+        newActionAmount = convertFromILS(amountInILS, accountCurrency);
+      }
+
+      // If already completed, adjust the stored balance for the difference
+      let newAmount = Number(editingActivity.amount);
+      if (wasCompleted) {
+        const isDeposit = formData.action === 'deposit';
+        const wasDeposit = (editingActivity.action || 'deposit') === 'deposit';
+        // Reverse old effect
+        if (wasDeposit) newAmount -= oldActionAmount;
+        else newAmount += oldActionAmount;
+        // Apply new effect
+        if (isDeposit) newAmount += newActionAmount;
+        else newAmount -= newActionAmount;
+        newAmount = Math.max(0, newAmount);
+      }
+
+      updateSavings({
+        id: editingActivity.id,
+        name: formData.name,
+        action: formData.action as 'deposit' | 'withdrawal',
+        action_amount: newActionAmount,
+        amount: newAmount,
+        transfer_method: formData.transferMethod as 'bank_account' | 'credit_card',
+        card_id: formData.cardId || null,
+        is_completed: wasCompleted,
+        monthly_deposit: null,
+        recurring_type: null,
+        recurring_day_of_month: null,
+      } as any);
     } else {
-      addSavings(activityData);
+      // New transaction — find latest balance for this account
+      const latestForAccount = savings
+        .filter(s => s.name === formData.name && !s.closed_at)
+        .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())[0];
+
+      const currentAmount = latestForAccount ? Number(latestForAccount.amount) : 0;
+      const accountCurrency = latestForAccount?.currency || 'ILS';
+
+      let actionAmountInAccountCurrency = inputAmount;
+      if (formData.inputCurrency !== accountCurrency) {
+        const amountInILS = convertToILS(inputAmount, formData.inputCurrency);
+        actionAmountInAccountCurrency = convertFromILS(amountInILS, accountCurrency);
+      }
+
+      addSavings({
+        month: currentMonth,
+        name: formData.name,
+        amount: currentAmount,
+        currency: accountCurrency,
+        transfer_method: formData.transferMethod as 'bank_account' | 'credit_card',
+        card_id: formData.cardId || null,
+        action: formData.action as 'deposit' | 'withdrawal',
+        action_amount: actionAmountInAccountCurrency,
+        monthly_deposit: null,
+        recurring_type: null,
+        recurring_day_of_month: null,
+        closed_at: null,
+        is_completed: false,
+      });
     }
+
     resetForm();
     setIsOpen(false);
   };
