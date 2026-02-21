@@ -13,20 +13,17 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Plus, Bug, Trash2, Edit, CheckCircle, Clock, AlertCircle, Filter, MessageSquare, Send } from 'lucide-react';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
+import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 
 const IssuesPage = () => {
   const { issues, isLoading, addIssue, updateIssue, deleteIssue } = useUserIssues();
   const { toast } = useToast();
 
-  // Comment counts for all issues
   const issueIds = issues.map(i => i.id);
   const { data: commentCounts = {} } = useIssueCommentCounts(issueIds);
 
-  // Resolve dialog state
   const [resolveDialogIssue, setResolveDialogIssue] = useState<UserIssue | null>(null);
   const [resolveComment, setResolveComment] = useState('');
-
-  // Comments panel state
   const [commentsPanelIssue, setCommentsPanelIssue] = useState<UserIssue | null>(null);
 
   const handleStatusChange = (id: string, value: string, field: 'status' | 'priority') => {
@@ -124,6 +121,30 @@ const IssuesPage = () => {
   const openIssues = filteredIssues.filter(i => i.status === 'open').sort(sortByPriority);
   const inProgressIssues = filteredIssues.filter(i => i.status === 'in_progress').sort(sortByPriority);
   const resolvedIssues = filteredIssues.filter(i => i.status === 'resolved').sort(sortByPriority);
+
+  const handleDragEnd = (result: DropResult) => {
+    const { draggableId, destination } = result;
+    if (!destination) return;
+
+    const newStatus = destination.droppableId as string;
+    const issue = issues.find(i => i.id === draggableId);
+    if (!issue || issue.status === newStatus) return;
+
+    // If dropping into resolved, require comment via dialog
+    if (newStatus === 'resolved') {
+      setResolveDialogIssue(issue);
+      setResolveComment('');
+      return;
+    }
+
+    updateIssue({ id: draggableId, status: newStatus });
+  };
+
+  const columns = [
+    { id: 'open', label: 'Open', icon: <AlertCircle className="h-5 w-5 text-yellow-400" />, items: openIssues },
+    { id: 'in_progress', label: 'In Progress', icon: <Clock className="h-5 w-5 text-blue-400" />, items: inProgressIssues },
+    { id: 'resolved', label: 'Resolved', icon: <CheckCircle className="h-5 w-5 text-green-400" />, items: resolvedIssues },
+  ];
 
   return (
     <div className="space-y-6">
@@ -245,82 +266,56 @@ const IssuesPage = () => {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-6 md:grid-cols-3">
-          {/* Open Issues */}
-          <div className="space-y-4">
-            <h2 className="text-lg font-semibold flex items-center gap-2">
-              <AlertCircle className="h-5 w-5 text-yellow-400" />
-              Open ({openIssues.length})
-            </h2>
-            {openIssues.map((issue) => (
-              <IssueCard
-                key={issue.id}
-                issue={issue}
-                commentCount={commentCounts[issue.id] || 0}
-                onEdit={handleEdit}
-                onDelete={deleteIssue}
-                onStatusChange={handleStatusChange}
-                onOpenComments={setCommentsPanelIssue}
-                getStatusColor={getStatusColor}
-                getPriorityColor={getPriorityColor}
-                getStatusIcon={getStatusIcon}
-              />
+        <DragDropContext onDragEnd={handleDragEnd}>
+          <div className="grid gap-6 md:grid-cols-3">
+            {columns.map((col) => (
+              <Droppable droppableId={col.id} key={col.id}>
+                {(provided, snapshot) => (
+                  <div
+                    ref={provided.innerRef}
+                    {...provided.droppableProps}
+                    className={`space-y-4 min-h-[200px] rounded-lg p-2 transition-colors ${
+                      snapshot.isDraggingOver ? 'bg-accent/30' : ''
+                    }`}
+                  >
+                    <h2 className="text-lg font-semibold flex items-center gap-2">
+                      {col.icon}
+                      {col.label} ({col.items.length})
+                    </h2>
+                    {col.items.map((issue, index) => (
+                      <Draggable key={issue.id} draggableId={issue.id} index={index}>
+                        {(provided, snapshot) => (
+                          <div
+                            ref={provided.innerRef}
+                            {...provided.draggableProps}
+                            {...provided.dragHandleProps}
+                            className={snapshot.isDragging ? 'opacity-90' : ''}
+                          >
+                            <IssueCard
+                              issue={issue}
+                              commentCount={commentCounts[issue.id] || 0}
+                              onEdit={handleEdit}
+                              onDelete={deleteIssue}
+                              onStatusChange={handleStatusChange}
+                              onOpenComments={setCommentsPanelIssue}
+                              getStatusColor={getStatusColor}
+                              getPriorityColor={getPriorityColor}
+                              getStatusIcon={getStatusIcon}
+                            />
+                          </div>
+                        )}
+                      </Draggable>
+                    ))}
+                    {provided.placeholder}
+                    {col.items.length === 0 && (
+                      <p className="text-sm text-muted-foreground text-center py-4">No {col.label.toLowerCase()} issues</p>
+                    )}
+                  </div>
+                )}
+              </Droppable>
             ))}
-            {openIssues.length === 0 && (
-              <p className="text-sm text-muted-foreground text-center py-4">No open issues</p>
-            )}
           </div>
-
-          {/* In Progress */}
-          <div className="space-y-4">
-            <h2 className="text-lg font-semibold flex items-center gap-2">
-              <Clock className="h-5 w-5 text-blue-400" />
-              In Progress ({inProgressIssues.length})
-            </h2>
-            {inProgressIssues.map((issue) => (
-              <IssueCard
-                key={issue.id}
-                issue={issue}
-                commentCount={commentCounts[issue.id] || 0}
-                onEdit={handleEdit}
-                onDelete={deleteIssue}
-                onStatusChange={handleStatusChange}
-                onOpenComments={setCommentsPanelIssue}
-                getStatusColor={getStatusColor}
-                getPriorityColor={getPriorityColor}
-                getStatusIcon={getStatusIcon}
-              />
-            ))}
-            {inProgressIssues.length === 0 && (
-              <p className="text-sm text-muted-foreground text-center py-4">No issues in progress</p>
-            )}
-          </div>
-
-          {/* Resolved */}
-          <div className="space-y-4">
-            <h2 className="text-lg font-semibold flex items-center gap-2">
-              <CheckCircle className="h-5 w-5 text-green-400" />
-              Resolved ({resolvedIssues.length})
-            </h2>
-            {resolvedIssues.map((issue) => (
-              <IssueCard
-                key={issue.id}
-                issue={issue}
-                commentCount={commentCounts[issue.id] || 0}
-                onEdit={handleEdit}
-                onDelete={deleteIssue}
-                onStatusChange={handleStatusChange}
-                onOpenComments={setCommentsPanelIssue}
-                getStatusColor={getStatusColor}
-                getPriorityColor={getPriorityColor}
-                getStatusIcon={getStatusIcon}
-              />
-            ))}
-            {resolvedIssues.length === 0 && (
-              <p className="text-sm text-muted-foreground text-center py-4">No resolved issues</p>
-            )}
-          </div>
-        </div>
+        </DragDropContext>
       )}
 
       {/* Resolve Dialog - requires comment */}
@@ -459,7 +454,7 @@ interface IssueCardProps {
 
 const IssueCard = ({ issue, commentCount, onEdit, onDelete, onStatusChange, onOpenComments, getStatusColor, getPriorityColor, getStatusIcon }: IssueCardProps) => {
   return (
-    <Card className="group">
+    <Card className="group cursor-grab active:cursor-grabbing">
       <CardHeader className="pb-2">
         <div className="flex items-start justify-between gap-2">
           <CardTitle className="text-base">{issue.title}</CardTitle>
