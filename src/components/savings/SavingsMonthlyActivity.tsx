@@ -285,6 +285,55 @@ const SavingsMonthlyActivity = ({ highlightId }: { highlightId?: string }) => {
     });
   };
 
+  // Actualize a recurring item — creates a real savings record from the template
+  const handleActualizeRecurring = (item: ActivityItem, markCompleted: boolean) => {
+    const latestForAccount = savings
+      .filter(s => s.name === item.name && !s.closed_at)
+      .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())[0];
+
+    const currentAmount = latestForAccount ? Number(latestForAccount.amount) : 0;
+    const actionAmount = item.amount;
+    const isDeposit = item.action === 'deposit';
+    const newAmount = markCompleted
+      ? (isDeposit ? currentAmount + actionAmount : Math.max(0, currentAmount - actionAmount))
+      : currentAmount;
+
+    addSavings({
+      month: currentMonth,
+      name: item.name,
+      amount: newAmount,
+      currency: item.currency || 'ILS',
+      transfer_method: 'bank_account',
+      card_id: null,
+      action: item.action as 'deposit' | 'withdrawal',
+      action_amount: actionAmount,
+      monthly_deposit: null,
+      recurring_type: null,
+      recurring_day_of_month: null,
+      closed_at: null,
+      is_completed: markCompleted,
+    });
+  };
+
+  // Edit a recurring (pending) item — actualize it first, then open edit dialog
+  const handleEditRecurring = (item: ActivityItem) => {
+    // Find the matching recurring template
+    const template = recurringSavings.find(rs => rs.name === item.name);
+    if (!template) return;
+
+    // Pre-fill form from the template
+    setEditingActivity(null); // Not editing an existing record
+    setFormData({
+      name: item.name,
+      action: item.action,
+      actionAmount: item.amount.toString(),
+      transferMethod: template.transfer_method || 'bank_account',
+      cardId: template.card_id || '',
+      inputCurrency: item.currency || 'ILS',
+    });
+    setIsOpen(true);
+  };
+
   // Get selected account's currency for display
   const selectedAccountCurrency = formData.name 
     ? savings.find(s => s.name === formData.name && !s.closed_at)?.currency || 'ILS'
@@ -506,66 +555,54 @@ const SavingsMonthlyActivity = ({ highlightId }: { highlightId?: string }) => {
                 )}
               >
                 <div className="flex items-center gap-3">
-                  {/* Completion toggle for non-recurring items */}
-                  {!item.isRecurring ? (
-                    <button
-                      onClick={() => {
-                        const saving = item.originalSaving;
-                        if (!saving) return;
+                  {/* Completion toggle for all items */}
+                  <button
+                    onClick={() => {
+                      if (item.isRecurring) {
+                        // Actualize the recurring item and mark as completed
+                        handleActualizeRecurring(item, true);
+                        return;
+                      }
+                      const saving = item.originalSaving;
+                      if (!saving) return;
+                      
+                      if (!item.isCompleted) {
+                        const actionAmount = Number(saving.action_amount || saving.monthly_deposit || 0);
+                        const currentAmount = Number(saving.amount);
+                        const isDeposit = item.action === 'deposit';
+                        const newAmount = isDeposit 
+                          ? currentAmount + actionAmount 
+                          : currentAmount - actionAmount;
                         
-                        if (!item.isCompleted) {
-                          // Crossing over — apply the transaction to the balance
-                          const actionAmount = Number(saving.action_amount || saving.monthly_deposit || 0);
-                          const currentAmount = Number(saving.amount);
-                          const isDeposit = item.action === 'deposit';
-                          const newAmount = isDeposit 
-                            ? currentAmount + actionAmount 
-                            : currentAmount - actionAmount;
-                          
-                          updateSavings({ 
-                            id: item.id, 
-                            is_completed: true,
-                            amount: Math.max(0, newAmount),
-                          } as any);
-                        } else {
-                          // Un-crossing — reverse the transaction from the balance
-                          const actionAmount = Number(saving.action_amount || saving.monthly_deposit || 0);
-                          const currentAmount = Number(saving.amount);
-                          const isDeposit = item.action === 'deposit';
-                          const newAmount = isDeposit 
-                            ? currentAmount - actionAmount 
-                            : currentAmount + actionAmount;
-                          
-                          updateSavings({ 
-                            id: item.id, 
-                            is_completed: false,
-                            amount: Math.max(0, newAmount),
-                          } as any);
-                        }
-                      }}
-                      className={cn(
-                        "h-7 w-7 rounded-full border-2 flex items-center justify-center transition-all shrink-0",
-                        item.isCompleted
-                          ? "bg-success border-success text-success-foreground"
-                          : "border-muted-foreground/30 hover:border-success/60"
-                      )}
-                    >
-                      {item.isCompleted && <Check className="h-4 w-4" />}
-                    </button>
-                  ) : (
-                    <div className={cn(
-                      "p-2 rounded-lg",
-                      item.action === 'withdrawal'
-                        ? "bg-destructive/20 text-destructive"
-                        : "bg-success/20 text-success"
-                    )}>
-                      {item.action === 'withdrawal' ? (
-                        <ArrowDownRight className="h-4 w-4" />
-                      ) : (
-                        <ArrowUpRight className="h-4 w-4" />
-                      )}
-                    </div>
-                  )}
+                        updateSavings({ 
+                          id: item.id, 
+                          is_completed: true,
+                          amount: Math.max(0, newAmount),
+                        } as any);
+                      } else {
+                        const actionAmount = Number(saving.action_amount || saving.monthly_deposit || 0);
+                        const currentAmount = Number(saving.amount);
+                        const isDeposit = item.action === 'deposit';
+                        const newAmount = isDeposit 
+                          ? currentAmount - actionAmount 
+                          : currentAmount + actionAmount;
+                        
+                        updateSavings({ 
+                          id: item.id, 
+                          is_completed: false,
+                          amount: Math.max(0, newAmount),
+                        } as any);
+                      }
+                    }}
+                    className={cn(
+                      "h-7 w-7 rounded-full border-2 flex items-center justify-center transition-all shrink-0",
+                      item.isCompleted
+                        ? "bg-success border-success text-success-foreground"
+                        : "border-muted-foreground/30 hover:border-success/60"
+                    )}
+                  >
+                    {item.isCompleted && <Check className="h-4 w-4" />}
+                  </button>
                   <p className={cn("text-sm font-medium", item.isCompleted && "line-through")}>{item.name}</p>
                 </div>
                 <div className="flex items-center gap-3">
@@ -578,32 +615,30 @@ const SavingsMonthlyActivity = ({ highlightId }: { highlightId?: string }) => {
                     {item.action === 'withdrawal' ? '-' : '+'}
                     {formatCurrency(item.amount, item.currency || 'ILS')}
                   </p>
-                  {!item.isRecurring ? (
-                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      {item.originalSaving && (
-                        <button
-                          onClick={() => handleOpenEdit(item.originalSaving!)}
-                          className="p-1.5 hover:bg-secondary rounded"
-                        >
-                          <Pencil className="h-3 w-3 text-muted-foreground" />
-                        </button>
-                      )}
+                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    {!item.isRecurring && item.originalSaving ? (
                       <button
-                        onClick={() => deleteSavings(item.id)}
-                        className="p-1.5 hover:bg-destructive/10 rounded"
+                        onClick={() => handleOpenEdit(item.originalSaving!)}
+                        className="p-1.5 hover:bg-secondary rounded"
                       >
-                        <Trash2 className="h-3 w-3 text-destructive" />
+                        <Pencil className="h-3 w-3 text-muted-foreground" />
                       </button>
-                    </div>
-                  ) : (
+                    ) : item.isRecurring ? (
+                      <button
+                        onClick={() => handleEditRecurring(item)}
+                        className="p-1.5 hover:bg-secondary rounded"
+                      >
+                        <Pencil className="h-3 w-3 text-muted-foreground" />
+                      </button>
+                    ) : null}
                     <button
-                      onClick={() => handleDismissRecurring(item)}
-                      className="p-1.5 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive/10 rounded"
-                      title="Skip this month"
+                      onClick={() => item.isRecurring ? handleDismissRecurring(item) : deleteSavings(item.id)}
+                      className="p-1.5 hover:bg-destructive/10 rounded"
+                      title={item.isRecurring ? "Skip this month" : undefined}
                     >
                       <Trash2 className="h-3 w-3 text-destructive" />
                     </button>
-                  )}
+                  </div>
                 </div>
               </div>
             ))}
