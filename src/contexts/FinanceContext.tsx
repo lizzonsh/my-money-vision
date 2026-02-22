@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, ReactNode, useMemo } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useMemo, useCallback } from 'react';
 // Finance Context - manages all financial data and operations
 import { convertToILS } from '@/lib/currencyUtils';
 import { useBudgets, Budget } from '@/hooks/useBudgets';
@@ -185,91 +185,113 @@ export const FinanceProvider = ({ children }: { children: ReactNode }) => {
     return { spentBudget, leftBudget, dailyLimit, plannedCreditCardExpenses, plannedGoalCreditCardExpenses: 0, paidGoalExpenses: 0, blinkDepositsTotal };
   }, [budgetsHook.budgets, budgetsHook.getBudgetForMonth, expensesHook.expenses, savingsHook.savings, currentMonth]);
 
+  const closeSavingsAccountCb = useCallback(
+    (name: string, fromMonth: string) => savingsHook.closeSavingsAccount({ name, fromMonth }),
+    [savingsHook.closeSavingsAccount]
+  );
+
+  const getTotalBalanceForMonthCb = useCallback(
+    (month: string) => bankBalanceHistoryHook.getTotalBalanceForMonth(
+      bankAccountsHook.bankAccounts.map(a => a.id),
+      month
+    ),
+    [bankBalanceHistoryHook.getTotalBalanceForMonth, bankAccountsHook.bankAccounts]
+  );
+
+  const contextValue = useMemo<FinanceContextType>(() => ({
+    // Data
+    budgets: budgetsHook.budgets,
+    expenses: expensesHook.expenses,
+    incomes: incomesHook.incomes,
+    savings: savingsHook.savings,
+    bigPurchases: bigPurchasesHook.bigPurchases,
+    recurringPayments: recurringPaymentsHook.recurringPayments,
+    recurringSavings: recurringSavingsHook.recurringSavings,
+    recurringIncomes: recurringIncomesHook.recurringIncomes,
+    bankAccounts: bankAccountsHook.bankAccounts,
+    goalItems: goalItemsHook.goalItems,
+    
+    // Loading
+    isLoading,
+    
+    // Current month
+    currentMonth,
+    setCurrentMonth,
+    
+    // Budget operations
+    addBudget: budgetsHook.addBudget,
+    updateBudget: budgetsHook.updateBudget,
+    deleteBudget: budgetsHook.deleteBudget,
+    getBudgetForMonth: budgetsHook.getBudgetForMonth,
+    
+    // Expense operations
+    addExpense: expensesHook.addExpense,
+    updateExpense: expensesHook.updateExpense,
+    deleteExpense: expensesHook.deleteExpense,
+    
+    // Income operations
+    addIncome: incomesHook.addIncome,
+    updateIncome: incomesHook.updateIncome,
+    deleteIncome: incomesHook.deleteIncome,
+    
+    // Savings operations
+    addSavings: savingsHook.addSavings,
+    updateSavings: savingsHook.updateSavings,
+    deleteSavings: savingsHook.deleteSavings,
+    closeSavingsAccount: closeSavingsAccountCb,
+    
+    // Big purchase operations
+    addBigPurchase: bigPurchasesHook.addBigPurchase,
+    updateBigPurchase: bigPurchasesHook.updateBigPurchase,
+    deleteBigPurchase: bigPurchasesHook.deleteBigPurchase,
+    archiveBigPurchase: bigPurchasesHook.archiveBigPurchase,
+    
+    // Recurring payment operations
+    addRecurringPayment: recurringPaymentsHook.addRecurringPayment,
+    updateRecurringPayment: recurringPaymentsHook.updateRecurringPayment,
+    deleteRecurringPayment: recurringPaymentsHook.deleteRecurringPayment,
+    
+    // Recurring savings operations
+    addRecurringSavings: recurringSavingsHook.addRecurringSavings,
+    updateRecurringSavings: recurringSavingsHook.updateRecurringSavings,
+    deleteRecurringSavings: recurringSavingsHook.deleteRecurringSavings,
+    
+    // Recurring income operations
+    addRecurringIncome: recurringIncomesHook.addRecurringIncome,
+    updateRecurringIncome: recurringIncomesHook.updateRecurringIncome,
+    deleteRecurringIncome: recurringIncomesHook.deleteRecurringIncome,
+    
+    // Bank account operations
+    addBankAccount: bankAccountsHook.addBankAccount,
+    updateBankAccount: bankAccountsHook.updateBankAccount,
+    deleteBankAccount: bankAccountsHook.deleteBankAccount,
+    totalBankBalance: bankAccountsHook.totalBalance,
+    
+    // Bank balance history
+    bankBalanceHistory: bankBalanceHistoryHook.balanceHistory,
+    upsertBalanceHistory: bankBalanceHistoryHook.upsertBalanceHistory,
+    getBalanceForMonth: bankBalanceHistoryHook.getBalanceForMonth,
+    getTotalBalanceForMonth: getTotalBalanceForMonthCb,
+    
+    // Calculated values
+    calculatedBudget,
+  }), [
+    budgetsHook.budgets, budgetsHook.addBudget, budgetsHook.updateBudget, budgetsHook.deleteBudget, budgetsHook.getBudgetForMonth,
+    expensesHook.expenses, expensesHook.addExpense, expensesHook.updateExpense, expensesHook.deleteExpense,
+    incomesHook.incomes, incomesHook.addIncome, incomesHook.updateIncome, incomesHook.deleteIncome,
+    savingsHook.savings, savingsHook.addSavings, savingsHook.updateSavings, savingsHook.deleteSavings, closeSavingsAccountCb,
+    bigPurchasesHook.bigPurchases, bigPurchasesHook.addBigPurchase, bigPurchasesHook.updateBigPurchase, bigPurchasesHook.deleteBigPurchase, bigPurchasesHook.archiveBigPurchase,
+    recurringPaymentsHook.recurringPayments, recurringPaymentsHook.addRecurringPayment, recurringPaymentsHook.updateRecurringPayment, recurringPaymentsHook.deleteRecurringPayment,
+    recurringSavingsHook.recurringSavings, recurringSavingsHook.addRecurringSavings, recurringSavingsHook.updateRecurringSavings, recurringSavingsHook.deleteRecurringSavings,
+    recurringIncomesHook.recurringIncomes, recurringIncomesHook.addRecurringIncome, recurringIncomesHook.updateRecurringIncome, recurringIncomesHook.deleteRecurringIncome,
+    bankAccountsHook.bankAccounts, bankAccountsHook.addBankAccount, bankAccountsHook.updateBankAccount, bankAccountsHook.deleteBankAccount, bankAccountsHook.totalBalance,
+    bankBalanceHistoryHook.balanceHistory, bankBalanceHistoryHook.upsertBalanceHistory, bankBalanceHistoryHook.getBalanceForMonth, getTotalBalanceForMonthCb,
+    goalItemsHook.goalItems,
+    isLoading, currentMonth, setCurrentMonth, calculatedBudget,
+  ]);
+
   return (
-    <FinanceContext.Provider
-      value={{
-        // Data
-        budgets: budgetsHook.budgets,
-        expenses: expensesHook.expenses,
-        incomes: incomesHook.incomes,
-        savings: savingsHook.savings,
-        bigPurchases: bigPurchasesHook.bigPurchases,
-        recurringPayments: recurringPaymentsHook.recurringPayments,
-        recurringSavings: recurringSavingsHook.recurringSavings,
-        recurringIncomes: recurringIncomesHook.recurringIncomes,
-        bankAccounts: bankAccountsHook.bankAccounts,
-        goalItems: goalItemsHook.goalItems,
-        
-        // Loading
-        isLoading,
-        
-        // Current month
-        currentMonth,
-        setCurrentMonth,
-        
-        // Budget operations
-        addBudget: budgetsHook.addBudget,
-        updateBudget: budgetsHook.updateBudget,
-        deleteBudget: budgetsHook.deleteBudget,
-        getBudgetForMonth: budgetsHook.getBudgetForMonth,
-        
-        // Expense operations
-        addExpense: expensesHook.addExpense,
-        updateExpense: expensesHook.updateExpense,
-        deleteExpense: expensesHook.deleteExpense,
-        
-        // Income operations
-        addIncome: incomesHook.addIncome,
-        updateIncome: incomesHook.updateIncome,
-        deleteIncome: incomesHook.deleteIncome,
-        
-        // Savings operations
-        addSavings: savingsHook.addSavings,
-        updateSavings: savingsHook.updateSavings,
-        deleteSavings: savingsHook.deleteSavings,
-        closeSavingsAccount: (name: string, fromMonth: string) => savingsHook.closeSavingsAccount({ name, fromMonth }),
-        
-        // Big purchase operations
-        addBigPurchase: bigPurchasesHook.addBigPurchase,
-        updateBigPurchase: bigPurchasesHook.updateBigPurchase,
-        deleteBigPurchase: bigPurchasesHook.deleteBigPurchase,
-        archiveBigPurchase: bigPurchasesHook.archiveBigPurchase,
-        
-        // Recurring payment operations
-        addRecurringPayment: recurringPaymentsHook.addRecurringPayment,
-        updateRecurringPayment: recurringPaymentsHook.updateRecurringPayment,
-        deleteRecurringPayment: recurringPaymentsHook.deleteRecurringPayment,
-        
-        // Recurring savings operations
-        addRecurringSavings: recurringSavingsHook.addRecurringSavings,
-        updateRecurringSavings: recurringSavingsHook.updateRecurringSavings,
-        deleteRecurringSavings: recurringSavingsHook.deleteRecurringSavings,
-        
-        // Recurring income operations
-        addRecurringIncome: recurringIncomesHook.addRecurringIncome,
-        updateRecurringIncome: recurringIncomesHook.updateRecurringIncome,
-        deleteRecurringIncome: recurringIncomesHook.deleteRecurringIncome,
-        
-        // Bank account operations
-        addBankAccount: bankAccountsHook.addBankAccount,
-        updateBankAccount: bankAccountsHook.updateBankAccount,
-        deleteBankAccount: bankAccountsHook.deleteBankAccount,
-        totalBankBalance: bankAccountsHook.totalBalance,
-        
-        // Bank balance history
-        bankBalanceHistory: bankBalanceHistoryHook.balanceHistory,
-        upsertBalanceHistory: bankBalanceHistoryHook.upsertBalanceHistory,
-        getBalanceForMonth: bankBalanceHistoryHook.getBalanceForMonth,
-        getTotalBalanceForMonth: (month: string) => 
-          bankBalanceHistoryHook.getTotalBalanceForMonth(
-            bankAccountsHook.bankAccounts.map(a => a.id),
-            month
-          ),
-        
-        // Calculated values
-        calculatedBudget,
-      }}
-    >
+    <FinanceContext.Provider value={contextValue}>
       {children}
     </FinanceContext.Provider>
   );
