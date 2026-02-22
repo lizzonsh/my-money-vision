@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { Plus, Bug, Trash2, Edit, CheckCircle, Clock, AlertCircle, Filter, MessageSquare, Send, GripVertical } from 'lucide-react';
+import { Plus, Bug, Trash2, Edit, CheckCircle, Clock, AlertCircle, Filter, MessageSquare, Send } from 'lucide-react';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
@@ -288,6 +288,7 @@ const IssuesPage = () => {
                           <div
                             ref={provided.innerRef}
                             {...provided.draggableProps}
+                            {...provided.dragHandleProps}
                             className={snapshot.isDragging ? 'opacity-90' : ''}
                           >
                             <IssueCard
@@ -300,7 +301,6 @@ const IssuesPage = () => {
                               getStatusColor={getStatusColor}
                               getPriorityColor={getPriorityColor}
                               getStatusIcon={getStatusIcon}
-                              dragHandleProps={provided.dragHandleProps}
                             />
                           </div>
                         )}
@@ -450,56 +450,45 @@ interface IssueCardProps {
   getStatusColor: (status: string) => string;
   getPriorityColor: (priority: string) => string;
   getStatusIcon: (status: string) => React.ReactNode;
-  dragHandleProps?: any;
 }
 
-const IssueCard = ({ issue, commentCount, onEdit, onDelete, onStatusChange, onOpenComments, getStatusColor, getPriorityColor, getStatusIcon, dragHandleProps }: IssueCardProps) => {
+const IssueCard = ({ issue, commentCount, onEdit, onDelete, onStatusChange, onOpenComments, getStatusColor, getPriorityColor, getStatusIcon }: IssueCardProps) => {
   return (
-    <Card className="group">
+    <Card className="group cursor-grab active:cursor-grabbing">
       <CardHeader className="pb-2">
-        <div className="flex items-start gap-2">
-          <div
-            {...dragHandleProps}
-            className="mt-1 cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground transition-colors shrink-0"
-          >
-            <GripVertical className="h-4 w-4" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-start justify-between gap-2">
-              <CardTitle className="text-base">{issue.title}</CardTitle>
-              <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
-                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onOpenComments(issue)}>
-                  <MessageSquare className="h-4 w-4" />
+        <div className="flex items-start justify-between gap-2">
+          <CardTitle className="text-base">{issue.title}</CardTitle>
+          <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onOpenComments(issue)}>
+              <MessageSquare className="h-4 w-4" />
+            </Button>
+            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onEdit(issue)}>
+              <Edit className="h-4 w-4" />
+            </Button>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive">
+                  <Trash2 className="h-4 w-4" />
                 </Button>
-                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onEdit(issue)}>
-                  <Edit className="h-4 w-4" />
-                </Button>
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive">
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Delete Issue</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        Are you sure you want to delete this issue? This action cannot be undone.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction onClick={() => onDelete(issue.id)}>Delete</AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
-              </div>
-            </div>
-            <CardDescription className="text-xs">
-              {format(new Date(issue.created_at), 'MMM d, yyyy')}
-            </CardDescription>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Delete Issue</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Are you sure you want to delete this issue? This action cannot be undone.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction onClick={() => onDelete(issue.id)}>Delete</AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </div>
         </div>
+        <CardDescription className="text-xs">
+          {format(new Date(issue.created_at), 'MMM d, yyyy')}
+        </CardDescription>
       </CardHeader>
       <CardContent className="pt-0">
         {issue.description && (
