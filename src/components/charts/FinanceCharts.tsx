@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import React, { useMemo } from 'react';
 import {
   AreaChart,
   Area,
@@ -62,7 +62,7 @@ const formatMonth = (monthKey: string): string => {
   return new Date(year, month - 1).toLocaleDateString('en-US', { month: 'short' });
 };
 
-export const IncomeExpenseChart = () => {
+export const IncomeExpenseChart = React.memo(() => {
   const { incomes, expenses, savings, currentMonth, setCurrentMonth } = useFinance();
   const navigate = useNavigate();
 
@@ -147,9 +147,9 @@ export const IncomeExpenseChart = () => {
       </div>
     </div>
   );
-};
+});
 
-export const SpendingByCategoryChart = () => {
+export const SpendingByCategoryChart = React.memo(() => {
   const { expenses, currentMonth } = useFinance();
 
   const chartData = useMemo(() => {
@@ -223,9 +223,9 @@ export const SpendingByCategoryChart = () => {
       </div>
     </div>
   );
-};
+});
 
-export const SavingsGrowthChart = () => {
+export const SavingsGrowthChart = React.memo(() => {
   const { savings, currentMonth } = useFinance();
 
   const chartData = useMemo(() => {
@@ -309,4 +309,4 @@ export const SavingsGrowthChart = () => {
       </div>
     </div>
   );
-};
+});
