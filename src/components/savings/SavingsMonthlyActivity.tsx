@@ -40,7 +40,9 @@ interface ActivityItem {
 }
 
 const SavingsMonthlyActivity = ({ highlightId }: { highlightId?: string }) => {
-  const { savings, recurringSavings, currentMonth, addSavings, updateSavings, deleteSavings } = useFinance();
+  const { currentMonth } = useFinance();
+  const { savings, addSavings, updateSavings, deleteSavings } = useSavings();
+  const { recurringSavings } = useRecurringSavings();
   const [isOpen, setIsOpen] = useState(false);
   const [editingActivity, setEditingActivity] = useState<Savings | null>(null);
   const highlightRef = useRef<HTMLDivElement>(null);
