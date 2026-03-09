@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
-import { useFinance, Savings } from '@/contexts/FinanceContext';
+import { useFinance } from '@/contexts/FinanceContext';
+import { useSavings, Savings } from '@/hooks/useSavings';
+import { useRecurringSavings } from '@/hooks/useRecurringSavings';
 import { formatCurrency } from '@/lib/formatters';
 import { convertToILS, convertFromILS, SUPPORTED_CURRENCIES } from '@/lib/currencyUtils';
 import { isDateUpToToday, isCurrentMonth } from '@/lib/dateUtils';
