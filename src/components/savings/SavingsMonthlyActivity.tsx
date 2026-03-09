@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
-import { useFinance, Savings } from '@/contexts/FinanceContext';
+import { useFinance } from '@/contexts/FinanceContext';
+import { useSavings, Savings } from '@/hooks/useSavings';
+import { useRecurringSavings } from '@/hooks/useRecurringSavings';
 import { formatCurrency } from '@/lib/formatters';
 import { convertToILS, convertFromILS, SUPPORTED_CURRENCIES } from '@/lib/currencyUtils';
 import { isDateUpToToday, isCurrentMonth } from '@/lib/dateUtils';
@@ -38,7 +40,9 @@ interface ActivityItem {
 }
 
 const SavingsMonthlyActivity = ({ highlightId }: { highlightId?: string }) => {
-  const { savings, recurringSavings, currentMonth, addSavings, updateSavings, deleteSavings } = useFinance();
+  const { currentMonth } = useFinance();
+  const { savings, addSavings, updateSavings, deleteSavings } = useSavings();
+  const { recurringSavings } = useRecurringSavings();
   const [isOpen, setIsOpen] = useState(false);
   const [editingActivity, setEditingActivity] = useState<Savings | null>(null);
   const highlightRef = useRef<HTMLDivElement>(null);
