@@ -2,11 +2,10 @@ import { useState } from 'react';
 import { useFinance, Savings } from '@/contexts/FinanceContext';
 import { formatCurrency } from '@/lib/formatters';
 import { convertToILS, SUPPORTED_CURRENCIES } from '@/lib/currencyUtils';
-import { Plus, Trash2, PiggyBank, Pencil, ShieldCheck, Shield, ShieldAlert } from 'lucide-react';
+import { Plus, Trash2, PiggyBank, Pencil } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
