@@ -2,23 +2,16 @@ import { useState } from 'react';
 import { useFinance, Savings } from '@/contexts/FinanceContext';
 import { formatCurrency } from '@/lib/formatters';
 import { convertToILS, SUPPORTED_CURRENCIES } from '@/lib/currencyUtils';
-import { Plus, Trash2, PiggyBank, Pencil, ShieldCheck, Shield, ShieldAlert } from 'lucide-react';
+import { Plus, Trash2, PiggyBank, Pencil } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger,
 } from '@/components/ui/dialog';
-
-const riskConfig = {
-  low: { label: 'Low', icon: ShieldCheck, color: 'text-emerald-600 bg-emerald-50 border-emerald-200' },
-  medium: { label: 'Med', icon: Shield, color: 'text-amber-600 bg-amber-50 border-amber-200' },
-  high: { label: 'High', icon: ShieldAlert, color: 'text-red-600 bg-red-50 border-red-200' },
-};
 
 const SavingsCurrentStatus = () => {
   const { savings, addSavings, updateSavings, closeSavingsAccount, currentMonth } = useFinance();
@@ -167,12 +160,7 @@ const SavingsCurrentStatus = () => {
         {uniqueSavings.length === 0 ? (
           <p className="text-sm text-muted-foreground text-center py-4">No savings accounts</p>
         ) : (
-          uniqueSavings.map((saving) => {
-            const riskLevel = (saving as any).risk_level || 'medium';
-            const risk = riskConfig[riskLevel as keyof typeof riskConfig] || riskConfig.medium;
-            const RiskIcon = risk.icon;
-
-            return (
+          uniqueSavings.map((saving) => (
               <div key={saving.id} className="p-4 rounded-lg bg-secondary/30 hover:bg-secondary/50 transition-colors group">
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-3">
@@ -180,13 +168,7 @@ const SavingsCurrentStatus = () => {
                       <PiggyBank className="h-5 w-5" />
                     </div>
                     <div>
-                      <div className="flex items-center gap-2">
-                        <p className="font-medium">{saving.name}</p>
-                        <Badge variant="outline" className={`text-[10px] px-1.5 py-0 h-5 gap-0.5 ${risk.color}`}>
-                          <RiskIcon className="h-2.5 w-2.5" />
-                          {risk.label}
-                        </Badge>
-                      </div>
+                      <p className="font-medium">{saving.name}</p>
                       <p className="text-sm text-muted-foreground mt-0.5">
                         {saving.currency || 'ILS'}
                         {saving.currency && saving.currency !== 'ILS' && (
@@ -210,8 +192,7 @@ const SavingsCurrentStatus = () => {
                   </div>
                 </div>
               </div>
-            );
-          })
+          ))
         )}
       </div>
     </div>
