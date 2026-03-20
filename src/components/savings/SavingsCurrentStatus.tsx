@@ -160,12 +160,7 @@ const SavingsCurrentStatus = () => {
         {uniqueSavings.length === 0 ? (
           <p className="text-sm text-muted-foreground text-center py-4">No savings accounts</p>
         ) : (
-          uniqueSavings.map((saving) => {
-            const riskLevel = (saving as any).risk_level || 'medium';
-            const risk = riskConfig[riskLevel as keyof typeof riskConfig] || riskConfig.medium;
-            const RiskIcon = risk.icon;
-
-            return (
+          uniqueSavings.map((saving) => (
               <div key={saving.id} className="p-4 rounded-lg bg-secondary/30 hover:bg-secondary/50 transition-colors group">
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-3">
@@ -173,13 +168,7 @@ const SavingsCurrentStatus = () => {
                       <PiggyBank className="h-5 w-5" />
                     </div>
                     <div>
-                      <div className="flex items-center gap-2">
-                        <p className="font-medium">{saving.name}</p>
-                        <Badge variant="outline" className={`text-[10px] px-1.5 py-0 h-5 gap-0.5 ${risk.color}`}>
-                          <RiskIcon className="h-2.5 w-2.5" />
-                          {risk.label}
-                        </Badge>
-                      </div>
+                      <p className="font-medium">{saving.name}</p>
                       <p className="text-sm text-muted-foreground mt-0.5">
                         {saving.currency || 'ILS'}
                         {saving.currency && saving.currency !== 'ILS' && (
