@@ -4,6 +4,7 @@ import SavingsCurrentStatus from '@/components/savings/SavingsCurrentStatus';
 import SavingsPredictionPortfolio from '@/components/savings/SavingsPredictionPortfolio';
 import SavingsMonthlyActivity from '@/components/savings/SavingsMonthlyActivity';
 import RecurringSavingsPanel from '@/components/savings/RecurringSavingsPanel';
+import SavingsAnalysisPanel from '@/components/savings/SavingsAnalysisPanel';
 import MonthNavigation from '@/components/navigation/MonthNavigation';
 import { SavingsGrowthChart } from '@/components/charts/FinanceCharts';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -13,10 +14,8 @@ const SavingsPage = () => {
   const navState = location.state as { tab?: string; highlightId?: string } | null;
   const [activeTab, setActiveTab] = useState(navState?.tab === 'activity' ? 'overview' : 'overview');
 
-  // Reset highlight after navigating away
   useEffect(() => {
     if (navState?.highlightId) {
-      // Clear navigation state so it doesn't persist on refresh
       window.history.replaceState({}, document.title);
     }
   }, [navState]);
@@ -34,17 +33,15 @@ const SavingsPage = () => {
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TabsList>
           <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="analysis">Analysis & Stocks</TabsTrigger>
           <TabsTrigger value="recurring">Recurring Savings</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
-          {/* Portfolio panels side by side */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <SavingsCurrentStatus />
             <SavingsPredictionPortfolio />
           </div>
-
-          {/* Activity and Growth Chart */}
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
             <div className="lg:col-span-3">
               <SavingsMonthlyActivity highlightId={navState?.highlightId} />
@@ -53,6 +50,10 @@ const SavingsPage = () => {
               <SavingsGrowthChart />
             </div>
           </div>
+        </TabsContent>
+
+        <TabsContent value="analysis">
+          <SavingsAnalysisPanel />
         </TabsContent>
 
         <TabsContent value="recurring">
