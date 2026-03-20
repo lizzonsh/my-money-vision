@@ -102,6 +102,7 @@ const SavingsCurrentStatus = () => {
       recurring_day_of_month: null,
       closed_at: null,
       is_completed: false,
+      risk_level: formData.riskLevel || 'medium',
     };
 
     if (editingSaving) {

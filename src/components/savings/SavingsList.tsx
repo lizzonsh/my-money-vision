@@ -140,6 +140,7 @@ const SavingsList = () => {
       recurring_day_of_month: isDeposit && actionAmount ? 15 : null,
       closed_at: null,
       is_completed: false,
+      risk_level: 'medium',
     };
 
     if (editingSaving) {
