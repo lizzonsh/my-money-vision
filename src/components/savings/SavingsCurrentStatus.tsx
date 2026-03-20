@@ -8,19 +8,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger,
 } from '@/components/ui/dialog';
+
 const riskConfig = {
   low: { label: 'Low', icon: ShieldCheck, color: 'text-emerald-600 bg-emerald-50 border-emerald-200' },
   medium: { label: 'Med', icon: Shield, color: 'text-amber-600 bg-amber-50 border-amber-200' },
@@ -28,16 +21,11 @@ const riskConfig = {
 };
 
 const SavingsCurrentStatus = () => {
-  const { savings, recurringSavings, addSavings, updateSavings, closeSavingsAccount, currentMonth } = useFinance();
+  const { savings, addSavings, updateSavings, closeSavingsAccount, currentMonth } = useFinance();
   const [isOpen, setIsOpen] = useState(false);
   const [editingSaving, setEditingSaving] = useState<Savings | null>(null);
   const [formData, setFormData] = useState({
-    name: '',
-    amount: '',
-    transferMethod: 'bank_account',
-    cardId: '',
-    currency: 'ILS',
-    riskLevel: 'medium',
+    name: '', amount: '', transferMethod: 'bank_account', cardId: '', currency: 'ILS', riskLevel: 'medium',
   });
 
   const currentMonthDate = new Date(currentMonth + '-01');
@@ -46,8 +34,7 @@ const SavingsCurrentStatus = () => {
     .filter(s => s.month <= currentMonth)
     .filter(s => {
       if (!s.closed_at) return true;
-      const closedDate = new Date(s.closed_at);
-      return closedDate > currentMonthDate;
+      return new Date(s.closed_at) > currentMonthDate;
     })
     .reduce((acc, saving) => {
       const existing = acc.get(saving.name);
@@ -59,48 +46,8 @@ const SavingsCurrentStatus = () => {
 
   const uniqueSavings = Array.from(latestSavingsPerName.values());
 
-  // Calculate growth data for each account
-  const growthDataMap = useMemo(() => {
-    const map = new Map<string, { lastMonthAmount: number | null; currentAmount: number; monthlyGrowth: number | null; monthlyGrowthPercent: number | null; firstAmount: number | null; totalGrowth: number | null; totalGrowthPercent: number | null }>();
-
-    for (const saving of uniqueSavings) {
-      // Get previous month
-      const [y, m] = currentMonth.split('-').map(Number);
-      const prevDate = new Date(y, m - 2, 1);
-      const prevMonth = `${prevDate.getFullYear()}-${String(prevDate.getMonth() + 1).padStart(2, '0')}`;
-
-      // Find last month's record for same account name
-      const prevRecord = savings
-        .filter(s => s.name === saving.name && s.month === prevMonth && !s.action)
-        .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())[0];
-
-      // Find the earliest record for total growth
-      const allRecords = savings
-        .filter(s => s.name === saving.name && !s.action)
-        .sort((a, b) => a.month.localeCompare(b.month));
-      const firstRecord = allRecords[0];
-
-      const currentAmount = Number(saving.amount);
-      const lastMonthAmount = prevRecord ? Number(prevRecord.amount) : null;
-      const firstAmount = firstRecord ? Number(firstRecord.amount) : null;
-
-      const monthlyGrowth = lastMonthAmount !== null ? currentAmount - lastMonthAmount : null;
-      const monthlyGrowthPercent = lastMonthAmount !== null && lastMonthAmount > 0
-        ? ((currentAmount - lastMonthAmount) / lastMonthAmount) * 100 : null;
-
-      const totalGrowth = firstAmount !== null && firstRecord?.month !== currentMonth
-        ? currentAmount - firstAmount : null;
-      const totalGrowthPercent = firstAmount !== null && firstAmount > 0 && firstRecord?.month !== currentMonth
-        ? ((currentAmount - firstAmount) / firstAmount) * 100 : null;
-
-      map.set(saving.name, { lastMonthAmount, currentAmount, monthlyGrowth, monthlyGrowthPercent, firstAmount, totalGrowth, totalGrowthPercent });
-    }
-    return map;
-  }, [uniqueSavings, savings, currentMonth]);
-
   const totalPortfolioValue = uniqueSavings.reduce(
-    (sum, s) => sum + convertToILS(Number(s.amount), s.currency || 'ILS'),
-    0
+    (sum, s) => sum + convertToILS(Number(s.amount), s.currency || 'ILS'), 0
   );
 
   const resetForm = () => {
@@ -111,12 +58,8 @@ const SavingsCurrentStatus = () => {
   const handleOpenEdit = (saving: Savings) => {
     setEditingSaving(saving);
     setFormData({
-      name: saving.name,
-      amount: saving.amount.toString(),
-      transferMethod: saving.transfer_method,
-      cardId: saving.card_id || '',
-      currency: saving.currency || 'ILS',
-      riskLevel: (saving as any).risk_level || 'medium',
+      name: saving.name, amount: saving.amount.toString(), transferMethod: saving.transfer_method,
+      cardId: saving.card_id || '', currency: saving.currency || 'ILS', riskLevel: (saving as any).risk_level || 'medium',
     });
     setIsOpen(true);
   };
@@ -124,22 +67,11 @@ const SavingsCurrentStatus = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const savingData = {
-      month: currentMonth,
-      name: formData.name,
-      amount: parseFloat(formData.amount),
-      currency: formData.currency,
-      transfer_method: formData.transferMethod as 'bank_account' | 'credit_card',
-      card_id: formData.cardId || null,
-      action: null,
-      action_amount: null,
-      monthly_deposit: null,
-      recurring_type: null,
-      recurring_day_of_month: null,
-      closed_at: null,
-      is_completed: false,
-      risk_level: formData.riskLevel,
+      month: currentMonth, name: formData.name, amount: parseFloat(formData.amount), currency: formData.currency,
+      transfer_method: formData.transferMethod as 'bank_account' | 'credit_card', card_id: formData.cardId || null,
+      action: null, action_amount: null, monthly_deposit: null, recurring_type: null, recurring_day_of_month: null,
+      closed_at: null, is_completed: false, risk_level: formData.riskLevel,
     };
-
     if (editingSaving) {
       updateSavings({ id: editingSaving.id, ...savingData });
     } else {
@@ -147,20 +79,6 @@ const SavingsCurrentStatus = () => {
     }
     resetForm();
     setIsOpen(false);
-  };
-
-  const GrowthBadge = ({ value, percent }: { value: number | null; percent: number | null }) => {
-    if (value === null) return null;
-    const isUp = value > 0;
-    const isZero = value === 0;
-    const Icon = isUp ? TrendingUp : isZero ? Minus : TrendingDown;
-    const cls = isUp ? 'text-emerald-600' : isZero ? 'text-muted-foreground' : 'text-red-600';
-    return (
-      <span className={`inline-flex items-center gap-0.5 text-xs ${cls}`}>
-        <Icon className="h-3 w-3" />
-        {percent !== null && <span>{isUp ? '+' : ''}{percent.toFixed(1)}%</span>}
-      </span>
-    );
   };
 
   return (
@@ -175,10 +93,7 @@ const SavingsCurrentStatus = () => {
         </div>
         <Dialog open={isOpen} onOpenChange={(open) => { setIsOpen(open); if (!open) resetForm(); }}>
           <DialogTrigger asChild>
-            <Button size="sm" className="gap-1">
-              <Plus className="h-4 w-4" />
-              Add
-            </Button>
+            <Button size="sm" className="gap-1"><Plus className="h-4 w-4" />Add</Button>
           </DialogTrigger>
           <DialogContent className="glass">
             <DialogHeader>
@@ -242,9 +157,7 @@ const SavingsCurrentStatus = () => {
                   </Select>
                 </div>
               )}
-              <Button type="submit" className="w-full">
-                {editingSaving ? 'Save Changes' : 'Add Savings'}
-              </Button>
+              <Button type="submit" className="w-full">{editingSaving ? 'Save Changes' : 'Add Savings'}</Button>
             </form>
           </DialogContent>
         </Dialog>
@@ -255,17 +168,12 @@ const SavingsCurrentStatus = () => {
           <p className="text-sm text-muted-foreground text-center py-4">No savings accounts</p>
         ) : (
           uniqueSavings.map((saving) => {
-            const growth = growthDataMap.get(saving.name);
             const riskLevel = (saving as any).risk_level || 'medium';
             const risk = riskConfig[riskLevel as keyof typeof riskConfig] || riskConfig.medium;
             const RiskIcon = risk.icon;
 
             return (
-              <div
-                key={saving.id}
-                className="p-4 rounded-lg bg-secondary/30 hover:bg-secondary/50 transition-colors group cursor-pointer"
-                onClick={() => setDetailSaving(saving)}
-              >
+              <div key={saving.id} className="p-4 rounded-lg bg-secondary/30 hover:bg-secondary/50 transition-colors group">
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-3">
                     <div className="p-2.5 rounded-lg bg-primary/10 text-primary">
@@ -279,40 +187,24 @@ const SavingsCurrentStatus = () => {
                           {risk.label}
                         </Badge>
                       </div>
-                      <div className="flex items-center gap-2 mt-1">
-                        {growth && (
-                          <>
-                            <GrowthBadge value={growth.monthlyGrowth} percent={growth.monthlyGrowthPercent} />
-                            {growth.totalGrowth !== null && (
-                              <span className="text-[10px] text-muted-foreground">
-                                total: {growth.totalGrowth >= 0 ? '+' : ''}{growth.totalGrowthPercent?.toFixed(1)}%
-                              </span>
-                            )}
-                          </>
+                      <p className="text-sm text-muted-foreground mt-0.5">
+                        {saving.currency || 'ILS'}
+                        {saving.currency && saving.currency !== 'ILS' && (
+                          <span className="ml-1">≈ {formatCurrency(convertToILS(Number(saving.amount), saving.currency))}</span>
                         )}
-                      </div>
+                        <span className="mx-1">•</span>
+                        Updated {new Date(saving.updated_at).toLocaleDateString()}
+                      </p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
                     <div className="text-right">
                       <p className="text-lg font-bold">{formatCurrency(Number(saving.amount), saving.currency || 'ILS')}</p>
-                      {saving.currency && saving.currency !== 'ILS' && (
-                        <p className="text-xs text-muted-foreground">
-                          ≈ {formatCurrency(convertToILS(Number(saving.amount), saving.currency))}
-                        </p>
-                      )}
                     </div>
-                    <button
-                      onClick={(e) => handleOpenEdit(saving, e)}
-                      className="p-1.5 opacity-0 group-hover:opacity-100 hover:bg-secondary rounded transition-all"
-                    >
+                    <button onClick={() => handleOpenEdit(saving)} className="p-1.5 opacity-0 group-hover:opacity-100 hover:bg-secondary rounded transition-all">
                       <Pencil className="h-4 w-4 text-muted-foreground" />
                     </button>
-                    <button
-                      onClick={(e) => { e.stopPropagation(); closeSavingsAccount(saving.name, currentMonth); }}
-                      className="p-1.5 opacity-0 group-hover:opacity-100 hover:bg-destructive/10 rounded transition-all"
-                      title="Close account from this month (preserves history)"
-                    >
+                    <button onClick={() => closeSavingsAccount(saving.name, currentMonth)} className="p-1.5 opacity-0 group-hover:opacity-100 hover:bg-destructive/10 rounded transition-all" title="Close account">
                       <Trash2 className="h-4 w-4 text-destructive" />
                     </button>
                   </div>
@@ -322,16 +214,6 @@ const SavingsCurrentStatus = () => {
           })
         )}
       </div>
-
-      {/* Detail Dialog */}
-      {detailSaving && (
-        <SavingsAccountDetail
-          saving={detailSaving}
-          growthData={growthDataMap.get(detailSaving.name) || { lastMonthAmount: null, currentAmount: Number(detailSaving.amount), monthlyGrowth: null, monthlyGrowthPercent: null, firstAmount: null, totalGrowth: null, totalGrowthPercent: null }}
-          open={!!detailSaving}
-          onOpenChange={(open) => { if (!open) setDetailSaving(null); }}
-        />
-      )}
     </div>
   );
 };
