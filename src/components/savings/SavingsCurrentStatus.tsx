@@ -108,8 +108,7 @@ const SavingsCurrentStatus = () => {
     setEditingSaving(null);
   };
 
-  const handleOpenEdit = (saving: Savings, e: React.MouseEvent) => {
-    e.stopPropagation();
+  const handleOpenEdit = (saving: Savings) => {
     setEditingSaving(saving);
     setFormData({
       name: saving.name,
