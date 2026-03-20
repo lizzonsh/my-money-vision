@@ -39,18 +39,17 @@ const SavingsPage = () => {
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <SavingsCurrentStatus />
-            <SavingsPredictionPortfolio />
-          </div>
-          <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-            <div className="lg:col-span-3">
-              <SavingsMonthlyActivity highlightId={navState?.highlightId} />
-            </div>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2">
-              <SavingsGrowthChart />
+              <SavingsCurrentStatus />
             </div>
+            <RiskAllocationChart />
           </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <SavingsPredictionPortfolio />
+            <SavingsMonthlyActivity highlightId={navState?.highlightId} />
+          </div>
+          <SavingsGrowthChart />
         </TabsContent>
 
         <TabsContent value="analysis">
