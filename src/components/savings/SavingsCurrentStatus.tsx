@@ -192,8 +192,7 @@ const SavingsCurrentStatus = () => {
                   </div>
                 </div>
               </div>
-            );
-          })
+          ))
         )}
       </div>
     </div>
