@@ -31,7 +31,6 @@ const SavingsCurrentStatus = () => {
   const { savings, recurringSavings, addSavings, updateSavings, closeSavingsAccount, currentMonth } = useFinance();
   const [isOpen, setIsOpen] = useState(false);
   const [editingSaving, setEditingSaving] = useState<Savings | null>(null);
-  const [detailSaving, setDetailSaving] = useState<Savings | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     amount: '',
