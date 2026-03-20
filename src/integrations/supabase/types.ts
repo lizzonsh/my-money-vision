@@ -573,6 +573,7 @@ export type Database = {
           name: string
           recurring_day_of_month: number | null
           recurring_type: Database["public"]["Enums"]["recurring_type"] | null
+          risk_level: string | null
           transfer_method: Database["public"]["Enums"]["transfer_method"]
           updated_at: string
           user_id: string
@@ -592,6 +593,7 @@ export type Database = {
           name: string
           recurring_day_of_month?: number | null
           recurring_type?: Database["public"]["Enums"]["recurring_type"] | null
+          risk_level?: string | null
           transfer_method: Database["public"]["Enums"]["transfer_method"]
           updated_at?: string
           user_id: string
@@ -611,6 +613,7 @@ export type Database = {
           name?: string
           recurring_day_of_month?: number | null
           recurring_type?: Database["public"]["Enums"]["recurring_type"] | null
+          risk_level?: string | null
           transfer_method?: Database["public"]["Enums"]["transfer_method"]
           updated_at?: string
           user_id?: string
@@ -654,6 +657,51 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      savings_stock_holdings: {
+        Row: {
+          created_at: string
+          currency: string | null
+          current_price: number
+          id: string
+          last_updated: string | null
+          name: string
+          purchase_price: number
+          quantity: number
+          savings_name: string
+          ticker: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          currency?: string | null
+          current_price?: number
+          id?: string
+          last_updated?: string | null
+          name: string
+          purchase_price?: number
+          quantity?: number
+          savings_name: string
+          ticker: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          currency?: string | null
+          current_price?: number
+          id?: string
+          last_updated?: string | null
+          name?: string
+          purchase_price?: number
+          quantity?: number
+          savings_name?: string
+          ticker?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       user_issues: {
         Row: {
