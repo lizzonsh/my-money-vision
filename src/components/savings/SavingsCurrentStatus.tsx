@@ -21,8 +21,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import SavingsAccountDetail from './SavingsAccountDetail';
-
 const riskConfig = {
   low: { label: 'Low', icon: ShieldCheck, color: 'text-emerald-600 bg-emerald-50 border-emerald-200' },
   medium: { label: 'Med', icon: Shield, color: 'text-amber-600 bg-amber-50 border-amber-200' },
