@@ -73,12 +73,22 @@ export const useUserIssues = () => {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['user-issues'] });
-      toast({ title: 'Issue updated successfully' });
+    onMutate: async ({ id, ...updates }) => {
+      await queryClient.cancelQueries({ queryKey: ['user-issues', user?.id] });
+      const previous = queryClient.getQueryData<UserIssue[]>(['user-issues', user?.id]);
+      queryClient.setQueryData<UserIssue[]>(['user-issues', user?.id], (old) =>
+        old?.map((issue) => (issue.id === id ? { ...issue, ...updates } : issue)) ?? []
+      );
+      return { previous };
     },
-    onError: (error) => {
+    onError: (error, _vars, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(['user-issues', user?.id], context.previous);
+      }
       toast({ title: 'Failed to update issue', description: error.message, variant: 'destructive' });
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['user-issues'] });
     },
   });
 
