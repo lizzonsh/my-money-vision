@@ -203,7 +203,7 @@ const SavingsAnalysisPanel = () => {
         ? ((currentAmount - lastMonthAmount) / lastMonthAmount) * 100 : null;
 
       // YTD growth: compare current amount vs first record of the year
-      const hasYtdHistory = firstYtdRecord && firstYtdRecord.month !== saving.month;
+      const hasYtdHistory = firstYtdRecord && firstYtdRecord.id !== saving.id;
       const totalGrowth = hasYtdHistory && firstYtdAmount !== null ? currentAmount - firstYtdAmount : null;
       const totalGrowthPercent = hasYtdHistory && firstYtdAmount !== null && firstYtdAmount > 0
         ? ((currentAmount - firstYtdAmount) / firstYtdAmount) * 100 : null;
