@@ -183,9 +183,9 @@ export const SpendingByCategoryChart = React.memo(() => {
 
   if (chartData.length === 0) {
     return (
-      <div className="glass rounded-xl p-5 shadow-card animate-slide-up">
+      <div className="glass rounded-xl p-3 sm:p-5 shadow-card animate-slide-up">
         <h3 className="font-semibold mb-4">Spending by Category</h3>
-        <div className="h-64 flex items-center justify-center text-muted-foreground">
+        <div className="h-40 sm:h-64 flex items-center justify-center text-muted-foreground">
           No expense data for this month
         </div>
       </div>
@@ -193,18 +193,18 @@ export const SpendingByCategoryChart = React.memo(() => {
   }
 
   return (
-    <div className="glass rounded-xl p-5 shadow-card animate-slide-up">
-      <h3 className="font-semibold mb-4">Spending by Category</h3>
-      <div className="h-64 flex items-center">
+    <div className="glass rounded-xl p-3 sm:p-5 shadow-card animate-slide-up">
+      <h3 className="font-semibold text-sm sm:text-base mb-3 sm:mb-4">Spending by Category</h3>
+      <div className="h-48 sm:h-64 flex items-center">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
             <Pie
               data={chartData}
               cx="50%"
               cy="50%"
-              innerRadius={60}
-              outerRadius={90}
-              paddingAngle={4}
+              innerRadius={40}
+              outerRadius={65}
+              paddingAngle={3}
               dataKey="value"
             >
               {chartData.map((entry, index) => (
@@ -216,7 +216,8 @@ export const SpendingByCategoryChart = React.memo(() => {
               layout="vertical" 
               align="right" 
               verticalAlign="middle"
-              formatter={(value) => <span className="text-xs text-foreground capitalize">{value}</span>}
+              wrapperStyle={{ fontSize: '11px' }}
+              formatter={(value) => <span className="text-[10px] sm:text-xs text-foreground capitalize">{value}</span>}
             />
           </PieChart>
         </ResponsiveContainer>
