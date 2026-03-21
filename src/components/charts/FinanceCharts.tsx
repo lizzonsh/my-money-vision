@@ -202,9 +202,9 @@ export const SpendingByCategoryChart = React.memo(() => {
               data={chartData}
               cx="50%"
               cy="50%"
-              innerRadius={60}
-              outerRadius={90}
-              paddingAngle={4}
+              innerRadius={40}
+              outerRadius={65}
+              paddingAngle={3}
               dataKey="value"
             >
               {chartData.map((entry, index) => (
