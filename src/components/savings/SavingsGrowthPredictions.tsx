@@ -199,6 +199,19 @@ const SavingsGrowthPredictions = () => {
     [savings, currentMonth, recurringNetByAccount]
   );
 
+  // Future months
+  const futureMonths = useMemo(() => getNextMonths(currentMonth, 6), [currentMonth]);
+
+  // Deposit-only recurring map for forward projection
+  const recurringDepositPerAccount = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const rs of recurringSavings) {
+      if (!rs.is_active || rs.action_type !== 'deposit') continue;
+      map.set(rs.name, (map.get(rs.name) || 0) + Number(rs.default_amount || 0));
+    }
+    return map;
+  }, [recurringSavings]);
+
   // Build predictions per account
   const predictions = useMemo(() => {
     const result = new Map<string, Array<{ month: string; predicted: number; actual: number | null }>>();
