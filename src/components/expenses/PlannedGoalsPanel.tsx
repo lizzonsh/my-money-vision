@@ -40,7 +40,7 @@ const PlannedGoalsPanel = () => {
    if (plannedGoalItems.length === 0) return null;
 
    return (
-     <div className="glass rounded-xl p-5 shadow-card animate-slide-up">
+     <div className="glass rounded-xl p-3 sm:p-5 shadow-card animate-slide-up">
        <div className="flex items-center justify-between mb-4">
          <div>
            <h3 className="font-semibold flex items-center gap-2">
