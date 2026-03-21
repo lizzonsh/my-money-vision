@@ -55,9 +55,9 @@ export const useStockHoldings = (savingsName?: string) => {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['stock-holdings'] });
-      toast({ title: 'Stock added' });
+      toast({ title: variables.holding_type === 'provident_fund' ? 'Provident fund added' : 'Stock added' });
     },
     onError: (error: any) => {
       toast({ title: 'Failed to add stock', description: error.message, variant: 'destructive' });
