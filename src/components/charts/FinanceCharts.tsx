@@ -216,7 +216,8 @@ export const SpendingByCategoryChart = React.memo(() => {
               layout="vertical" 
               align="right" 
               verticalAlign="middle"
-              formatter={(value) => <span className="text-xs text-foreground capitalize">{value}</span>}
+              wrapperStyle={{ fontSize: '11px' }}
+              formatter={(value) => <span className="text-[10px] sm:text-xs text-foreground capitalize">{value}</span>}
             />
           </PieChart>
         </ResponsiveContainer>
