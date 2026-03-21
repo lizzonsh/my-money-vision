@@ -4,7 +4,7 @@ import { useSavings } from '@/hooks/useSavings';
 import { useStockHoldings } from '@/hooks/useStockHoldings';
 import { formatCurrency } from '@/lib/formatters';
 import { convertToILS } from '@/lib/currencyUtils';
-import { TrendingUp, TrendingDown, Minus, Plus, Trash2, BarChart3, ShieldCheck, ShieldAlert, Shield, PiggyBank, ChevronRight } from 'lucide-react';
+import { TrendingUp, TrendingDown, Minus, Plus, Trash2, BarChart3, ShieldCheck, ShieldAlert, Shield, PiggyBank, ChevronRight, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -244,11 +244,50 @@ const SavingsAnalysisPanel = () => {
     updateSavingsByName({ name: saving.name, updates: { risk_level: newRisk } });
   };
 
+  const handleExportCSV = () => {
+    // Build monthly data per account
+    const accountNames = [...new Set(savings.map(s => s.name))];
+    const allMonths = [...new Set(savings.map(s => s.month))].sort();
+
+    // For each account+month, get the latest record
+    const rows: string[] = [];
+    rows.push(['Account', 'Month', 'Amount', 'Currency', 'Risk Level', 'Action', 'Action Amount', 'Monthly Deposit'].join(','));
+
+    for (const name of accountNames) {
+      for (const month of allMonths) {
+        const records = savings
+          .filter(s => s.name === name && s.month === month)
+          .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
+        const rec = records[0];
+        if (!rec) continue;
+        const escapeName = `"${name.replace(/"/g, '""')}"`;
+        rows.push([
+          escapeName, rec.month, rec.amount, rec.currency || 'ILS',
+          rec.risk_level || 'medium', rec.action || '', rec.action_amount ?? '', rec.monthly_deposit ?? ''
+        ].join(','));
+      }
+    }
+
+    const blob = new Blob([rows.join('\n')], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `savings-stats-${currentMonth}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       {/* Account List */}
       <div className="glass rounded-xl p-5 shadow-card">
-        <h3 className="font-semibold mb-4">Accounts</h3>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="font-semibold">Accounts</h3>
+          <Button size="sm" variant="outline" className="gap-1.5 h-7 text-xs" onClick={handleExportCSV}>
+            <Download className="h-3 w-3" />
+            Export CSV
+          </Button>
+        </div>
         <div className="space-y-2">
           {uniqueSavings.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-4">No savings accounts</p>
