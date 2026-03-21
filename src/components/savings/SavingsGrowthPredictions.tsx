@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import { useFinance, Savings } from '@/contexts/FinanceContext';
 import { formatCurrency } from '@/lib/formatters';
 import { convertToILS } from '@/lib/currencyUtils';
+import { getCurrentMonth } from '@/lib/dateUtils';
 import { TrendingUp, TrendingDown, Minus, Eye, EyeOff, BarChart3, Target, Info, ChevronDown, ChevronUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
