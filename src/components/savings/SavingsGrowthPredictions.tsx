@@ -9,15 +9,20 @@ import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine, Legend,
 } from 'recharts';
 
+/** Calculate the number of months between two YYYY-MM strings */
+function monthsBetween(a: string, b: string): number {
+  const [y1, m1] = a.split('-').map(Number);
+  const [y2, m2] = b.split('-').map(Number);
+  return (y2 - y1) * 12 + (m2 - m1);
+}
+
 /**
  * Compute average monthly MARKET growth % per account from historical records.
- * This excludes deposits/withdrawals to isolate pure market/interest growth.
- * 
- * Formula per month: market_growth = balance_current - (balance_prev + net_deposits)
- * Where net_deposits = sum(deposit action_amounts) - sum(withdrawal action_amounts)
+ * Excludes deposits/withdrawals to isolate pure market/interest growth.
+ * When there are gaps between recorded months, the growth is normalized
+ * to a per-month rate by dividing by the number of months in the gap.
  */
 function computeAvgGrowthPerAccount(savings: Savings[], currentMonth: string) {
-  // Group records by account name
   const byName = new Map<string, Savings[]>();
   for (const s of savings) {
     if (s.month > currentMonth) continue;
@@ -26,21 +31,18 @@ function computeAvgGrowthPerAccount(savings: Savings[], currentMonth: string) {
     byName.set(s.name, list);
   }
 
-  const result = new Map<string, { avgGrowthPct: number; dataPoints: number; monthlyRates: Array<{ month: string; pct: number; actual: number; prev: number; netDeposits: number }> }>();
+  const result = new Map<string, { avgGrowthPct: number; dataPoints: number; monthlyRates: Array<{ month: string; pct: number; actual: number; prev: number; netDeposits: number; monthSpan: number }> }>();
 
   for (const [name, records] of byName) {
-    // Get latest balance per month AND sum net deposits per month
     const latestPerMonth = new Map<string, Savings>();
     const netDepositsPerMonth = new Map<string, number>();
 
     for (const r of records) {
-      // Track latest record for final balance
       const existing = latestPerMonth.get(r.month);
       if (!existing || new Date(r.updated_at) > new Date(existing.updated_at)) {
         latestPerMonth.set(r.month, r);
       }
 
-      // Accumulate net deposits for each month
       const currentNet = netDepositsPerMonth.get(r.month) || 0;
       if (r.action === 'deposit' && r.action_amount) {
         netDepositsPerMonth.set(r.month, currentNet + Number(r.action_amount));
@@ -57,22 +59,32 @@ function computeAvgGrowthPerAccount(savings: Savings[], currentMonth: string) {
       continue;
     }
 
-    const rates: Array<{ month: string; pct: number; actual: number; prev: number; netDeposits: number }> = [];
+    const rates: Array<{ month: string; pct: number; actual: number; prev: number; netDeposits: number; monthSpan: number }> = [];
+    let totalWeightedPct = 0;
+    let totalMonths = 0;
+
     for (let i = 1; i < sortedMonths.length; i++) {
+      const prevMonth = sortedMonths[i - 1][0];
+      const currMonth = sortedMonths[i][0];
       const prevAmt = Number(sortedMonths[i - 1][1].amount);
       const currAmt = Number(sortedMonths[i][1].amount);
-      const netDep = netDepositsPerMonth.get(sortedMonths[i][0]) || 0;
+      const gap = monthsBetween(prevMonth, currMonth);
+      const netDep = netDepositsPerMonth.get(currMonth) || 0;
 
-      if (prevAmt > 0) {
-        // Market growth = current balance - previous balance - net deposits
+      if (prevAmt > 0 && gap > 0) {
         const marketGrowth = currAmt - prevAmt - netDep;
-        const pct = (marketGrowth / prevAmt) * 100;
-        rates.push({ month: sortedMonths[i][0], pct, actual: currAmt, prev: prevAmt, netDeposits: netDep });
+        const totalPct = (marketGrowth / prevAmt) * 100;
+        // Normalize: spread growth evenly across gap months
+        const monthlyPct = totalPct / gap;
+
+        rates.push({ month: currMonth, pct: monthlyPct, actual: currAmt, prev: prevAmt, netDeposits: netDep, monthSpan: gap });
+        totalWeightedPct += monthlyPct * gap;
+        totalMonths += gap;
       }
     }
 
-    const avgPct = rates.length > 0 ? rates.reduce((s, r) => s + r.pct, 0) / rates.length : 0;
-    result.set(name, { avgGrowthPct: avgPct, dataPoints: rates.length, monthlyRates: rates });
+    const avgPct = totalMonths > 0 ? totalWeightedPct / totalMonths : 0;
+    result.set(name, { avgGrowthPct: avgPct, dataPoints: totalMonths, monthlyRates: rates });
   }
 
   return result;
