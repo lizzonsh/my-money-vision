@@ -455,7 +455,7 @@ interface IssueCardProps {
 const IssueCard = ({ issue, commentCount, onEdit, onDelete, onStatusChange, onOpenComments, getStatusColor, getPriorityColor, getStatusIcon }: IssueCardProps) => {
   return (
     <Card className="group cursor-grab active:cursor-grabbing">
-      <CardHeader className="pb-2">
+      <CardHeader className="p-3 sm:p-6 pb-2">
         <div className="flex items-start justify-between gap-2">
           <CardTitle className="text-base">{issue.title}</CardTitle>
           <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
