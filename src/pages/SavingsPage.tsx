@@ -43,10 +43,8 @@ const SavingsPage = () => {
             <SavingsCurrentStatus />
             <SavingsPredictionPortfolio />
           </div>
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2">
-              <SavingsMonthlyActivity highlightId={navState?.highlightId} />
-            </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <SavingsMonthlyActivity highlightId={navState?.highlightId} />
             <RiskAllocationChart />
           </div>
           <SavingsGrowthChart />
