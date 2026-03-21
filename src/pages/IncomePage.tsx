@@ -128,9 +128,6 @@ const IncomePage = () => {
           <RecurringIncomesPanel />
         </TabsContent>
 
-        <TabsContent value="projections">
-          <NetWorthProjection />
-        </TabsContent>
       </Tabs>
     </div>
   );
