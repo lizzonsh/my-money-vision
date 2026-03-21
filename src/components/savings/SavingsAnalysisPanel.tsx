@@ -278,6 +278,7 @@ const StockSection = ({ savingsName, currency }: { savingsName: string; currency
 const SavingsAnalysisPanel = () => {
   const { savings, updateSavings, currentMonth } = useFinance();
   const { updateSavingsByName } = useSavings();
+  const { holdings: allHoldings } = useStockHoldings();
   const [selectedAccount, setSelectedAccount] = useState<string | null>(null);
 
   const currentMonthDate = new Date(currentMonth + '-01');
