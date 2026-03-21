@@ -67,11 +67,11 @@ const StockSection = ({ savingsName, currency }: { savingsName: string; currency
     e.preventDefault();
     addHolding({
       savings_name: savingsName, ticker: 'FUND', name: fundForm.name,
-      quantity: 1, purchase_price: parseFloat(fundForm.totalInvested),
+      quantity: 1, purchase_price: 0,
       current_price: parseFloat(fundForm.currentValue), currency, holding_type: 'provident_fund',
       last_updated: new Date().toISOString(),
     });
-    setFundForm({ name: '', totalInvested: '', currentValue: '' });
+    setFundForm({ name: '', currentValue: '' });
     setShowAdd(null);
   };
 
