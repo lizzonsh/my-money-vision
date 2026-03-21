@@ -161,16 +161,16 @@ const SavingsCurrentStatus = () => {
         </Dialog>
       </div>
 
-      <div className="space-y-3">
+      <div className="space-y-2 sm:space-y-3">
         {uniqueSavings.length === 0 ? (
           <p className="text-sm text-muted-foreground text-center py-4">No savings accounts</p>
         ) : (
           uniqueSavings.map((saving) => (
-              <div key={saving.id} className="p-4 rounded-lg bg-secondary/30 hover:bg-secondary/50 transition-colors group">
+              <div key={saving.id} className="p-2.5 sm:p-4 rounded-lg bg-secondary/30 hover:bg-secondary/50 transition-colors group">
                 <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2.5 rounded-lg bg-primary/10 text-primary">
-                      <PiggyBank className="h-5 w-5" />
+                  <div className="flex items-center gap-2 sm:gap-3">
+                    <div className="p-1.5 sm:p-2.5 rounded-lg bg-primary/10 text-primary">
+                      <PiggyBank className="h-4 w-4 sm:h-5 sm:w-5" />
                     </div>
                     <div>
                       <p className="font-medium">{saving.name}</p>
