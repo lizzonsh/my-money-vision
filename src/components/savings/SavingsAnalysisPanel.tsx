@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useFinance, Savings } from '@/contexts/FinanceContext';
+import { useSavings } from '@/hooks/useSavings';
 import { useStockHoldings } from '@/hooks/useStockHoldings';
 import { formatCurrency } from '@/lib/formatters';
 import { convertToILS } from '@/lib/currencyUtils';
