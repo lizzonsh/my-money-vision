@@ -123,6 +123,16 @@ const StockSection = ({ savingsName, currency, currentMonth }: { savingsName: st
 
   return (
     <div className="space-y-4">
+      {/* Carried forward notice */}
+      {isCarriedForward && (
+        <div className="flex items-center justify-between p-3 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 text-xs">
+          <span>Showing holdings from a previous month (read-only)</span>
+          <Button size="sm" variant="outline" className="h-6 text-xs gap-1 border-amber-300 text-amber-700 hover:bg-amber-100" onClick={handleMakeEditable}>
+            <Plus className="h-3 w-3" /> Copy to this month
+          </Button>
+        </div>
+      )}
+
       {/* Add Investment Button */}
       <div className="flex items-center justify-between">
         <h4 className="font-medium text-sm">Investments</h4>
