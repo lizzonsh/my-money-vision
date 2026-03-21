@@ -92,6 +92,25 @@ export const useSavings = () => {
     },
   });
 
+  // Update a field across all records for an account name
+  const updateSavingsByName = useMutation({
+    mutationFn: async ({ name, updates }: { name: string; updates: Partial<SavingsUpdate> }) => {
+      if (!user) throw new Error('Not authenticated');
+      const { error } = await supabase
+        .from('savings')
+        .update(updates)
+        .eq('user_id', user.id)
+        .eq('name', name);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['savings'] });
+    },
+    onError: (error) => {
+      toast({ title: 'Failed to update savings', description: error.message, variant: 'destructive' });
+    },
+  });
+
   // Hard delete - only for specific records (used internally)
   const deleteSavings = useMutation({
     mutationFn: async (id: string) => {
@@ -116,6 +135,7 @@ export const useSavings = () => {
     error,
     addSavings: addSavings.mutate,
     updateSavings: updateSavings.mutate,
+    updateSavingsByName: updateSavingsByName.mutate,
     deleteSavings: deleteSavings.mutate,
     closeSavingsAccount: closeSavingsAccount.mutate,
   };
