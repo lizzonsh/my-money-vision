@@ -139,16 +139,16 @@ const SavingsPredictionPortfolio = () => {
         {Array.from(predictedPerAccount.entries()).map(([name, entry]) => (
           <div
             key={name}
-            className="p-4 rounded-lg bg-secondary/30"
+            className="p-2.5 sm:p-4 rounded-lg bg-secondary/30"
           >
             <div className="flex items-start justify-between">
-              <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-lg bg-primary/10 text-primary">
-                  <PiggyBank className="h-5 w-5" />
+              <div className="flex items-center gap-2 sm:gap-3">
+                <div className="p-1.5 sm:p-2.5 rounded-lg bg-primary/10 text-primary">
+                  <PiggyBank className="h-4 w-4 sm:h-5 sm:w-5" />
                 </div>
                 <div>
-                  <p className="font-medium">{name}</p>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="font-medium text-sm sm:text-base">{name}</p>
+                  <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
                     {entry.currency}
                     {entry.currency !== 'ILS' && (
                       <span className="ml-1">
@@ -164,7 +164,7 @@ const SavingsPredictionPortfolio = () => {
                 </div>
               </div>
               <div className="text-right">
-                <p className="text-lg font-bold">
+                <p className="text-base sm:text-lg font-bold">
                   {formatCurrency(entry.predicted, entry.currency)}
                 </p>
                 {entry.current !== entry.predicted && (
