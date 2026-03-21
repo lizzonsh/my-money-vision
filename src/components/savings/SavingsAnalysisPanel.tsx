@@ -114,10 +114,7 @@ const StockSection = ({ savingsName, currency }: { savingsName: string; currency
       {showAdd === 'provident_fund' && (
         <form onSubmit={handleAddFund} className="space-y-3 p-3 rounded-lg bg-secondary/20 border">
           <div><Label className="text-xs">Fund Name</Label><Input className="h-8 text-sm" placeholder="e.g. Migdal Provident" value={fundForm.name} onChange={(e) => setFundForm({ ...fundForm, name: e.target.value })} required /></div>
-          <div className="grid grid-cols-2 gap-2">
-            <div><Label className="text-xs">Total Invested</Label><Input className="h-8 text-sm" type="number" step="any" value={fundForm.totalInvested} onChange={(e) => setFundForm({ ...fundForm, totalInvested: e.target.value })} required /></div>
-            <div><Label className="text-xs">Current Value</Label><Input className="h-8 text-sm" type="number" step="any" value={fundForm.currentValue} onChange={(e) => setFundForm({ ...fundForm, currentValue: e.target.value })} required /></div>
-          </div>
+          <div><Label className="text-xs">Current Value</Label><Input className="h-8 text-sm" type="number" step="any" value={fundForm.currentValue} onChange={(e) => setFundForm({ ...fundForm, currentValue: e.target.value })} required /></div>
           <Button type="submit" size="sm" className="w-full h-8">Add Fund</Button>
         </form>
       )}
