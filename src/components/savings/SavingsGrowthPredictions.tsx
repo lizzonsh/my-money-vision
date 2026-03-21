@@ -163,6 +163,7 @@ function formatMonth(month: string): string {
 
 const SavingsGrowthPredictions = () => {
   const { savings, currentMonth, recurringSavings } = useFinance();
+  const { allHoldings } = useStockHoldings();
   const [selectedAccount, setSelectedAccount] = useState<string | null>(null);
   const [showActual, setShowActual] = useState(true);
   const [showMethodology, setShowMethodology] = useState(false);
