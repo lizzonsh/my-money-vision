@@ -42,8 +42,8 @@ const GrowthIndicator = ({ value, percent, label, currency }: { value: number | 
   );
 };
 
-const StockSection = ({ savingsName, currency }: { savingsName: string; currency: string }) => {
-  const { holdings, addHolding, updateHolding, deleteHolding } = useStockHoldings(savingsName);
+const StockSection = ({ savingsName, currency, currentMonth }: { savingsName: string; currency: string; currentMonth: string }) => {
+  const { holdings, addHolding, updateHolding, deleteHolding, carryForwardToMonth, allHoldings } = useStockHoldings(savingsName, currentMonth);
   const [showAdd, setShowAdd] = useState<'stock' | 'provident_fund' | null>(null);
   const [form, setForm] = useState({ ticker: '', name: '', quantity: '', purchasePrice: '', currentPrice: '' });
   const [fundForm, setFundForm] = useState({ name: '', currentValue: '' });
