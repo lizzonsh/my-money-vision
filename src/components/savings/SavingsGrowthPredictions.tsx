@@ -25,10 +25,15 @@ function addMonths(month: string, offset: number): string {
 /**
  * Compute average monthly MARKET growth % per account from historical records.
  * Excludes deposits/withdrawals to isolate pure market/interest growth.
- * If there is a gap between 2 saved months, the total growth is expanded into
- * month-by-month entries so missing months are still counted in the average.
+ * For gaps between recorded months, recurring monthly contributions are
+ * included for each missing month and the resulting return is normalized
+ * to a monthly rate across the gap.
  */
-function computeAvgGrowthPerAccount(savings: Savings[], currentMonth: string) {
+function computeAvgGrowthPerAccount(
+  savings: Savings[],
+  currentMonth: string,
+  recurringMonthlyNetByName: Map<string, number>
+) {
   const byName = new Map<string, Savings[]>();
   for (const s of savings) {
     if (s.month > currentMonth) continue;
@@ -46,7 +51,8 @@ function computeAvgGrowthPerAccount(savings: Savings[], currentMonth: string) {
 
   for (const [name, records] of byName) {
     const latestPerMonth = new Map<string, Savings>();
-    const netDepositsPerMonth = new Map<string, number>();
+    const explicitNetDepositsPerMonth = new Map<string, number>();
+    const monthsWithExplicitActions = new Set<string>();
 
     for (const r of records) {
       const existing = latestPerMonth.get(r.month);
@@ -54,11 +60,14 @@ function computeAvgGrowthPerAccount(savings: Savings[], currentMonth: string) {
         latestPerMonth.set(r.month, r);
       }
 
-      const currentNet = netDepositsPerMonth.get(r.month) || 0;
-      if (r.action === 'deposit' && r.action_amount) {
-        netDepositsPerMonth.set(r.month, currentNet + Number(r.action_amount));
-      } else if (r.action === 'withdrawal' && r.action_amount) {
-        netDepositsPerMonth.set(r.month, currentNet - Number(r.action_amount));
+      if (r.action) {
+        monthsWithExplicitActions.add(r.month);
+        const currentNet = explicitNetDepositsPerMonth.get(r.month) || 0;
+        if (r.action === 'deposit') {
+          explicitNetDepositsPerMonth.set(r.month, currentNet + Number(r.action_amount || 0));
+        } else if (r.action === 'withdrawal') {
+          explicitNetDepositsPerMonth.set(r.month, currentNet - Number(r.action_amount || 0));
+        }
       }
     }
 
@@ -80,8 +89,8 @@ function computeAvgGrowthPerAccount(savings: Savings[], currentMonth: string) {
     }
 
     const rates: Array<{ month: string; pct: number; actual: number; prev: number; netDeposits: number; monthSpan: number }> = [];
-    let totalPct = 0;
-    let totalMonths = 0;
+    let weightedPctSum = 0;
+    let weightedMonthCount = 0;
 
     for (let i = 1; i < sortedMonths.length; i++) {
       const prevMonth = sortedMonths[i - 1][0];
@@ -89,31 +98,40 @@ function computeAvgGrowthPerAccount(savings: Savings[], currentMonth: string) {
       const prevAmt = Number(sortedMonths[i - 1][1].amount);
       const currAmt = Number(sortedMonths[i][1].amount);
       const gap = monthsBetween(prevMonth, currMonth);
-      const netDep = netDepositsPerMonth.get(currMonth) || 0;
 
       if (prevAmt <= 0 || gap <= 0) continue;
 
-      const marketGrowth = currAmt - prevAmt - netDep;
-      const gapPct = (marketGrowth / prevAmt) * 100;
-      const monthlyPct = gapPct / gap;
-
+      let totalNetDep = 0;
       for (let step = 1; step <= gap; step++) {
-        rates.push({
-          month: addMonths(prevMonth, step),
-          pct: monthlyPct,
-          actual: currAmt,
-          prev: prevAmt,
-          netDeposits: netDep,
-          monthSpan: 1,
-        });
-        totalPct += monthlyPct;
-        totalMonths += 1;
+        const month = addMonths(prevMonth, step);
+        if (monthsWithExplicitActions.has(month)) {
+          totalNetDep += explicitNetDepositsPerMonth.get(month) || 0;
+        } else {
+          totalNetDep += recurringMonthlyNetByName.get(name) || 0;
+        }
       }
+
+      const adjustedEnding = currAmt - totalNetDep;
+      const monthlyPct = adjustedEnding > 0
+        ? (Math.pow(adjustedEnding / prevAmt, 1 / gap) - 1) * 100
+        : ((currAmt - prevAmt - totalNetDep) / prevAmt) * 100 / gap;
+
+      rates.push({
+        month: currMonth,
+        pct: monthlyPct,
+        actual: currAmt,
+        prev: prevAmt,
+        netDeposits: totalNetDep,
+        monthSpan: gap,
+      });
+
+      weightedPctSum += monthlyPct * gap;
+      weightedMonthCount += gap;
     }
 
     result.set(name, {
-      avgGrowthPct: totalMonths > 0 ? totalPct / totalMonths : 0,
-      dataPoints: totalMonths + 1,
+      avgGrowthPct: weightedMonthCount > 0 ? weightedPctSum / weightedMonthCount : 0,
+      dataPoints: sortedMonths.length,
       baselineMonth: sortedMonths[0][0],
       monthlyRates: rates,
     });
