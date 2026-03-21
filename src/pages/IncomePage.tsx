@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import IncomesList from '@/components/income/IncomesList';
 import RecurringIncomesPanel from '@/components/income/RecurringIncomesPanel';
-import NetWorthProjection from '@/components/predictions/NetWorthProjection';
+
 import MonthNavigation from '@/components/navigation/MonthNavigation';
 import { useFinance } from '@/contexts/FinanceContext';
 import { convertToILS } from '@/lib/currencyUtils';
@@ -108,7 +108,6 @@ const IncomePage = () => {
         <TabsList>
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="defaults">Default Incomes</TabsTrigger>
-          <TabsTrigger value="projections">Projections</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
@@ -129,9 +128,6 @@ const IncomePage = () => {
           <RecurringIncomesPanel />
         </TabsContent>
 
-        <TabsContent value="projections">
-          <NetWorthProjection />
-        </TabsContent>
       </Tabs>
     </div>
   );
