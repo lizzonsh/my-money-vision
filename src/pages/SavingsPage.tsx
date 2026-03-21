@@ -5,6 +5,7 @@ import SavingsPredictionPortfolio from '@/components/savings/SavingsPredictionPo
 import SavingsMonthlyActivity from '@/components/savings/SavingsMonthlyActivity';
 import RecurringSavingsPanel from '@/components/savings/RecurringSavingsPanel';
 import SavingsAnalysisPanel from '@/components/savings/SavingsAnalysisPanel';
+import SavingsGrowthPredictions from '@/components/savings/SavingsGrowthPredictions';
 import RiskAllocationChart from '@/components/savings/RiskAllocationChart';
 import MonthNavigation from '@/components/navigation/MonthNavigation';
 import { SavingsGrowthChart } from '@/components/charts/FinanceCharts';
@@ -35,6 +36,7 @@ const SavingsPage = () => {
         <TabsList>
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="analysis">Analysis & Stocks</TabsTrigger>
+          <TabsTrigger value="predictions">Growth Predictions</TabsTrigger>
           <TabsTrigger value="recurring">Recurring Savings</TabsTrigger>
         </TabsList>
 
@@ -52,6 +54,10 @@ const SavingsPage = () => {
 
         <TabsContent value="analysis">
           <SavingsAnalysisPanel />
+        </TabsContent>
+
+        <TabsContent value="predictions">
+          <SavingsGrowthPredictions />
         </TabsContent>
 
         <TabsContent value="recurring">
