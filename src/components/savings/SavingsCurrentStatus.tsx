@@ -173,8 +173,8 @@ const SavingsCurrentStatus = () => {
                       <PiggyBank className="h-4 w-4 sm:h-5 sm:w-5" />
                     </div>
                     <div>
-                      <p className="font-medium">{saving.name}</p>
-                      <p className="text-sm text-muted-foreground mt-0.5">
+                      <p className="font-medium text-sm sm:text-base">{saving.name}</p>
+                      <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
                         {saving.currency || 'ILS'}
                         {saving.currency && saving.currency !== 'ILS' && (
                           <span className="ml-1">≈ {formatCurrency(convertToILS(Number(saving.amount), saving.currency))}</span>
