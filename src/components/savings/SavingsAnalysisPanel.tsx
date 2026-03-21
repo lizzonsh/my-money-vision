@@ -316,7 +316,7 @@ const SavingsAnalysisPanel = () => {
                 <GrowthIndicator
                   value={selectedGrowth.totalGrowth}
                   percent={selectedGrowth.totalGrowthPercent}
-                  label="Total Growth"
+                  label="YTD Growth"
                   currency={selected.currency || 'ILS'}
                 />
               </div>
