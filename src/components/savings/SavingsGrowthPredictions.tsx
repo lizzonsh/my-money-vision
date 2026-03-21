@@ -548,15 +548,15 @@ const SavingsGrowthPredictions = () => {
       {/* Portfolio comparison table */}
       {isPortfolio && (
         <div className="glass rounded-xl p-3 sm:p-5 shadow-card">
-          <h4 className="font-semibold mb-4">Portfolio Forecast</h4>
+          <h4 className="font-semibold text-sm sm:text-base mb-3 sm:mb-4">Portfolio Forecast</h4>
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+            <table className="w-full text-xs sm:text-sm">
               <thead>
                 <tr className="border-b">
-                  <th className="text-left py-2 px-3 text-muted-foreground font-medium">Month</th>
-                  <th className="text-right py-2 px-3 text-muted-foreground font-medium">Predicted Total</th>
-                  <th className="text-right py-2 px-3 text-muted-foreground font-medium">Actual Total</th>
-                  <th className="text-right py-2 px-3 text-muted-foreground font-medium">Difference</th>
+                  <th className="text-left py-1.5 sm:py-2 px-2 sm:px-3 text-muted-foreground font-medium">Month</th>
+                  <th className="text-right py-1.5 sm:py-2 px-2 sm:px-3 text-muted-foreground font-medium">Predicted</th>
+                  <th className="text-right py-1.5 sm:py-2 px-2 sm:px-3 text-muted-foreground font-medium">Actual</th>
+                  <th className="text-right py-1.5 sm:py-2 px-2 sm:px-3 text-muted-foreground font-medium">Diff</th>
                 </tr>
               </thead>
               <tbody>
