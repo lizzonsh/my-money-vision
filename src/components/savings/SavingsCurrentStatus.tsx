@@ -80,8 +80,8 @@ const SavingsCurrentStatus = () => {
   };
 
   return (
-    <div className="glass rounded-xl p-5 shadow-card animate-slide-up">
-      <div className="flex items-center justify-between mb-4">
+    <div className="glass rounded-xl p-3 sm:p-5 shadow-card animate-slide-up">
+      <div className="flex items-center justify-between mb-3 sm:mb-4">
         <div>
           <h3 className="font-semibold">Current Portfolio</h3>
           <p className="text-lg font-bold">{formatCurrency(totalPortfolioValue)}</p>
@@ -161,20 +161,20 @@ const SavingsCurrentStatus = () => {
         </Dialog>
       </div>
 
-      <div className="space-y-3">
+      <div className="space-y-2 sm:space-y-3">
         {uniqueSavings.length === 0 ? (
           <p className="text-sm text-muted-foreground text-center py-4">No savings accounts</p>
         ) : (
           uniqueSavings.map((saving) => (
-              <div key={saving.id} className="p-4 rounded-lg bg-secondary/30 hover:bg-secondary/50 transition-colors group">
+              <div key={saving.id} className="p-2.5 sm:p-4 rounded-lg bg-secondary/30 hover:bg-secondary/50 transition-colors group">
                 <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2.5 rounded-lg bg-primary/10 text-primary">
-                      <PiggyBank className="h-5 w-5" />
+                  <div className="flex items-center gap-2 sm:gap-3">
+                    <div className="p-1.5 sm:p-2.5 rounded-lg bg-primary/10 text-primary">
+                      <PiggyBank className="h-4 w-4 sm:h-5 sm:w-5" />
                     </div>
                     <div>
-                      <p className="font-medium">{saving.name}</p>
-                      <p className="text-sm text-muted-foreground mt-0.5">
+                      <p className="font-medium text-sm sm:text-base">{saving.name}</p>
+                      <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
                         {saving.currency || 'ILS'}
                         {saving.currency && saving.currency !== 'ILS' && (
                           <span className="ml-1">≈ {formatCurrency(convertToILS(Number(saving.amount), saving.currency))}</span>
@@ -186,7 +186,7 @@ const SavingsCurrentStatus = () => {
                   </div>
                   <div className="flex items-center gap-2">
                     <div className="text-right">
-                      <p className="text-lg font-bold">{formatCurrency(Number(saving.amount), saving.currency || 'ILS')}</p>
+                      <p className="text-base sm:text-lg font-bold">{formatCurrency(Number(saving.amount), saving.currency || 'ILS')}</p>
                     </div>
                     <button onClick={() => handleOpenEdit(saving)} className="p-1.5 opacity-0 group-hover:opacity-100 hover:bg-secondary rounded transition-all">
                       <Pencil className="h-4 w-4 text-muted-foreground" />

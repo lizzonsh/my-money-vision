@@ -23,16 +23,16 @@ const SavingsPage = () => {
   }, [navState]);
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 sm:gap-4">
         <div>
-          <h1 className="text-3xl font-bold">Savings</h1>
-          <p className="text-muted-foreground">Manage your savings accounts and growth</p>
+          <h1 className="text-2xl sm:text-3xl font-bold">Savings</h1>
+          <p className="text-xs sm:text-sm text-muted-foreground">Manage your savings accounts and growth</p>
         </div>
         <MonthNavigation />
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 sm:space-y-6">
         <TabsList className="w-full overflow-x-auto flex justify-start no-scrollbar">
           <TabsTrigger value="overview" className="text-xs sm:text-sm">Overview</TabsTrigger>
           <TabsTrigger value="analysis" className="text-xs sm:text-sm">Analysis & Stocks</TabsTrigger>
@@ -40,12 +40,12 @@ const SavingsPage = () => {
           <TabsTrigger value="recurring" className="text-xs sm:text-sm">Recurring</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="overview" className="space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <TabsContent value="overview" className="space-y-4 sm:space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
             <SavingsCurrentStatus />
             <SavingsPredictionPortfolio />
           </div>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
             <SavingsMonthlyActivity highlightId={navState?.highlightId} />
             <RiskAllocationChart />
           </div>
