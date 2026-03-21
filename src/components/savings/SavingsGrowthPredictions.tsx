@@ -491,6 +491,41 @@ const SavingsGrowthPredictions = () => {
           </div>
         </div>
       )}
+
+      {/* Methodology Explanation */}
+      <div className="glass rounded-xl p-5 shadow-card">
+        <button
+          onClick={() => setShowMethodology(!showMethodology)}
+          className="flex items-center gap-2 w-full text-left"
+        >
+          <Info className="h-4 w-4 text-primary" />
+          <h4 className="font-semibold text-sm">How Predictions Work</h4>
+          {showMethodology ? <ChevronUp className="h-4 w-4 ml-auto text-muted-foreground" /> : <ChevronDown className="h-4 w-4 ml-auto text-muted-foreground" />}
+        </button>
+        {showMethodology && (
+          <div className="mt-4 space-y-3 text-sm text-muted-foreground">
+            <div>
+              <p className="font-medium text-foreground mb-1">1. Market Growth Rate (excluding deposits)</p>
+              <p>For each account, we compare balances between consecutive months and <strong>subtract any deposits/withdrawals</strong> to isolate pure market/interest growth. This gives us the real return rate independent of money you added or removed.</p>
+              <p className="mt-1 italic">Formula: market_growth% = (balance_now − balance_prev − net_deposits) / balance_prev × 100</p>
+            </div>
+            <div>
+              <p className="font-medium text-foreground mb-1">2. Average Growth Rate</p>
+              <p>We average all monthly market growth rates across the account's entire history to get a single average monthly growth percentage.</p>
+            </div>
+            <div>
+              <p className="font-medium text-foreground mb-1">3. Prediction Calculation</p>
+              <p>Starting from the current balance, each future month is projected by:</p>
+              <p className="mt-1 italic">predicted = previous_balance × (1 + avg_growth%) + expected_monthly_deposit</p>
+              <p className="mt-1">Expected monthly deposits come from your active recurring savings templates.</p>
+            </div>
+            <div>
+              <p className="font-medium text-foreground mb-1">4. Actual vs Predicted</p>
+              <p>When real data exists for a future month, we show it alongside the prediction so you can compare — this is especially useful for stock-dependent accounts where actual returns vary from the average.</p>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 };
