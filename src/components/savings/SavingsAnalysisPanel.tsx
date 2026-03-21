@@ -196,12 +196,12 @@ const StockSection = ({ savingsName, currency }: { savingsName: string; currency
                     <span className="font-mono font-semibold text-sm">{stock.ticker}</span>
                     <span className="text-xs text-muted-foreground">{stock.name}</span>
                   </div>
-                  <p className="text-xs text-muted-foreground mt-0.5">{stock.quantity} shares × {formatCurrency(stock.current_price, currency)}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">{stock.quantity} shares × {formatCurrency(stock.purchase_price, currency)}</p>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="text-right">
-                    <p className="text-sm font-semibold">{formatCurrency(stock.quantity * stock.current_price, currency)}</p>
-                    <p className={`text-xs ${isUp ? 'text-emerald-600' : 'text-red-600'}`}>{isUp ? '+' : ''}{formatCurrency(gain, currency)} ({isUp ? '+' : ''}{gainPct.toFixed(1)}%)</p>
+                    <p className="text-sm font-semibold">{formatCurrency(stock.current_price, currency)}</p>
+                    <p className={`text-xs ${isUp ? 'text-emerald-600' : 'text-red-600'}`}>{isUp ? '+' : ''}{gainPct.toFixed(1)}%</p>
                   </div>
                   <button onClick={() => startEditStock(stock)} className="p-1 opacity-0 group-hover:opacity-100 hover:bg-primary/10 rounded transition-all"><Pencil className="h-3.5 w-3.5 text-primary" /></button>
                   <button onClick={() => deleteHolding(stock.id)} className="p-1 opacity-0 group-hover:opacity-100 hover:bg-destructive/10 rounded transition-all"><Trash2 className="h-3.5 w-3.5 text-destructive" /></button>
