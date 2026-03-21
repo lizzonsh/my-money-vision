@@ -608,21 +608,35 @@ const ExpensesList = () => {
             {filteredDeposits.map((deposit) => {
               const amountInILS = convertToILS(Number(deposit.action_amount || 0), deposit.currency || 'ILS');
               const isUSD = deposit.currency === 'USD';
+              const isCompleted = deposit.is_completed;
               return (
                 <div
                   key={`deposit-${deposit.id}`}
                   onClick={() => navigate('/savings', { state: { tab: 'activity', highlightId: deposit.id } })}
-                  className="flex items-center justify-between p-3 rounded-lg bg-chart-5/10 border border-chart-5/20 interactive-card group cursor-pointer hover:bg-chart-5/20 transition-colors"
+                  className={cn(
+                    "flex items-center justify-between p-3 rounded-lg interactive-card group cursor-pointer transition-colors",
+                    isCompleted
+                      ? "bg-success/10 border border-success/30"
+                      : "bg-chart-5/10 border border-chart-5/20 hover:bg-chart-5/20"
+                  )}
                 >
                   <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-chart-5/20">
-                      <PiggyBank className="h-4 w-4 text-chart-5" />
+                    <div className={cn(
+                      "p-2 rounded-lg",
+                      isCompleted ? "bg-success/20" : "bg-chart-5/20"
+                    )}>
+                      <PiggyBank className={cn("h-4 w-4", isCompleted ? "text-success" : "text-chart-5")} />
                     </div>
                     <div>
                       <p className="text-sm font-medium">{deposit.name}</p>
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-xs px-2 py-0.5 rounded-full bg-warning/20 text-warning">
-                          Planned
+                        <span className={cn(
+                          "text-xs px-2 py-0.5 rounded-full",
+                          isCompleted
+                            ? "bg-success/20 text-success"
+                            : "bg-warning/20 text-warning"
+                        )}>
+                          {isCompleted ? 'Completed' : 'Planned'}
                         </span>
                         <span className="text-xs px-2 py-0.5 rounded-full bg-chart-5/20 text-chart-5">
                           Deposit → Savings
@@ -641,7 +655,9 @@ const ExpensesList = () => {
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="text-sm font-semibold text-chart-5">{formatCurrency(amountInILS)}</p>
+                    <p className={cn("text-sm font-semibold", isCompleted ? "text-success" : "text-chart-5")}>
+                      {formatCurrency(amountInILS)}
+                    </p>
                     {isUSD && (
                       <p className="text-xs text-muted-foreground">${Number(deposit.action_amount).toLocaleString()}</p>
                     )}
