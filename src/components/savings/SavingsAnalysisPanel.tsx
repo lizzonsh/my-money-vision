@@ -519,12 +519,12 @@ const SavingsAnalysisPanel = () => {
       <div className="lg:col-span-2">
         {selected && selectedGrowth ? (
           <div className="glass rounded-xl p-3 sm:p-5 shadow-card space-y-5">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <BarChart3 className="h-5 w-5 text-primary" />
-                <h3 className="font-semibold text-lg">{selected.name}</h3>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <BarChart3 className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+                <h3 className="font-semibold text-base sm:text-lg">{selected.name}</h3>
               </div>
-              <p className="text-xl font-bold">{formatCurrency(Number(selected.amount), selected.currency || 'ILS')}</p>
+              <p className="text-lg sm:text-xl font-bold">{formatCurrency(Number(selected.amount), selected.currency || 'ILS')}</p>
             </div>
 
             {/* Risk Level Selector */}
