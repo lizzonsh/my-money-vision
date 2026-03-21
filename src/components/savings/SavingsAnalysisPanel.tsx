@@ -219,7 +219,7 @@ const SavingsAnalysisPanel = () => {
   const selectedGrowth = selected ? growthDataMap.get(selected.name) : null;
 
   const handleRiskChange = (saving: Savings, newRisk: string) => {
-    updateSavings({ id: saving.id, risk_level: newRisk });
+    updateSavingsByName({ name: saving.name, updates: { risk_level: newRisk } });
   };
 
   return (
