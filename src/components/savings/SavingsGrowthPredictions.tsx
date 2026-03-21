@@ -94,9 +94,10 @@ function formatMonth(month: string): string {
 }
 
 const SavingsGrowthPredictions = () => {
-  const { savings, currentMonth } = useFinance();
+  const { savings, currentMonth, recurringSavings } = useFinance();
   const [selectedAccount, setSelectedAccount] = useState<string | null>(null);
   const [showActual, setShowActual] = useState(true);
+  const [showMethodology, setShowMethodology] = useState(false);
 
   const currentMonthDate = new Date(currentMonth + '-01');
 
