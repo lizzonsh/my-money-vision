@@ -8,6 +8,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from '@/components/ui/select';
 
 const riskConfig = {
   low: { label: 'Low Risk', icon: ShieldCheck, color: 'text-emerald-600 bg-emerald-50 border-emerald-200' },
@@ -148,7 +151,7 @@ const StockSection = ({ savingsName, currency }: { savingsName: string; currency
 };
 
 const SavingsAnalysisPanel = () => {
-  const { savings, currentMonth } = useFinance();
+  const { savings, updateSavings, currentMonth } = useFinance();
   const [selectedAccount, setSelectedAccount] = useState<string | null>(null);
 
   const currentMonthDate = new Date(currentMonth + '-01');
@@ -177,13 +180,16 @@ const SavingsAnalysisPanel = () => {
       const prevDate = new Date(y, m - 2, 1);
       const prevMonth = `${prevDate.getFullYear()}-${String(prevDate.getMonth() + 1).padStart(2, '0')}`;
 
-      const prevRecord = savings
-        .filter(s => s.name === saving.name && s.month === prevMonth && !s.action)
-        .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())[0];
+      // Find the latest record for this account in the previous month (any record, not just non-action)
+      const prevRecords = savings
+        .filter(s => s.name === saving.name && s.month === prevMonth)
+        .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
+      const prevRecord = prevRecords[0];
 
+      // Find the earliest record ever for total growth
       const allRecords = savings
-        .filter(s => s.name === saving.name && !s.action)
-        .sort((a, b) => a.month.localeCompare(b.month));
+        .filter(s => s.name === saving.name)
+        .sort((a, b) => a.month.localeCompare(b.month) || new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
       const firstRecord = allRecords[0];
 
       const currentAmount = Number(saving.amount);
@@ -194,9 +200,10 @@ const SavingsAnalysisPanel = () => {
       const monthlyGrowthPercent = lastMonthAmount !== null && lastMonthAmount > 0
         ? ((currentAmount - lastMonthAmount) / lastMonthAmount) * 100 : null;
 
-      const totalGrowth = firstAmount !== null && firstRecord?.month !== currentMonth
-        ? currentAmount - firstAmount : null;
-      const totalGrowthPercent = firstAmount !== null && firstAmount > 0 && firstRecord?.month !== currentMonth
+      // Show total growth if we have a first record from a different month
+      const hasHistory = firstRecord && firstRecord.month !== saving.month;
+      const totalGrowth = hasHistory && firstAmount !== null ? currentAmount - firstAmount : null;
+      const totalGrowthPercent = hasHistory && firstAmount !== null && firstAmount > 0
         ? ((currentAmount - firstAmount) / firstAmount) * 100 : null;
 
       map.set(saving.name, { lastMonthAmount, currentAmount, monthlyGrowth, monthlyGrowthPercent, firstAmount, totalGrowth, totalGrowthPercent });
@@ -206,6 +213,10 @@ const SavingsAnalysisPanel = () => {
 
   const selected = selectedAccount ? uniqueSavings.find(s => s.name === selectedAccount) : null;
   const selectedGrowth = selected ? growthDataMap.get(selected.name) : null;
+
+  const handleRiskChange = (saving: Savings, newRisk: string) => {
+    updateSavings({ id: saving.id, risk_level: newRisk });
+  };
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -217,7 +228,7 @@ const SavingsAnalysisPanel = () => {
             <p className="text-sm text-muted-foreground text-center py-4">No savings accounts</p>
           ) : (
             uniqueSavings.map((saving) => {
-              const riskLevel = (saving as any).risk_level || 'medium';
+              const riskLevel = saving.risk_level || 'medium';
               const risk = riskConfig[riskLevel as keyof typeof riskConfig] || riskConfig.medium;
               const RiskIcon = risk.icon;
               const growth = growthDataMap.get(saving.name);
@@ -267,19 +278,26 @@ const SavingsAnalysisPanel = () => {
               <div className="flex items-center gap-3">
                 <BarChart3 className="h-5 w-5 text-primary" />
                 <h3 className="font-semibold text-lg">{selected.name}</h3>
-                {(() => {
-                  const rl = (selected as any).risk_level || 'medium';
-                  const r = riskConfig[rl as keyof typeof riskConfig] || riskConfig.medium;
-                  const RI = r.icon;
-                  return (
-                    <Badge variant="outline" className={`gap-1 ${r.color}`}>
-                      <RI className="h-3 w-3" />
-                      {r.label}
-                    </Badge>
-                  );
-                })()}
               </div>
               <p className="text-xl font-bold">{formatCurrency(Number(selected.amount), selected.currency || 'ILS')}</p>
+            </div>
+
+            {/* Risk Level Selector */}
+            <div className="flex items-center gap-3">
+              <Label className="text-sm text-muted-foreground">Risk Level</Label>
+              <Select
+                value={selected.risk_level || 'medium'}
+                onValueChange={(value) => handleRiskChange(selected, value)}
+              >
+                <SelectTrigger className="w-44 h-8">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="low">🟢 Low Risk</SelectItem>
+                  <SelectItem value="medium">🟡 Medium Risk</SelectItem>
+                  <SelectItem value="high">🔴 High Risk</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             {/* Growth Cards */}
