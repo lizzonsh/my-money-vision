@@ -564,12 +564,12 @@ const SavingsGrowthPredictions = () => {
                   const diff = item.actual !== null ? item.actual - item.predicted : null;
                   return (
                     <tr key={item.month} className="border-b border-border/50 hover:bg-secondary/20">
-                      <td className="py-2.5 px-3">{formatMonth(item.month)}</td>
-                      <td className="text-right py-2.5 px-3 font-medium">{formatCurrency(item.predicted)}</td>
-                      <td className="text-right py-2.5 px-3">
+                      <td className="py-1.5 sm:py-2.5 px-2 sm:px-3">{formatMonth(item.month)}</td>
+                      <td className="text-right py-1.5 sm:py-2.5 px-2 sm:px-3 font-medium">{formatCurrency(item.predicted)}</td>
+                      <td className="text-right py-1.5 sm:py-2.5 px-2 sm:px-3">
                         {item.actual !== null ? formatCurrency(item.actual) : <span className="text-muted-foreground">—</span>}
                       </td>
-                      <td className="text-right py-2.5 px-3">
+                      <td className="text-right py-1.5 sm:py-2.5 px-2 sm:px-3">
                         {diff !== null ? (
                           <span className={cn(diff >= 0 ? 'text-emerald-600' : 'text-red-600')}>
                             {diff >= 0 ? '+' : ''}{formatCurrency(diff)}
