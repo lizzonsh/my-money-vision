@@ -234,10 +234,11 @@ const SavingsGrowthPredictions = () => {
         // Apply market growth first, then add recurring deposit
         runningAmt = runningAmt * (1 + avgPct / 100) + monthlyDeposit;
 
-        // Only show actual data for months up to current month
+        // Only show actual data for months up to the real calendar month
         // Future month records are recurring templates, not real actuals
+        const realCurrentMonth = getCurrentMonth();
         let actualAmt: number | null = null;
-        if (fm <= currentMonth) {
+        if (fm <= realCurrentMonth) {
           const actualRecords = savings
             .filter(s => s.name === name && s.month === fm)
             .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
