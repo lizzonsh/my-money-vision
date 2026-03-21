@@ -42,8 +42,8 @@ const GrowthIndicator = ({ value, percent, label, currency }: { value: number | 
   );
 };
 
-const StockSection = ({ savingsName, currency }: { savingsName: string; currency: string }) => {
-  const { holdings, addHolding, updateHolding, deleteHolding } = useStockHoldings(savingsName);
+const StockSection = ({ savingsName, currency, currentMonth }: { savingsName: string; currency: string; currentMonth: string }) => {
+  const { holdings, addHolding, updateHolding, deleteHolding, carryForwardToMonth, allHoldings } = useStockHoldings(savingsName, currentMonth);
   const [showAdd, setShowAdd] = useState<'stock' | 'provident_fund' | null>(null);
   const [form, setForm] = useState({ ticker: '', name: '', quantity: '', purchasePrice: '', currentPrice: '' });
   const [fundForm, setFundForm] = useState({ name: '', currentValue: '' });
@@ -54,13 +54,21 @@ const StockSection = ({ savingsName, currency }: { savingsName: string; currency
   const stocks = holdings.filter(h => h.holding_type !== 'provident_fund');
   const funds = holdings.filter(h => h.holding_type === 'provident_fund');
 
+  // Check if current month has its own holdings or is carrying forward
+  const hasOwnMonthData = allHoldings.some(h => h.month === currentMonth && (!savingsName || h.savings_name === savingsName));
+  const isCarriedForward = holdings.length > 0 && !hasOwnMonthData;
+
+  const handleMakeEditable = () => {
+    carryForwardToMonth({ fromHoldings: holdings, targetMonth: currentMonth });
+  };
+
   const handleAddStock = (e: React.FormEvent) => {
     e.preventDefault();
     addHolding({
       savings_name: savingsName, ticker: form.ticker.toUpperCase(), name: form.name,
       quantity: parseFloat(form.quantity), purchase_price: parseFloat(form.purchasePrice),
       current_price: parseFloat(form.currentPrice), currency, holding_type: 'stock',
-      last_updated: new Date().toISOString(),
+      month: currentMonth, last_updated: new Date().toISOString(),
     });
     setForm({ ticker: '', name: '', quantity: '', purchasePrice: '', currentPrice: '' });
     setShowAdd(null);
@@ -72,7 +80,7 @@ const StockSection = ({ savingsName, currency }: { savingsName: string; currency
       savings_name: savingsName, ticker: 'FUND', name: fundForm.name,
       quantity: 1, purchase_price: 0,
       current_price: parseFloat(fundForm.currentValue), currency, holding_type: 'provident_fund',
-      last_updated: new Date().toISOString(),
+      month: currentMonth, last_updated: new Date().toISOString(),
     });
     setFundForm({ name: '', currentValue: '' });
     setShowAdd(null);
@@ -115,6 +123,16 @@ const StockSection = ({ savingsName, currency }: { savingsName: string; currency
 
   return (
     <div className="space-y-4">
+      {/* Carried forward notice */}
+      {isCarriedForward && (
+        <div className="flex items-center justify-between p-3 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 text-xs">
+          <span>Showing holdings from a previous month (read-only)</span>
+          <Button size="sm" variant="outline" className="h-6 text-xs gap-1 border-amber-300 text-amber-700 hover:bg-amber-100" onClick={handleMakeEditable}>
+            <Plus className="h-3 w-3" /> Copy to this month
+          </Button>
+        </div>
+      )}
+
       {/* Add Investment Button */}
       <div className="flex items-center justify-between">
         <h4 className="font-medium text-sm">Investments</h4>
@@ -554,7 +572,7 @@ const SavingsAnalysisPanel = () => {
             </div>
 
             {/* Stocks */}
-            <StockSection savingsName={selected.name} currency={selected.currency || 'ILS'} />
+            <StockSection savingsName={selected.name} currency={selected.currency || 'ILS'} currentMonth={currentMonth} />
           </div>
         ) : (
           <div className="glass rounded-xl p-5 shadow-card flex items-center justify-center h-64">
