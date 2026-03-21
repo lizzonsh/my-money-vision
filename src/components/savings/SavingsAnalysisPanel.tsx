@@ -261,6 +261,7 @@ const StockSection = ({ savingsName, currency }: { savingsName: string; currency
           </div>
         )}
       </div>
+    </div>
   );
 };
 
