@@ -436,7 +436,7 @@ const RecurringPaymentsPanel = () => {
         </div>
       </div>
 
-      <div className="space-y-2 max-h-80 overflow-y-auto">
+      <div className="space-y-2">
         {recurringPayments.length === 0 ? (
           <p className="text-sm text-muted-foreground text-center py-4">
             No recurring payments set up
