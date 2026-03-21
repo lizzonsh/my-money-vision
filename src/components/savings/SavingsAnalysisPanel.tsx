@@ -166,7 +166,8 @@ const SavingsAnalysisPanel = () => {
     })
     .reduce((acc, saving) => {
       const existing = acc.get(saving.name);
-      if (!existing || new Date(saving.updated_at) > new Date(existing.updated_at)) {
+      if (!existing || saving.month > existing.month || 
+          (saving.month === existing.month && new Date(saving.updated_at) > new Date(existing.updated_at))) {
         acc.set(saving.name, saving);
       }
       return acc;
