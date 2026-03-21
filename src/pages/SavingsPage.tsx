@@ -33,11 +33,11 @@ const SavingsPage = () => {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 sm:space-y-6">
-        <TabsList className="w-full overflow-x-auto flex justify-start no-scrollbar">
-          <TabsTrigger value="overview" className="text-xs sm:text-sm">Overview</TabsTrigger>
-          <TabsTrigger value="analysis" className="text-xs sm:text-sm">Analysis & Stocks</TabsTrigger>
-          <TabsTrigger value="predictions" className="text-xs sm:text-sm">Predictions</TabsTrigger>
-          <TabsTrigger value="recurring" className="text-xs sm:text-sm">Recurring</TabsTrigger>
+        <TabsList className="w-full grid grid-cols-4 no-scrollbar">
+          <TabsTrigger value="overview" className="text-[11px] sm:text-sm px-1 sm:px-3">Overview</TabsTrigger>
+          <TabsTrigger value="analysis" className="text-[11px] sm:text-sm px-1 sm:px-3">Analysis</TabsTrigger>
+          <TabsTrigger value="predictions" className="text-[11px] sm:text-sm px-1 sm:px-3">Predictions</TabsTrigger>
+          <TabsTrigger value="recurring" className="text-[11px] sm:text-sm px-1 sm:px-3">Recurring</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-4 sm:space-y-6">
