@@ -31,6 +31,9 @@ const RecurringSavingsPanel = () => {
     addRecurringSavings, 
     updateRecurringSavings, 
     deleteRecurringSavings,
+    savings,
+    updateSavings,
+    currentMonth,
   } = useFinance();
   
   const [isOpen, setIsOpen] = useState(false);
@@ -95,6 +98,26 @@ const RecurringSavingsPanel = () => {
 
     if (editingTemplate) {
       updateRecurringSavings({ id: editingTemplate.id, ...templateData });
+      
+      // Also update any non-completed savings records for the current month
+      // that match the old template name, so monthly activity stays in sync
+      const matchingSavings = savings.filter(
+        s => s.month === currentMonth && 
+             s.name === editingTemplate.name && 
+             !s.is_completed && 
+             s.action_amount != null && 
+             Number(s.action_amount) > 0
+      );
+      for (const s of matchingSavings) {
+        updateSavings({
+          id: s.id,
+          name: templateData.name,
+          action: templateData.action_type as 'deposit' | 'withdrawal',
+          action_amount: templateData.default_amount,
+          transfer_method: templateData.transfer_method as 'bank_account' | 'credit_card',
+          card_id: templateData.card_id,
+        });
+      }
     } else {
       addRecurringSavings(templateData);
     }
