@@ -186,7 +186,7 @@ const SavingsCurrentStatus = () => {
                   </div>
                   <div className="flex items-center gap-2">
                     <div className="text-right">
-                      <p className="text-lg font-bold">{formatCurrency(Number(saving.amount), saving.currency || 'ILS')}</p>
+                      <p className="text-base sm:text-lg font-bold">{formatCurrency(Number(saving.amount), saving.currency || 'ILS')}</p>
                     </div>
                     <button onClick={() => handleOpenEdit(saving)} className="p-1.5 opacity-0 group-hover:opacity-100 hover:bg-secondary rounded transition-all">
                       <Pencil className="h-4 w-4 text-muted-foreground" />
