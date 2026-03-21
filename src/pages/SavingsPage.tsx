@@ -56,6 +56,10 @@ const SavingsPage = () => {
           <SavingsAnalysisPanel />
         </TabsContent>
 
+        <TabsContent value="predictions">
+          <SavingsGrowthPredictions />
+        </TabsContent>
+
         <TabsContent value="recurring">
           <RecurringSavingsPanel />
         </TabsContent>
