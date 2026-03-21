@@ -354,7 +354,7 @@ const SavingsMonthlyActivity = ({ highlightId }: { highlightId?: string }) => {
     : inputAmount;
 
   return (
-    <div className="glass rounded-xl p-5 shadow-card animate-slide-up">
+    <div className="glass rounded-xl p-3 sm:p-5 shadow-card animate-slide-up">
       <div className="flex items-center justify-between mb-4">
         <div>
           <h3 className="font-semibold">Monthly Activity</h3>

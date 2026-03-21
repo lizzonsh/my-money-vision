@@ -346,7 +346,7 @@ const SavingsGrowthPredictions = () => {
         {/* Stats Cards */}
         <div className="space-y-4">
           {/* Avg Growth */}
-          <div className="glass rounded-xl p-5 shadow-card">
+          <div className="glass rounded-xl p-3 sm:p-5 shadow-card">
             <div className="flex items-center gap-2 mb-3">
               <TrendingUp className="h-4 w-4 text-primary" />
               <h4 className="font-semibold text-sm">Avg Monthly Growth</h4>
@@ -381,7 +381,7 @@ const SavingsGrowthPredictions = () => {
           </div>
 
           {/* 6-Month Predicted End */}
-          <div className="glass rounded-xl p-5 shadow-card">
+          <div className="glass rounded-xl p-3 sm:p-5 shadow-card">
             <div className="flex items-center gap-2 mb-3">
               <Target className="h-4 w-4 text-primary" />
               <h4 className="font-semibold text-sm">6-Month Projection</h4>
@@ -411,7 +411,7 @@ const SavingsGrowthPredictions = () => {
         </div>
 
         {/* Chart */}
-        <div className="lg:col-span-2 glass rounded-xl p-5 shadow-card">
+        <div className="lg:col-span-2 glass rounded-xl p-3 sm:p-5 shadow-card">
           <div className="flex items-center justify-between mb-4">
             <h4 className="font-semibold">Growth Forecast</h4>
             <button
@@ -461,7 +461,7 @@ const SavingsGrowthPredictions = () => {
 
       {/* Per-Month Comparison Table */}
       {!isPortfolio && (
-        <div className="glass rounded-xl p-5 shadow-card">
+        <div className="glass rounded-xl p-3 sm:p-5 shadow-card">
           <h4 className="font-semibold mb-4">Predicted vs Actual Comparison</h4>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -547,7 +547,7 @@ const SavingsGrowthPredictions = () => {
 
       {/* Portfolio comparison table */}
       {isPortfolio && (
-        <div className="glass rounded-xl p-5 shadow-card">
+        <div className="glass rounded-xl p-3 sm:p-5 shadow-card">
           <h4 className="font-semibold mb-4">Portfolio Forecast</h4>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -614,7 +614,7 @@ const SavingsGrowthPredictions = () => {
         });
 
         return (
-          <div className="glass rounded-xl p-5 shadow-card">
+          <div className="glass rounded-xl p-3 sm:p-5 shadow-card">
             <div className="flex items-center gap-2 mb-4">
               <Briefcase className="h-4 w-4 text-primary" />
               <h4 className="font-semibold">Investment Holdings by Month</h4>
@@ -663,7 +663,7 @@ const SavingsGrowthPredictions = () => {
       })()}
 
       {/* Methodology Explanation */}
-      <div className="glass rounded-xl p-5 shadow-card">
+      <div className="glass rounded-xl p-3 sm:p-5 shadow-card">
         <button
           onClick={() => setShowMethodology(!showMethodology)}
           className="flex items-center gap-2 w-full text-left"

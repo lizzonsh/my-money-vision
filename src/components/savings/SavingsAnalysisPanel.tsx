@@ -458,7 +458,7 @@ const SavingsAnalysisPanel = () => {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       {/* Account List */}
-      <div className="glass rounded-xl p-5 shadow-card">
+      <div className="glass rounded-xl p-3 sm:p-5 shadow-card">
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-semibold">Accounts</h3>
           <Button size="sm" variant="outline" className="gap-1.5 h-7 text-xs" onClick={handleExportCSV}>
@@ -516,7 +516,7 @@ const SavingsAnalysisPanel = () => {
       {/* Detail Panel */}
       <div className="lg:col-span-2">
         {selected && selectedGrowth ? (
-          <div className="glass rounded-xl p-5 shadow-card space-y-5">
+          <div className="glass rounded-xl p-3 sm:p-5 shadow-card space-y-5">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <BarChart3 className="h-5 w-5 text-primary" />
@@ -575,7 +575,7 @@ const SavingsAnalysisPanel = () => {
             <StockSection savingsName={selected.name} currency={selected.currency || 'ILS'} currentMonth={currentMonth} />
           </div>
         ) : (
-          <div className="glass rounded-xl p-5 shadow-card flex items-center justify-center h-64">
+          <div className="glass rounded-xl p-3 sm:p-5 shadow-card flex items-center justify-center h-64">
             <p className="text-muted-foreground text-sm">Select an account to view analysis</p>
           </div>
         )}

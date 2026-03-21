@@ -149,7 +149,7 @@ const RecurringSavingsPanel = () => {
     .reduce((sum, t) => sum + convertToILS(Number(t.default_amount), t.currency || 'ILS'), 0);
 
   return (
-    <div className="glass rounded-xl p-5 shadow-card animate-slide-up">
+    <div className="glass rounded-xl p-3 sm:p-5 shadow-card animate-slide-up">
       <div className="flex items-center justify-between mb-4">
         <div>
           <h3 className="font-semibold flex items-center gap-2">

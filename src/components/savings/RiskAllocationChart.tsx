@@ -52,14 +52,14 @@ const RiskAllocationChart = () => {
 
   if (data.length === 0) {
     return (
-      <div className="glass rounded-xl p-5 shadow-card animate-slide-up flex items-center justify-center h-64">
+      <div className="glass rounded-xl p-3 sm:p-5 shadow-card animate-slide-up flex items-center justify-center h-64">
         <p className="text-sm text-muted-foreground">No savings data for risk allocation</p>
       </div>
     );
   }
 
   return (
-    <div className="glass rounded-xl p-5 shadow-card animate-slide-up">
+    <div className="glass rounded-xl p-3 sm:p-5 shadow-card animate-slide-up">
       <h3 className="font-semibold mb-4">Risk Allocation</h3>
 
       <div className="flex items-center gap-4">
