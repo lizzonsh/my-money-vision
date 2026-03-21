@@ -137,15 +137,14 @@ Deno.serve(async (req) => {
       }
 
       const previousAmount = latestSaving?.[0]?.amount || 0
-      const newAmount = rs.action_type === 'deposit' 
-        ? Number(previousAmount) + Number(rs.default_amount)
-        : Number(previousAmount) - Number(rs.default_amount)
 
+      // Don't modify the balance yet — the user must "complete" the
+      // transaction in the UI for it to affect the account balance.
       await supabase.from('savings').insert({
         user_id: rs.user_id,
         month: currentMonth,
         name: rs.name,
-        amount: newAmount,
+        amount: Number(previousAmount),
         action: rs.action_type,
         action_amount: rs.default_amount,
         transfer_method: rs.transfer_method,
@@ -153,7 +152,8 @@ Deno.serve(async (req) => {
         currency: rs.currency || 'ILS',
         recurring_type: 'monthly',
         recurring_day_of_month: rs.day_of_month,
-        monthly_deposit: rs.action_type === 'deposit' ? rs.default_amount : null,
+        monthly_deposit: null,
+        is_completed: false,
       })
       results.savings.added++
     }
