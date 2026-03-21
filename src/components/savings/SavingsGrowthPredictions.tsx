@@ -233,11 +233,15 @@ const SavingsGrowthPredictions = () => {
         // Apply market growth first, then add recurring deposit
         runningAmt = runningAmt * (1 + avgPct / 100) + monthlyDeposit;
 
-        // Check if actual data exists for this future month (latest record)
-        const actualRecords = savings
-          .filter(s => s.name === name && s.month === fm)
-          .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
-        const actualAmt = actualRecords.length > 0 ? Number(actualRecords[0].amount) : null;
+        // Only show actual data for months up to current month
+        // Future month records are recurring templates, not real actuals
+        let actualAmt: number | null = null;
+        if (fm <= currentMonth) {
+          const actualRecords = savings
+            .filter(s => s.name === name && s.month === fm)
+            .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
+          actualAmt = actualRecords.length > 0 ? Number(actualRecords[0].amount) : null;
+        }
 
         items.push({ month: fm, predicted: runningAmt, actual: actualAmt });
       }
@@ -246,7 +250,7 @@ const SavingsGrowthPredictions = () => {
     }
 
     return result;
-  }, [latestPerName, growthStats, futureMonths, savings, recurringDepositPerAccount]);
+  }, [latestPerName, growthStats, futureMonths, savings, recurringDepositPerAccount, currentMonth]);
 
   // Portfolio-level prediction (sum in ILS)
   const portfolioPrediction = useMemo(() => {
