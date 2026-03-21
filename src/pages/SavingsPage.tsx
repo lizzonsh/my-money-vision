@@ -36,6 +36,7 @@ const SavingsPage = () => {
         <TabsList>
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="analysis">Analysis & Stocks</TabsTrigger>
+          <TabsTrigger value="predictions">Growth Predictions</TabsTrigger>
           <TabsTrigger value="recurring">Recurring Savings</TabsTrigger>
         </TabsList>
 
