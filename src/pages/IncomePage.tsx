@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import IncomesList from '@/components/income/IncomesList';
 import RecurringIncomesPanel from '@/components/income/RecurringIncomesPanel';
-import NetWorthProjection from '@/components/predictions/NetWorthProjection';
+
 import MonthNavigation from '@/components/navigation/MonthNavigation';
 import { useFinance } from '@/contexts/FinanceContext';
 import { convertToILS } from '@/lib/currencyUtils';
