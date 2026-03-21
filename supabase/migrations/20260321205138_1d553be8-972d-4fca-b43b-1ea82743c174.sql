@@ -1,0 +1,2 @@
+ALTER TABLE public.savings_stock_holdings ADD COLUMN holding_type text NOT NULL DEFAULT 'stock';
+COMMENT ON COLUMN public.savings_stock_holdings.holding_type IS 'Type of holding: stock or provident_fund';
