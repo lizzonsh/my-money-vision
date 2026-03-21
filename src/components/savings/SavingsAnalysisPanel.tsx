@@ -183,13 +183,10 @@ const SavingsAnalysisPanel = () => {
     }>();
 
     for (const saving of uniqueSavings) {
-      const [y, m] = currentMonth.split('-').map(Number);
-      const prevDate = new Date(y, m - 2, 1);
-      const prevMonth = `${prevDate.getFullYear()}-${String(prevDate.getMonth() + 1).padStart(2, '0')}`;
-
+      // Find the most recent record from any month before the current one
       const prevRecords = savings
-        .filter(s => s.name === saving.name && s.month === prevMonth)
-        .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
+        .filter(s => s.name === saving.name && s.month < currentMonth)
+        .sort((a, b) => b.month.localeCompare(a.month) || new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
       const prevRecord = prevRecords[0];
 
       // YTD: earliest record from Jan of current year
