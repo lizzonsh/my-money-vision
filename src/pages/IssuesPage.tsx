@@ -490,7 +490,7 @@ const IssueCard = ({ issue, commentCount, onEdit, onDelete, onStatusChange, onOp
           {format(new Date(issue.created_at), 'MMM d, yyyy')}
         </CardDescription>
       </CardHeader>
-      <CardContent className="pt-0">
+      <CardContent className="pt-0 px-3 sm:px-6 pb-3 sm:pb-6">
         {issue.description && (
           <p className="text-sm text-muted-foreground mb-3 line-clamp-2">{issue.description}</p>
         )}
