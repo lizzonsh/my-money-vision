@@ -4,7 +4,7 @@ import { useSavings } from '@/hooks/useSavings';
 import { useStockHoldings } from '@/hooks/useStockHoldings';
 import { formatCurrency } from '@/lib/formatters';
 import { convertToILS } from '@/lib/currencyUtils';
-import { TrendingUp, TrendingDown, Minus, Plus, Trash2, BarChart3, ShieldCheck, ShieldAlert, Shield, PiggyBank, ChevronRight } from 'lucide-react';
+import { TrendingUp, TrendingDown, Minus, Plus, Trash2, BarChart3, ShieldCheck, ShieldAlert, Shield, PiggyBank, ChevronRight, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
