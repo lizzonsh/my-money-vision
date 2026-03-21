@@ -9,9 +9,15 @@ import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine, Legend,
 } from 'recharts';
 
-/** Compute average monthly growth % per account from historical records */
+/**
+ * Compute average monthly MARKET growth % per account from historical records.
+ * This excludes deposits/withdrawals to isolate pure market/interest growth.
+ * 
+ * Formula per month: market_growth = balance_current - (balance_prev + net_deposits)
+ * Where net_deposits = sum(deposit action_amounts) - sum(withdrawal action_amounts)
+ */
 function computeAvgGrowthPerAccount(savings: Savings[], currentMonth: string) {
-  // Group records by account name, sorted chronologically
+  // Group records by account name
   const byName = new Map<string, Savings[]>();
   for (const s of savings) {
     if (s.month > currentMonth) continue;
@@ -20,15 +26,26 @@ function computeAvgGrowthPerAccount(savings: Savings[], currentMonth: string) {
     byName.set(s.name, list);
   }
 
-  const result = new Map<string, { avgGrowthPct: number; dataPoints: number; monthlyRates: Array<{ month: string; pct: number; actual: number; prev: number }> }>();
+  const result = new Map<string, { avgGrowthPct: number; dataPoints: number; monthlyRates: Array<{ month: string; pct: number; actual: number; prev: number; netDeposits: number }> }>();
 
   for (const [name, records] of byName) {
-    // Get latest record per month
+    // Get latest balance per month AND sum net deposits per month
     const latestPerMonth = new Map<string, Savings>();
+    const netDepositsPerMonth = new Map<string, number>();
+
     for (const r of records) {
+      // Track latest record for final balance
       const existing = latestPerMonth.get(r.month);
       if (!existing || new Date(r.updated_at) > new Date(existing.updated_at)) {
         latestPerMonth.set(r.month, r);
+      }
+
+      // Accumulate net deposits for each month
+      const currentNet = netDepositsPerMonth.get(r.month) || 0;
+      if (r.action === 'deposit' && r.action_amount) {
+        netDepositsPerMonth.set(r.month, currentNet + Number(r.action_amount));
+      } else if (r.action === 'withdrawal' && r.action_amount) {
+        netDepositsPerMonth.set(r.month, currentNet - Number(r.action_amount));
       }
     }
 
@@ -40,13 +57,17 @@ function computeAvgGrowthPerAccount(savings: Savings[], currentMonth: string) {
       continue;
     }
 
-    const rates: Array<{ month: string; pct: number; actual: number; prev: number }> = [];
+    const rates: Array<{ month: string; pct: number; actual: number; prev: number; netDeposits: number }> = [];
     for (let i = 1; i < sortedMonths.length; i++) {
       const prevAmt = Number(sortedMonths[i - 1][1].amount);
       const currAmt = Number(sortedMonths[i][1].amount);
+      const netDep = netDepositsPerMonth.get(sortedMonths[i][0]) || 0;
+
       if (prevAmt > 0) {
-        const pct = ((currAmt - prevAmt) / prevAmt) * 100;
-        rates.push({ month: sortedMonths[i][0], pct, actual: currAmt, prev: prevAmt });
+        // Market growth = current balance - previous balance - net deposits
+        const marketGrowth = currAmt - prevAmt - netDep;
+        const pct = (marketGrowth / prevAmt) * 100;
+        rates.push({ month: sortedMonths[i][0], pct, actual: currAmt, prev: prevAmt, netDeposits: netDep });
       }
     }
 
