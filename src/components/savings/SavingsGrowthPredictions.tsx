@@ -179,23 +179,25 @@ const SavingsGrowthPredictions = () => {
 
   const accounts = Array.from(latestPerName.values());
 
-  // Compute growth stats
-  const growthStats = useMemo(() => computeAvgGrowthPerAccount(savings, currentMonth), [savings, currentMonth]);
-
-  // Future months
-  const futureMonths = useMemo(() => getNextMonths(currentMonth, 6), [currentMonth]);
-
-  // Build monthly recurring deposit map per account name
-  const recurringDepositPerAccount = useMemo(() => {
+  const recurringNetByAccount = useMemo(() => {
     const map = new Map<string, number>();
     for (const rs of recurringSavings) {
-      if (rs.is_active && rs.action_type === 'deposit') {
-        const current = map.get(rs.name) || 0;
-        map.set(rs.name, current + Number(rs.default_amount));
-      }
+      if (!rs.is_active) continue;
+      const current = map.get(rs.name) || 0;
+      const amount = Number(rs.default_amount || 0);
+      map.set(
+        rs.name,
+        current + (rs.action_type === 'deposit' ? amount : -amount)
+      );
     }
     return map;
   }, [recurringSavings]);
+
+  // Compute growth stats
+  const growthStats = useMemo(
+    () => computeAvgGrowthPerAccount(savings, currentMonth, recurringNetByAccount),
+    [savings, currentMonth, recurringNetByAccount]
+  );
 
   // Build predictions per account
   const predictions = useMemo(() => {
