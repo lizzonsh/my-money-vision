@@ -604,8 +604,10 @@ const SavingsGrowthPredictions = () => {
 
         const monthlyValues = sortedMonths.map(m => {
           const mHoldings = holdingsByMonth.get(m)!;
-          const totalCost = mHoldings.reduce((sum, h) =>
-            sum + (h.holding_type === 'provident_fund' ? h.purchase_price : h.quantity * h.purchase_price), 0);
+          const totalCost = mHoldings.reduce((sum, h) => {
+            const cost = h.holding_type === 'provident_fund' ? h.purchase_price : h.quantity * h.purchase_price;
+            return sum + convertToILS(cost, h.currency || 'ILS');
+          }, 0);
           return { month: m, cost: totalCost, count: mHoldings.length };
         });
 
@@ -631,18 +633,20 @@ const SavingsGrowthPredictions = () => {
                     const momChange = prevCost !== null ? item.cost - prevCost : null;
                     const momPct = prevCost !== null && prevCost > 0 ? ((item.cost - prevCost) / prevCost) * 100 : null;
 
-                    const mHoldings = holdingsByMonth.get(item.month)!;
-                    const currency = mHoldings[0]?.currency || 'ILS';
+                    // When viewing a specific account, use its currency; portfolio always uses ILS
+                    const displayCurrency = !isPortfolio
+                      ? (holdingsByMonth.get(item.month)![0]?.currency || 'ILS')
+                      : 'ILS';
 
                     return (
                       <tr key={item.month} className="border-b border-border/50 hover:bg-secondary/20">
                         <td className="py-2.5 px-3">{formatMonth(item.month)}</td>
                         <td className="text-right py-2.5 px-3">{item.count}</td>
-                        <td className="text-right py-2.5 px-3 font-medium">{formatCurrency(item.cost, currency)}</td>
+                        <td className="text-right py-2.5 px-3 font-medium">{formatCurrency(item.cost, displayCurrency)}</td>
                         <td className="text-right py-2.5 px-3">
                           {momChange !== null ? (
                             <span className={cn(momChange >= 0 ? 'text-emerald-600' : 'text-red-600')}>
-                              {momChange >= 0 ? '+' : ''}{formatCurrency(momChange, currency)} ({momPct?.toFixed(1)}%)
+                              {momChange >= 0 ? '+' : ''}{formatCurrency(momChange, displayCurrency)} ({momPct?.toFixed(1)}%)
                             </span>
                           ) : <span className="text-muted-foreground">—</span>}
                         </td>
