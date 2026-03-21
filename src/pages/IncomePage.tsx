@@ -105,9 +105,9 @@ const IncomePage = () => {
       </div>
 
       <Tabs defaultValue="overview" className="space-y-6">
-        <TabsList>
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="defaults">Default Incomes</TabsTrigger>
+        <TabsList className="w-full grid grid-cols-2">
+          <TabsTrigger value="overview" className="text-xs sm:text-sm">Overview</TabsTrigger>
+          <TabsTrigger value="defaults" className="text-xs sm:text-sm">Default Incomes</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">

@@ -21,9 +21,9 @@ const ExpensesPage = () => {
       </div>
 
       <Tabs defaultValue="overview" className="space-y-4 sm:space-y-6">
-        <TabsList>
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="recurring">Recurring Payments</TabsTrigger>
+        <TabsList className="w-full grid grid-cols-2">
+          <TabsTrigger value="overview" className="text-xs sm:text-sm">Overview</TabsTrigger>
+          <TabsTrigger value="recurring" className="text-xs sm:text-sm">Recurring</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-4 sm:space-y-6">
