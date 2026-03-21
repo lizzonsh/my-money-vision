@@ -606,7 +606,8 @@ const SavingsGrowthPredictions = () => {
           const mHoldings = holdingsByMonth.get(m)!;
           const totalCost = mHoldings.reduce((sum, h) => {
             const cost = h.holding_type === 'provident_fund' ? h.purchase_price : h.quantity * h.purchase_price;
-            return sum + convertToILS(cost, h.currency || 'ILS');
+            // Only convert to ILS in portfolio view; single account keeps native currency
+            return sum + (isPortfolio ? convertToILS(cost, h.currency || 'ILS') : cost);
           }, 0);
           return { month: m, cost: totalCost, count: mHoldings.length };
         });
