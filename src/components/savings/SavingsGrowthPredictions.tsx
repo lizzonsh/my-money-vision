@@ -80,9 +80,9 @@ function computeAvgGrowthPerAccount(
       continue;
     }
 
-    // Need at least 3 data points: first is founding deposit (baseline),
-    // second establishes the first real balance, growth starts from [1]->[2]
-    if (sortedMonths.length <= 2) {
+    // Need at least 2 data points: first is ground zero (baseline, not included),
+    // growth starts from [0]->[1]
+    if (sortedMonths.length <= 1) {
       result.set(name, {
         avgGrowthPct: 0,
         dataPoints: sortedMonths.length,
@@ -96,9 +96,9 @@ function computeAvgGrowthPerAccount(
     let weightedPctSum = 0;
     let weightedMonthCount = 0;
 
-    // Start from i=2: sortedMonths[0] is the founding deposit (starting point),
-    // sortedMonths[1] is the first real balance baseline, growth starts from [1]->[2]
-    for (let i = 2; i < sortedMonths.length; i++) {
+    // Start from i=1: sortedMonths[0] is ground zero (baseline, not included),
+    // growth calculation starts from [0]->[1]
+    for (let i = 1; i < sortedMonths.length; i++) {
       const prevMonth = sortedMonths[i - 1][0];
       const currMonth = sortedMonths[i][0];
       const prevAmt = Number(sortedMonths[i - 1][1].amount);
@@ -138,7 +138,7 @@ function computeAvgGrowthPerAccount(
     result.set(name, {
       avgGrowthPct: weightedMonthCount > 0 ? weightedPctSum / weightedMonthCount : 0,
       dataPoints: sortedMonths.length,
-      baselineMonth: sortedMonths[1][0], // Growth starts from the second data point
+      baselineMonth: sortedMonths[0][0], // First month is ground zero
       monthlyRates: rates,
     });
   }
