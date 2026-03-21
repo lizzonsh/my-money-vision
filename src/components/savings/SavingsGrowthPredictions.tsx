@@ -328,7 +328,8 @@ const SavingsGrowthPredictions = () => {
                   {(selectedStats?.avgGrowthPct || 0) >= 0 ? '+' : ''}{(selectedStats?.avgGrowthPct || 0).toFixed(2)}%
                 </p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Based on {selectedStats?.dataPoints || 0} months of data
+                  Based on {selectedStats?.dataPoints || 0} recorded months
+                  {selectedStats?.baselineMonth ? ` starting from ${formatMonth(selectedStats.baselineMonth)}` : ''}
                 </p>
               </div>
             )}
