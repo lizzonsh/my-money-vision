@@ -245,27 +245,24 @@ const SavingsAnalysisPanel = () => {
   };
 
   const handleExportCSV = () => {
-    // Build monthly data per account
-    const accountNames = [...new Set(savings.map(s => s.name))];
-    const allMonths = [...new Set(savings.map(s => s.month))].sort();
-
-    // For each account+month, get the latest record
     const rows: string[] = [];
-    rows.push(['Account', 'Month', 'Amount', 'Currency', 'Risk Level', 'Action', 'Action Amount', 'Monthly Deposit'].join(','));
+    rows.push(['Account', 'Amount', 'Currency', 'Risk Level', 'Last Month Growth', 'Last Month Growth %', 'YTD Growth', 'YTD Growth %', 'All-Time Growth', 'All-Time Growth %'].join(','));
 
-    for (const name of accountNames) {
-      for (const month of allMonths) {
-        const records = savings
-          .filter(s => s.name === name && s.month === month)
-          .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
-        const rec = records[0];
-        if (!rec) continue;
-        const escapeName = `"${name.replace(/"/g, '""')}"`;
-        rows.push([
-          escapeName, rec.month, rec.amount, rec.currency || 'ILS',
-          rec.risk_level || 'medium', rec.action || '', rec.action_amount ?? '', rec.monthly_deposit ?? ''
-        ].join(','));
-      }
+    for (const saving of uniqueSavings) {
+      const growth = growthDataMap.get(saving.name);
+      const escapeName = `"${saving.name.replace(/"/g, '""')}"`;
+      rows.push([
+        escapeName,
+        Number(saving.amount).toFixed(2),
+        saving.currency || 'ILS',
+        saving.risk_level || 'medium',
+        growth?.monthlyGrowth?.toFixed(2) ?? '',
+        growth?.monthlyGrowthPercent != null ? growth.monthlyGrowthPercent.toFixed(1) + '%' : '',
+        growth?.ytdGrowth?.toFixed(2) ?? '',
+        growth?.ytdGrowthPercent != null ? growth.ytdGrowthPercent.toFixed(1) + '%' : '',
+        growth?.allTimeGrowth?.toFixed(2) ?? '',
+        growth?.allTimeGrowthPercent != null ? growth.allTimeGrowthPercent.toFixed(1) + '%' : '',
+      ].join(','));
     }
 
     const blob = new Blob([rows.join('\n')], { type: 'text/csv;charset=utf-8;' });
