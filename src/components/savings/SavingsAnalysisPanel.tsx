@@ -54,13 +54,21 @@ const StockSection = ({ savingsName, currency, currentMonth }: { savingsName: st
   const stocks = holdings.filter(h => h.holding_type !== 'provident_fund');
   const funds = holdings.filter(h => h.holding_type === 'provident_fund');
 
+  // Check if current month has its own holdings or is carrying forward
+  const hasOwnMonthData = allHoldings.some(h => h.month === currentMonth && (!savingsName || h.savings_name === savingsName));
+  const isCarriedForward = holdings.length > 0 && !hasOwnMonthData;
+
+  const handleMakeEditable = () => {
+    carryForwardToMonth({ fromHoldings: holdings, targetMonth: currentMonth });
+  };
+
   const handleAddStock = (e: React.FormEvent) => {
     e.preventDefault();
     addHolding({
       savings_name: savingsName, ticker: form.ticker.toUpperCase(), name: form.name,
       quantity: parseFloat(form.quantity), purchase_price: parseFloat(form.purchasePrice),
       current_price: parseFloat(form.currentPrice), currency, holding_type: 'stock',
-      last_updated: new Date().toISOString(),
+      month: currentMonth, last_updated: new Date().toISOString(),
     });
     setForm({ ticker: '', name: '', quantity: '', purchasePrice: '', currentPrice: '' });
     setShowAdd(null);
