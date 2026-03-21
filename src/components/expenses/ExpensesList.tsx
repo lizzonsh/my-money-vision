@@ -261,7 +261,7 @@ const ExpensesList = () => {
   };
 
   return (
-    <div className="glass rounded-xl p-5 shadow-card animate-slide-up h-full flex flex-col">
+    <div className="glass rounded-xl p-3 sm:p-5 shadow-card animate-slide-up h-full flex flex-col">
       <div className="flex items-center justify-between mb-4">
         <div>
           <h3 className="font-semibold">Expenses</h3>

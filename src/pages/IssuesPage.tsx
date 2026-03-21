@@ -147,14 +147,14 @@ const IssuesPage = () => {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold flex items-center gap-2">
-            <Bug className="h-8 w-8" />
+          <h1 className="text-2xl sm:text-3xl font-bold flex items-center gap-2">
+            <Bug className="h-6 w-6 sm:h-8 sm:w-8" />
             Issues & Bugs
           </h1>
-          <p className="text-muted-foreground">Track bugs and issues you encounter while using the app</p>
+          <p className="text-xs sm:text-sm text-muted-foreground">Track bugs and issues you encounter</p>
         </div>
         
         <Dialog open={isAddDialogOpen} onOpenChange={handleDialogClose}>
@@ -267,18 +267,18 @@ const IssuesPage = () => {
         </Card>
       ) : (
         <DragDropContext onDragEnd={handleDragEnd}>
-          <div className="grid gap-6 md:grid-cols-3">
+           <div className="grid gap-4 sm:gap-6 grid-cols-1 md:grid-cols-3">
             {columns.map((col) => (
               <Droppable droppableId={col.id} key={col.id}>
                 {(provided, snapshot) => (
                   <div
                     ref={provided.innerRef}
                     {...provided.droppableProps}
-                    className={`space-y-4 min-h-[200px] rounded-lg p-2 transition-colors ${
+                    className={`space-y-3 sm:space-y-4 min-h-[150px] sm:min-h-[200px] rounded-lg p-1.5 sm:p-2 transition-colors ${
                       snapshot.isDraggingOver ? 'bg-accent/30' : ''
                     }`}
                   >
-                    <h2 className="text-lg font-semibold flex items-center gap-2">
+                    <h2 className="text-base sm:text-lg font-semibold flex items-center gap-2">
                       {col.icon}
                       {col.label} ({col.items.length})
                     </h2>
@@ -455,7 +455,7 @@ interface IssueCardProps {
 const IssueCard = ({ issue, commentCount, onEdit, onDelete, onStatusChange, onOpenComments, getStatusColor, getPriorityColor, getStatusIcon }: IssueCardProps) => {
   return (
     <Card className="group cursor-grab active:cursor-grabbing">
-      <CardHeader className="pb-2">
+      <CardHeader className="p-3 sm:p-6 pb-2">
         <div className="flex items-start justify-between gap-2">
           <CardTitle className="text-base">{issue.title}</CardTitle>
           <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -490,7 +490,7 @@ const IssueCard = ({ issue, commentCount, onEdit, onDelete, onStatusChange, onOp
           {format(new Date(issue.created_at), 'MMM d, yyyy')}
         </CardDescription>
       </CardHeader>
-      <CardContent className="pt-0">
+      <CardContent className="pt-0 px-3 sm:px-6 pb-3 sm:pb-6">
         {issue.description && (
           <p className="text-sm text-muted-foreground mb-3 line-clamp-2">{issue.description}</p>
         )}
