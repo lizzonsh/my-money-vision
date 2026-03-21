@@ -57,6 +57,7 @@ const SavingsAccountDetail = ({ saving, growthData, open, onOpenChange }: Props)
       purchase_price: parseFloat(stockForm.purchasePrice),
       current_price: parseFloat(stockForm.currentPrice),
       currency: saving.currency || 'ILS',
+      holding_type: 'stock',
       last_updated: new Date().toISOString(),
     });
     setStockForm({ ticker: '', name: '', quantity: '', purchasePrice: '', currentPrice: '' });

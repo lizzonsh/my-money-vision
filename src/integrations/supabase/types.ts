@@ -663,6 +663,7 @@ export type Database = {
           created_at: string
           currency: string | null
           current_price: number
+          holding_type: string
           id: string
           last_updated: string | null
           name: string
@@ -677,6 +678,7 @@ export type Database = {
           created_at?: string
           currency?: string | null
           current_price?: number
+          holding_type?: string
           id?: string
           last_updated?: string | null
           name: string
@@ -691,6 +693,7 @@ export type Database = {
           created_at?: string
           currency?: string | null
           current_price?: number
+          holding_type?: string
           id?: string
           last_updated?: string | null
           name?: string

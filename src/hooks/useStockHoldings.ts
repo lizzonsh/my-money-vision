@@ -13,6 +13,7 @@ export interface StockHolding {
   purchase_price: number;
   current_price: number;
   currency: string;
+  holding_type: 'stock' | 'provident_fund';
   last_updated: string;
   created_at: string;
   updated_at: string;
