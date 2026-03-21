@@ -585,6 +585,90 @@ const SavingsGrowthPredictions = () => {
         </div>
       )}
 
+      {/* Investment Holdings Monthly Tracking */}
+      {(() => {
+        // Group holdings by month to show investment value over time
+        const holdingsByMonth = new Map<string, StockHolding[]>();
+        const relevantHoldings = !isPortfolio
+          ? allHoldings.filter(h => h.savings_name === selected)
+          : allHoldings;
+
+        for (const h of relevantHoldings) {
+          const list = holdingsByMonth.get(h.month) || [];
+          list.push(h);
+          holdingsByMonth.set(h.month, list);
+        }
+
+        const sortedMonths = Array.from(holdingsByMonth.keys()).sort();
+        if (sortedMonths.length === 0) return null;
+
+        const monthlyValues = sortedMonths.map(m => {
+          const mHoldings = holdingsByMonth.get(m)!;
+          const totalValue = mHoldings.reduce((sum, h) =>
+            sum + (h.holding_type === 'provident_fund' ? h.current_price : h.quantity * h.current_price), 0);
+          const totalCost = mHoldings.reduce((sum, h) =>
+            sum + (h.holding_type === 'provident_fund' ? h.purchase_price : h.quantity * h.purchase_price), 0);
+          return { month: m, value: totalValue, cost: totalCost, count: mHoldings.length };
+        });
+
+        return (
+          <div className="glass rounded-xl p-5 shadow-card">
+            <div className="flex items-center gap-2 mb-4">
+              <Briefcase className="h-4 w-4 text-primary" />
+              <h4 className="font-semibold">Investment Holdings by Month</h4>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b">
+                    <th className="text-left py-2 px-3 text-muted-foreground font-medium">Month</th>
+                    <th className="text-right py-2 px-3 text-muted-foreground font-medium">Holdings</th>
+                    <th className="text-right py-2 px-3 text-muted-foreground font-medium">Total Value</th>
+                    <th className="text-right py-2 px-3 text-muted-foreground font-medium">Total Cost</th>
+                    <th className="text-right py-2 px-3 text-muted-foreground font-medium">Gain/Loss</th>
+                    <th className="text-right py-2 px-3 text-muted-foreground font-medium">MoM Change</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {monthlyValues.map((item, idx) => {
+                    const gain = item.value - item.cost;
+                    const gainPct = item.cost > 0 ? (gain / item.cost) * 100 : 0;
+                    const prevValue = idx > 0 ? monthlyValues[idx - 1].value : null;
+                    const momChange = prevValue !== null ? item.value - prevValue : null;
+                    const momPct = prevValue !== null && prevValue > 0 ? ((item.value - prevValue) / prevValue) * 100 : null;
+
+                    // Determine currency from holdings
+                    const mHoldings = holdingsByMonth.get(item.month)!;
+                    const currency = mHoldings[0]?.currency || 'ILS';
+
+                    return (
+                      <tr key={item.month} className="border-b border-border/50 hover:bg-secondary/20">
+                        <td className="py-2.5 px-3">{formatMonth(item.month)}</td>
+                        <td className="text-right py-2.5 px-3">{item.count}</td>
+                        <td className="text-right py-2.5 px-3 font-medium">{formatCurrency(item.value, currency)}</td>
+                        <td className="text-right py-2.5 px-3">{formatCurrency(item.cost, currency)}</td>
+                        <td className="text-right py-2.5 px-3">
+                          <span className={cn(gain >= 0 ? 'text-emerald-600' : 'text-red-600')}>
+                            {gain >= 0 ? '+' : ''}{formatCurrency(gain, currency)} ({gainPct.toFixed(1)}%)
+                          </span>
+                        </td>
+                        <td className="text-right py-2.5 px-3">
+                          {momChange !== null ? (
+                            <span className={cn(momChange >= 0 ? 'text-emerald-600' : 'text-red-600')}>
+                              {momChange >= 0 ? '+' : ''}{formatCurrency(momChange, currency)} ({momPct?.toFixed(1)}%)
+                            </span>
+                          ) : <span className="text-muted-foreground">—</span>}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        );
+      })()}
+
       {/* Methodology Explanation */}
       <div className="glass rounded-xl p-5 shadow-card">
         <button
