@@ -52,11 +52,11 @@ const SavingsPage = () => {
           <SavingsGrowthChart />
         </TabsContent>
 
-        <TabsContent value="analysis">
+        <TabsContent value="analysis" className="animate-fade-in">
           <SavingsAnalysisPanel />
         </TabsContent>
 
-        <TabsContent value="predictions">
+        <TabsContent value="predictions" className="animate-fade-in">
           <SavingsGrowthPredictions />
         </TabsContent>
 
