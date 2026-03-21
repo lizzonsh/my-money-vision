@@ -278,6 +278,7 @@ const StockSection = ({ savingsName, currency }: { savingsName: string; currency
 const SavingsAnalysisPanel = () => {
   const { savings, updateSavings, currentMonth } = useFinance();
   const { updateSavingsByName } = useSavings();
+  const { holdings: allHoldings } = useStockHoldings();
   const [selectedAccount, setSelectedAccount] = useState<string | null>(null);
 
   const currentMonthDate = new Date(currentMonth + '-01');
@@ -387,6 +388,44 @@ const SavingsAnalysisPanel = () => {
         growth?.allTimeGrowth?.toFixed(2) ?? '',
         growth?.allTimeGrowthPercent != null ? growth.allTimeGrowthPercent.toFixed(1) + '%' : '',
       ].join(','));
+    }
+
+    // Stocks section
+    const stocks = allHoldings.filter(h => h.holding_type !== 'provident_fund');
+    if (stocks.length > 0) {
+      rows.push('');
+      rows.push(['Account', 'Ticker', 'Name', 'Quantity', 'Buy Price', 'Current Price', 'Value', 'Gain/Loss', 'Gain %'].join(','));
+      for (const s of stocks) {
+        const value = s.quantity * s.current_price;
+        const cost = s.quantity * s.purchase_price;
+        const gain = value - cost;
+        const pct = s.purchase_price > 0 ? ((s.current_price - s.purchase_price) / s.purchase_price) * 100 : 0;
+        rows.push([
+          `"${s.savings_name.replace(/"/g, '""')}"`,
+          s.ticker,
+          `"${s.name.replace(/"/g, '""')}"`,
+          s.quantity,
+          s.purchase_price.toFixed(2),
+          s.current_price.toFixed(2),
+          value.toFixed(2),
+          gain.toFixed(2),
+          pct.toFixed(1) + '%',
+        ].join(','));
+      }
+    }
+
+    // Provident Funds section
+    const funds = allHoldings.filter(h => h.holding_type === 'provident_fund');
+    if (funds.length > 0) {
+      rows.push('');
+      rows.push(['Account', 'Fund Name', 'Current Value'].join(','));
+      for (const f of funds) {
+        rows.push([
+          `"${f.savings_name.replace(/"/g, '""')}"`,
+          `"${f.name.replace(/"/g, '""')}"`,
+          f.current_price.toFixed(2),
+        ].join(','));
+      }
     }
 
     const blob = new Blob([rows.join('\n')], { type: 'text/csv;charset=utf-8;' });
