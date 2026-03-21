@@ -27,15 +27,17 @@ const GrowthIndicator = ({ value, percent, label, currency }: { value: number | 
   const colorClass = isPositive ? 'text-emerald-600' : isZero ? 'text-muted-foreground' : 'text-red-600';
 
   return (
-    <div className="flex flex-col">
-      <span className="text-xs text-muted-foreground mb-1">{label}</span>
-      <div className={`flex items-center gap-1.5 ${colorClass}`}>
-        <Icon className="h-4 w-4" />
-        <span className="font-semibold text-sm">
-          {isPositive ? '+' : ''}{formatCurrency(value, currency)}
-        </span>
+    <div className="flex flex-col min-w-0">
+      <span className="text-[10px] sm:text-xs text-muted-foreground mb-1">{label}</span>
+      <div className={`flex flex-col sm:flex-row sm:items-center gap-0.5 sm:gap-1.5 ${colorClass}`}>
+        <div className="flex items-center gap-1">
+          <Icon className="h-3 w-3 sm:h-4 sm:w-4 shrink-0" />
+          <span className="font-semibold text-xs sm:text-sm truncate">
+            {isPositive ? '+' : ''}{formatCurrency(value, currency)}
+          </span>
+        </div>
         {percent !== null && (
-          <span className="text-xs opacity-80">({isPositive ? '+' : ''}{percent.toFixed(1)}%)</span>
+          <span className="text-[10px] sm:text-xs opacity-80">({isPositive ? '+' : ''}{percent.toFixed(1)}%)</span>
         )}
       </div>
     </div>
