@@ -587,11 +587,12 @@ const SavingsGrowthPredictions = () => {
 
       {/* Investment Holdings Monthly Tracking */}
       {(() => {
-        // Group holdings by month to show investment value over time
+        // Group stock holdings by month to show stock investment over time
         const holdingsByMonth = new Map<string, StockHolding[]>();
-        const relevantHoldings = !isPortfolio
+        const relevantHoldings = (!isPortfolio
           ? allHoldings.filter(h => h.savings_name === selected)
-          : allHoldings;
+          : allHoldings
+        ).filter(h => h.holding_type !== 'provident_fund');
 
         for (const h of relevantHoldings) {
           const list = holdingsByMonth.get(h.month) || [];
@@ -605,7 +606,7 @@ const SavingsGrowthPredictions = () => {
         const monthlyValues = sortedMonths.map(m => {
           const mHoldings = holdingsByMonth.get(m)!;
           const totalCost = mHoldings.reduce((sum, h) => {
-            const cost = h.holding_type === 'provident_fund' ? h.purchase_price : h.quantity * h.purchase_price;
+            const cost = h.quantity * h.purchase_price;
             // Only convert to ILS in portfolio view; single account keeps native currency
             return sum + (isPortfolio ? convertToILS(cost, h.currency || 'ILS') : cost);
           }, 0);
