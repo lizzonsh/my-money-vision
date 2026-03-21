@@ -320,7 +320,7 @@ const SavingsAnalysisPanel = () => {
             </div>
 
             {/* Growth Cards */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-3 gap-4">
               <div className="p-4 rounded-lg bg-secondary/30">
                 <GrowthIndicator
                   value={selectedGrowth.monthlyGrowth}
@@ -331,9 +331,17 @@ const SavingsAnalysisPanel = () => {
               </div>
               <div className="p-4 rounded-lg bg-secondary/30">
                 <GrowthIndicator
-                  value={selectedGrowth.totalGrowth}
-                  percent={selectedGrowth.totalGrowthPercent}
+                  value={selectedGrowth.ytdGrowth}
+                  percent={selectedGrowth.ytdGrowthPercent}
                   label="YTD Growth"
+                  currency={selected.currency || 'ILS'}
+                />
+              </div>
+              <div className="p-4 rounded-lg bg-secondary/30">
+                <GrowthIndicator
+                  value={selectedGrowth.allTimeGrowth}
+                  percent={selectedGrowth.allTimeGrowthPercent}
+                  label="All-Time Growth"
                   currency={selected.currency || 'ILS'}
                 />
               </div>
