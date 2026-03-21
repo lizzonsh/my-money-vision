@@ -1,10 +1,10 @@
 import { useState, useMemo } from 'react';
 import { useFinance, Savings } from '@/contexts/FinanceContext';
 import { useSavings } from '@/hooks/useSavings';
-import { useStockHoldings } from '@/hooks/useStockHoldings';
+import { useStockHoldings, StockHolding } from '@/hooks/useStockHoldings';
 import { formatCurrency } from '@/lib/formatters';
 import { convertToILS } from '@/lib/currencyUtils';
-import { TrendingUp, TrendingDown, Minus, Plus, Trash2, BarChart3, ShieldCheck, ShieldAlert, Shield, PiggyBank, ChevronRight, Download } from 'lucide-react';
+import { TrendingUp, TrendingDown, Minus, Plus, Trash2, BarChart3, ShieldCheck, ShieldAlert, Shield, PiggyBank, ChevronRight, Download, Pencil, X, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -43,10 +43,13 @@ const GrowthIndicator = ({ value, percent, label, currency }: { value: number | 
 };
 
 const StockSection = ({ savingsName, currency }: { savingsName: string; currency: string }) => {
-  const { holdings, addHolding, deleteHolding } = useStockHoldings(savingsName);
+  const { holdings, addHolding, updateHolding, deleteHolding } = useStockHoldings(savingsName);
   const [showAdd, setShowAdd] = useState<'stock' | 'provident_fund' | null>(null);
   const [form, setForm] = useState({ ticker: '', name: '', quantity: '', purchasePrice: '', currentPrice: '' });
   const [fundForm, setFundForm] = useState({ name: '', currentValue: '' });
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState({ ticker: '', name: '', quantity: '', purchasePrice: '', currentPrice: '' });
+  const [editFundForm, setEditFundForm] = useState({ name: '', currentValue: '' });
 
   const stocks = holdings.filter(h => h.holding_type !== 'provident_fund');
   const funds = holdings.filter(h => h.holding_type === 'provident_fund');
@@ -73,6 +76,39 @@ const StockSection = ({ savingsName, currency }: { savingsName: string; currency
     });
     setFundForm({ name: '', currentValue: '' });
     setShowAdd(null);
+  };
+
+  const startEditStock = (stock: StockHolding) => {
+    setEditingId(stock.id);
+    setEditForm({
+      ticker: stock.ticker, name: stock.name,
+      quantity: String(stock.quantity), purchasePrice: String(stock.purchase_price),
+      currentPrice: String(stock.current_price),
+    });
+  };
+
+  const startEditFund = (fund: StockHolding) => {
+    setEditingId(fund.id);
+    setEditFundForm({ name: fund.name, currentValue: String(fund.current_price) });
+  };
+
+  const saveEditStock = () => {
+    if (!editingId) return;
+    updateHolding({
+      id: editingId, ticker: editForm.ticker.toUpperCase(), name: editForm.name,
+      quantity: parseFloat(editForm.quantity), purchase_price: parseFloat(editForm.purchasePrice),
+      current_price: parseFloat(editForm.currentPrice), last_updated: new Date().toISOString(),
+    });
+    setEditingId(null);
+  };
+
+  const saveEditFund = () => {
+    if (!editingId) return;
+    updateHolding({
+      id: editingId, name: editFundForm.name,
+      current_price: parseFloat(editFundForm.currentValue), last_updated: new Date().toISOString(),
+    });
+    setEditingId(null);
   };
 
   const hasAny = holdings.length > 0;
@@ -128,9 +164,31 @@ const StockSection = ({ savingsName, currency }: { savingsName: string; currency
         <div className="space-y-2">
           <h5 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Stocks</h5>
           {stocks.map((stock) => {
+            const isEditing = editingId === stock.id;
             const gain = (stock.current_price - stock.purchase_price) * stock.quantity;
             const gainPct = stock.purchase_price > 0 ? ((stock.current_price - stock.purchase_price) / stock.purchase_price) * 100 : 0;
             const isUp = gain > 0;
+
+            if (isEditing) {
+              return (
+                <div key={stock.id} className="p-3 rounded-lg bg-secondary/20 border border-primary/30 space-y-2">
+                  <div className="grid grid-cols-2 gap-2">
+                    <div><Label className="text-xs">Ticker</Label><Input className="h-7 text-sm" value={editForm.ticker} onChange={(e) => setEditForm({ ...editForm, ticker: e.target.value })} /></div>
+                    <div><Label className="text-xs">Name</Label><Input className="h-7 text-sm" value={editForm.name} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} /></div>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2">
+                    <div><Label className="text-xs">Qty</Label><Input className="h-7 text-sm" type="number" step="any" value={editForm.quantity} onChange={(e) => setEditForm({ ...editForm, quantity: e.target.value })} /></div>
+                    <div><Label className="text-xs">Buy Price</Label><Input className="h-7 text-sm" type="number" step="any" value={editForm.purchasePrice} onChange={(e) => setEditForm({ ...editForm, purchasePrice: e.target.value })} /></div>
+                    <div><Label className="text-xs">Current</Label><Input className="h-7 text-sm" type="number" step="any" value={editForm.currentPrice} onChange={(e) => setEditForm({ ...editForm, currentPrice: e.target.value })} /></div>
+                  </div>
+                  <div className="flex gap-2 justify-end">
+                    <Button size="sm" variant="ghost" className="h-7 text-xs gap-1" onClick={() => setEditingId(null)}><X className="h-3 w-3" /> Cancel</Button>
+                    <Button size="sm" className="h-7 text-xs gap-1" onClick={saveEditStock}><Check className="h-3 w-3" /> Save</Button>
+                  </div>
+                </div>
+              );
+            }
+
             return (
               <div key={stock.id} className="flex items-center justify-between p-3 rounded-lg bg-secondary/20 group">
                 <div>
@@ -145,6 +203,7 @@ const StockSection = ({ savingsName, currency }: { savingsName: string; currency
                     <p className="text-sm font-semibold">{formatCurrency(stock.quantity * stock.current_price, currency)}</p>
                     <p className={`text-xs ${isUp ? 'text-emerald-600' : 'text-red-600'}`}>{isUp ? '+' : ''}{formatCurrency(gain, currency)} ({isUp ? '+' : ''}{gainPct.toFixed(1)}%)</p>
                   </div>
+                  <button onClick={() => startEditStock(stock)} className="p-1 opacity-0 group-hover:opacity-100 hover:bg-primary/10 rounded transition-all"><Pencil className="h-3.5 w-3.5 text-primary" /></button>
                   <button onClick={() => deleteHolding(stock.id)} className="p-1 opacity-0 group-hover:opacity-100 hover:bg-destructive/10 rounded transition-all"><Trash2 className="h-3.5 w-3.5 text-destructive" /></button>
                 </div>
               </div>
@@ -158,6 +217,23 @@ const StockSection = ({ savingsName, currency }: { savingsName: string; currency
         <div className="space-y-2">
           <h5 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Provident Funds</h5>
           {funds.map((fund) => {
+            const isEditing = editingId === fund.id;
+
+            if (isEditing) {
+              return (
+                <div key={fund.id} className="p-3 rounded-lg bg-secondary/20 border border-primary/30 space-y-2">
+                  <div className="grid grid-cols-2 gap-2">
+                    <div><Label className="text-xs">Fund Name</Label><Input className="h-7 text-sm" value={editFundForm.name} onChange={(e) => setEditFundForm({ ...editFundForm, name: e.target.value })} /></div>
+                    <div><Label className="text-xs">Current Value</Label><Input className="h-7 text-sm" type="number" step="any" value={editFundForm.currentValue} onChange={(e) => setEditFundForm({ ...editFundForm, currentValue: e.target.value })} /></div>
+                  </div>
+                  <div className="flex gap-2 justify-end">
+                    <Button size="sm" variant="ghost" className="h-7 text-xs gap-1" onClick={() => setEditingId(null)}><X className="h-3 w-3" /> Cancel</Button>
+                    <Button size="sm" className="h-7 text-xs gap-1" onClick={saveEditFund}><Check className="h-3 w-3" /> Save</Button>
+                  </div>
+                </div>
+              );
+            }
+
             return (
               <div key={fund.id} className="flex items-center justify-between p-3 rounded-lg bg-secondary/20 group">
                 <div className="flex items-center gap-2">
@@ -166,6 +242,7 @@ const StockSection = ({ savingsName, currency }: { savingsName: string; currency
                 </div>
                 <div className="flex items-center gap-2">
                   <p className="text-sm font-semibold">{formatCurrency(fund.current_price, currency)}</p>
+                  <button onClick={() => startEditFund(fund)} className="p-1 opacity-0 group-hover:opacity-100 hover:bg-primary/10 rounded transition-all"><Pencil className="h-3.5 w-3.5 text-primary" /></button>
                   <button onClick={() => deleteHolding(fund.id)} className="p-1 opacity-0 group-hover:opacity-100 hover:bg-destructive/10 rounded transition-all"><Trash2 className="h-3.5 w-3.5 text-destructive" /></button>
                 </div>
               </div>
