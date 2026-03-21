@@ -124,48 +124,52 @@ const BankBalanceCard = () => {
   const monthlyExpensesPaid = creditCardDebit + currentMonthBankTransfers;
 
   // Calculate savings deposits and withdrawals (bank account transfers)
-  // Sync with Dashboard stats and SavingsMonthlyActivity logic
-  const monthlySavings = savings.filter(s => s.month === currentMonth);
+  // Sync with SavingsMonthlyActivity logic exactly
+  const currentMonthDate = new Date(currentMonth + '-01');
+  const monthlySavings = savings.filter(s => {
+    if (s.month !== currentMonth) return false;
+    if (!s.closed_at) return true;
+    return new Date(s.closed_at) > currentMonthDate;
+  });
   
-  // Actual savings deposits
-  const actualSavingsDeposits = monthlySavings
-    .filter(s => s.action === 'deposit' || (!s.action && (s.action_amount || s.monthly_deposit)))
-    .reduce(
-      (sum, s) =>
-        sum +
-        convertToILS(
-          Number(s.action_amount || s.monthly_deposit || 0),
-          s.currency || 'ILS'
-        ),
-      0
-    );
-  
-  // Pending recurring savings not yet recorded
+  const savingsUpToDate = monthlySavings.filter(s => 
+    !shouldFilterByDate || isDateUpToToday(s.updated_at)
+  );
+
+  // Get active recurring savings
   const activeRecurringSavingsItems = recurringSavings.filter(rs => rs.is_active);
   const recordedSavingsNames = new Set(
-    monthlySavings
-      .filter(s => (s.action_amount && s.action_amount > 0) || (s.monthly_deposit && s.monthly_deposit > 0))
+    savingsUpToDate
+      .filter(s => (s.action_amount && s.action_amount > 0) || (s.monthly_deposit && s.monthly_deposit > 0) || (s as any).is_completed)
       .map(s => s.name)
   );
   const pendingRecurringSavingsItems = activeRecurringSavingsItems.filter(
     rs => !recordedSavingsNames.has(rs.name)
   );
+
+  // Build combined activity items (same as SavingsMonthlyActivity/SavingsActivity)
+  const savingsActivityItems = [
+    ...savingsUpToDate
+      .filter(s => (s.action_amount && s.action_amount > 0) || (s.monthly_deposit && s.monthly_deposit > 0))
+      .map(s => ({
+        action: (s.action || 'deposit') as 'deposit' | 'withdrawal',
+        amount: (s.action_amount && s.action_amount > 0) ? Number(s.action_amount) : Number(s.monthly_deposit),
+        currency: s.currency || 'ILS',
+      })),
+    ...pendingRecurringSavingsItems.map(rs => ({
+      action: rs.action_type as 'deposit' | 'withdrawal',
+      amount: Number(rs.default_amount),
+      currency: rs.currency || 'ILS',
+    })),
+  ];
+
+  const savingsDeposits = savingsActivityItems
+    .filter(item => item.action === 'deposit')
+    .reduce((sum, item) => sum + convertToILS(item.amount, item.currency), 0);
   
-  const pendingSavingsDeposits = pendingRecurringSavingsItems
-    .filter(rs => rs.action_type === 'deposit')
-    .reduce((sum, rs) => sum + convertToILS(Number(rs.default_amount), rs.currency || 'ILS'), 0);
-  
-  const pendingSavingsWithdrawals = pendingRecurringSavingsItems
-    .filter(rs => rs.action_type === 'withdrawal')
-    .reduce((sum, rs) => sum + convertToILS(Number(rs.default_amount), rs.currency || 'ILS'), 0);
-  
-  const savingsDeposits = actualSavingsDeposits + pendingSavingsDeposits;
-  
-  const actualWithdrawals = monthlySavings
-    .filter(s => s.action === 'withdrawal')
-    .reduce((sum, s) => sum + convertToILS(Number(s.action_amount || 0), s.currency || 'ILS'), 0);
-  
-  const savingsWithdrawals = actualWithdrawals + pendingSavingsWithdrawals;
+  const savingsWithdrawals = savingsActivityItems
+    .filter(item => item.action === 'withdrawal')
+    .reduce((sum, item) => sum + convertToILS(item.amount, item.currency), 0);
 
   // Calculate projected balance using current month incomes
   const netChange = currentMonthIncomes - monthlyExpensesPaid - savingsDeposits + savingsWithdrawals;
