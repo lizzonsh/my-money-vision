@@ -452,8 +452,11 @@ const SavingsGrowthPredictions = () => {
                   {stats.monthlyRates.map((r, i) => (
                     <div key={i} className="px-3 py-1.5 rounded-lg bg-secondary/30 text-xs">
                       <span className="text-muted-foreground">{formatMonth(r.month)}</span>
+                      {r.monthSpan > 1 && (
+                        <span className="text-muted-foreground/60 ml-1">({r.monthSpan}mo avg)</span>
+                      )}
                       <span className={cn('ml-1.5 font-medium', r.pct >= 0 ? 'text-emerald-600' : 'text-red-600')}>
-                        {r.pct >= 0 ? '+' : ''}{r.pct.toFixed(2)}%
+                        {r.pct >= 0 ? '+' : ''}{r.pct.toFixed(2)}%/mo
                       </span>
                     </div>
                   ))}
