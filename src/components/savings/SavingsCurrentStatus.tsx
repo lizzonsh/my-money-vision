@@ -59,16 +59,21 @@ const SavingsCurrentStatus = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const savingData = {
-      month: currentMonth, name: formData.name, amount: parseFloat(formData.amount), currency: formData.currency,
-      transfer_method: formData.transferMethod as 'bank_account' | 'credit_card', card_id: formData.cardId || null,
-      action: null, action_amount: null, monthly_deposit: null, recurring_type: null, recurring_day_of_month: null,
-      closed_at: null, is_completed: false, risk_level: formData.riskLevel,
-    };
     if (editingSaving) {
-      updateSavings({ id: editingSaving.id, ...savingData });
+      // Only update portfolio-level fields, preserve activity fields
+      updateSavings({
+        id: editingSaving.id,
+        month: currentMonth, name: formData.name, amount: parseFloat(formData.amount), currency: formData.currency,
+        transfer_method: formData.transferMethod as 'bank_account' | 'credit_card', card_id: formData.cardId || null,
+        risk_level: formData.riskLevel,
+      });
     } else {
-      addSavings(savingData);
+      addSavings({
+        month: currentMonth, name: formData.name, amount: parseFloat(formData.amount), currency: formData.currency,
+        transfer_method: formData.transferMethod as 'bank_account' | 'credit_card', card_id: formData.cardId || null,
+        action: null, action_amount: null, monthly_deposit: null, recurring_type: null, recurring_day_of_month: null,
+        closed_at: null, is_completed: false, risk_level: formData.riskLevel,
+      });
     }
     resetForm();
     setIsOpen(false);
