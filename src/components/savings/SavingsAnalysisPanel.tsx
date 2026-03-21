@@ -44,10 +44,14 @@ const GrowthIndicator = ({ value, percent, label, currency }: { value: number | 
 
 const StockSection = ({ savingsName, currency }: { savingsName: string; currency: string }) => {
   const { holdings, addHolding, deleteHolding, totalValue, totalGain, totalGainPercent } = useStockHoldings(savingsName);
-  const [showAdd, setShowAdd] = useState(false);
+  const [showAdd, setShowAdd] = useState<'stock' | 'provident_fund' | null>(null);
   const [form, setForm] = useState({ ticker: '', name: '', quantity: '', purchasePrice: '', currentPrice: '' });
+  const [fundForm, setFundForm] = useState({ name: '', totalInvested: '', currentValue: '' });
 
-  const handleAdd = (e: React.FormEvent) => {
+  const stocks = holdings.filter(h => h.holding_type !== 'provident_fund');
+  const funds = holdings.filter(h => h.holding_type === 'provident_fund');
+
+  const handleAddStock = (e: React.FormEvent) => {
     e.preventDefault();
     addHolding({
       savings_name: savingsName,
@@ -57,97 +61,206 @@ const StockSection = ({ savingsName, currency }: { savingsName: string; currency
       purchase_price: parseFloat(form.purchasePrice),
       current_price: parseFloat(form.currentPrice),
       currency,
+      holding_type: 'stock',
       last_updated: new Date().toISOString(),
     });
     setForm({ ticker: '', name: '', quantity: '', purchasePrice: '', currentPrice: '' });
-    setShowAdd(false);
+    setShowAdd(null);
   };
 
+  const handleAddFund = (e: React.FormEvent) => {
+    e.preventDefault();
+    addHolding({
+      savings_name: savingsName,
+      ticker: 'FUND',
+      name: fundForm.name,
+      quantity: 1,
+      purchase_price: parseFloat(fundForm.totalInvested),
+      current_price: parseFloat(fundForm.currentValue),
+      currency,
+      holding_type: 'provident_fund',
+      last_updated: new Date().toISOString(),
+    });
+    setFundForm({ name: '', totalInvested: '', currentValue: '' });
+    setShowAdd(null);
+  };
+
+  const stocksTotal = stocks.reduce((sum, h) => sum + h.quantity * h.current_price, 0);
+  const stocksCost = stocks.reduce((sum, h) => sum + h.quantity * h.purchase_price, 0);
+  const stocksGain = stocksTotal - stocksCost;
+  const stocksGainPct = stocksCost > 0 ? (stocksGain / stocksCost) * 100 : 0;
+
+  const fundsTotal = funds.reduce((sum, h) => sum + h.current_price, 0);
+  const fundsCost = funds.reduce((sum, h) => sum + h.purchase_price, 0);
+  const fundsGain = fundsTotal - fundsCost;
+  const fundsGainPct = fundsCost > 0 ? (fundsGain / fundsCost) * 100 : 0;
+
   return (
-    <div className="space-y-3">
-      <div className="flex items-center justify-between">
-        <h4 className="font-medium text-sm">Stock Holdings</h4>
-        <Button size="sm" variant="outline" className="gap-1 h-7 text-xs" onClick={() => setShowAdd(!showAdd)}>
-          <Plus className="h-3 w-3" />
-          Add Stock
-        </Button>
-      </div>
+    <div className="space-y-5">
+      {/* Stock Holdings */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h4 className="font-medium text-sm">Stock Holdings</h4>
+          <Button size="sm" variant="outline" className="gap-1 h-7 text-xs" onClick={() => setShowAdd(showAdd === 'stock' ? null : 'stock')}>
+            <Plus className="h-3 w-3" />
+            Add Stock
+          </Button>
+        </div>
 
-      {showAdd && (
-        <form onSubmit={handleAdd} className="space-y-3 p-3 rounded-lg bg-secondary/20 border">
-          <div className="grid grid-cols-2 gap-2">
-            <div>
-              <Label className="text-xs">Ticker</Label>
-              <Input className="h-8 text-sm" placeholder="AAPL" value={form.ticker} onChange={(e) => setForm({ ...form, ticker: e.target.value })} required />
+        {showAdd === 'stock' && (
+          <form onSubmit={handleAddStock} className="space-y-3 p-3 rounded-lg bg-secondary/20 border">
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <Label className="text-xs">Ticker</Label>
+                <Input className="h-8 text-sm" placeholder="AAPL" value={form.ticker} onChange={(e) => setForm({ ...form, ticker: e.target.value })} required />
+              </div>
+              <div>
+                <Label className="text-xs">Name</Label>
+                <Input className="h-8 text-sm" placeholder="Apple Inc." value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
+              </div>
             </div>
-            <div>
-              <Label className="text-xs">Name</Label>
-              <Input className="h-8 text-sm" placeholder="Apple Inc." value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
+            <div className="grid grid-cols-3 gap-2">
+              <div>
+                <Label className="text-xs">Qty</Label>
+                <Input className="h-8 text-sm" type="number" step="any" value={form.quantity} onChange={(e) => setForm({ ...form, quantity: e.target.value })} required />
+              </div>
+              <div>
+                <Label className="text-xs">Buy Price</Label>
+                <Input className="h-8 text-sm" type="number" step="any" value={form.purchasePrice} onChange={(e) => setForm({ ...form, purchasePrice: e.target.value })} required />
+              </div>
+              <div>
+                <Label className="text-xs">Current</Label>
+                <Input className="h-8 text-sm" type="number" step="any" value={form.currentPrice} onChange={(e) => setForm({ ...form, currentPrice: e.target.value })} required />
+              </div>
             </div>
-          </div>
-          <div className="grid grid-cols-3 gap-2">
-            <div>
-              <Label className="text-xs">Qty</Label>
-              <Input className="h-8 text-sm" type="number" step="any" value={form.quantity} onChange={(e) => setForm({ ...form, quantity: e.target.value })} required />
-            </div>
-            <div>
-              <Label className="text-xs">Buy Price</Label>
-              <Input className="h-8 text-sm" type="number" step="any" value={form.purchasePrice} onChange={(e) => setForm({ ...form, purchasePrice: e.target.value })} required />
-            </div>
-            <div>
-              <Label className="text-xs">Current</Label>
-              <Input className="h-8 text-sm" type="number" step="any" value={form.currentPrice} onChange={(e) => setForm({ ...form, currentPrice: e.target.value })} required />
-            </div>
-          </div>
-          <Button type="submit" size="sm" className="w-full h-8">Add</Button>
-        </form>
-      )}
+            <Button type="submit" size="sm" className="w-full h-8">Add</Button>
+          </form>
+        )}
 
-      {holdings.length === 0 ? (
-        <p className="text-xs text-muted-foreground text-center py-3">No stocks tracked</p>
-      ) : (
-        <div className="space-y-2">
-          {holdings.map((stock) => {
-            const gain = (stock.current_price - stock.purchase_price) * stock.quantity;
-            const gainPct = stock.purchase_price > 0 ? ((stock.current_price - stock.purchase_price) / stock.purchase_price) * 100 : 0;
-            const isUp = gain > 0;
-            return (
-              <div key={stock.id} className="flex items-center justify-between p-3 rounded-lg bg-secondary/20 group">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="font-mono font-semibold text-sm">{stock.ticker}</span>
-                    <span className="text-xs text-muted-foreground">{stock.name}</span>
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    {stock.quantity} shares × {formatCurrency(stock.current_price, currency)}
-                  </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="text-right">
-                    <p className="text-sm font-semibold">{formatCurrency(stock.quantity * stock.current_price, currency)}</p>
-                    <p className={`text-xs ${isUp ? 'text-emerald-600' : 'text-red-600'}`}>
-                      {isUp ? '+' : ''}{formatCurrency(gain, currency)} ({isUp ? '+' : ''}{gainPct.toFixed(1)}%)
+        {stocks.length === 0 ? (
+          <p className="text-xs text-muted-foreground text-center py-3">No stocks tracked</p>
+        ) : (
+          <div className="space-y-2">
+            {stocks.map((stock) => {
+              const gain = (stock.current_price - stock.purchase_price) * stock.quantity;
+              const gainPct = stock.purchase_price > 0 ? ((stock.current_price - stock.purchase_price) / stock.purchase_price) * 100 : 0;
+              const isUp = gain > 0;
+              return (
+                <div key={stock.id} className="flex items-center justify-between p-3 rounded-lg bg-secondary/20 group">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono font-semibold text-sm">{stock.ticker}</span>
+                      <span className="text-xs text-muted-foreground">{stock.name}</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {stock.quantity} shares × {formatCurrency(stock.current_price, currency)}
                     </p>
                   </div>
-                  <button onClick={() => deleteHolding(stock.id)} className="p-1 opacity-0 group-hover:opacity-100 hover:bg-destructive/10 rounded transition-all">
-                    <Trash2 className="h-3.5 w-3.5 text-destructive" />
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <div className="text-right">
+                      <p className="text-sm font-semibold">{formatCurrency(stock.quantity * stock.current_price, currency)}</p>
+                      <p className={`text-xs ${isUp ? 'text-emerald-600' : 'text-red-600'}`}>
+                        {isUp ? '+' : ''}{formatCurrency(gain, currency)} ({isUp ? '+' : ''}{gainPct.toFixed(1)}%)
+                      </p>
+                    </div>
+                    <button onClick={() => deleteHolding(stock.id)} className="p-1 opacity-0 group-hover:opacity-100 hover:bg-destructive/10 rounded transition-all">
+                      <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                    </button>
+                  </div>
                 </div>
+              );
+            })}
+            <div className="flex items-center justify-between pt-2 border-t text-sm">
+              <span className="text-muted-foreground">Stocks Total</span>
+              <div className="text-right">
+                <span className="font-semibold">{formatCurrency(stocksTotal, currency)}</span>
+                <span className={`ml-2 text-xs ${stocksGain >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                  {stocksGain >= 0 ? '+' : ''}{formatCurrency(stocksGain, currency)} ({stocksGainPct.toFixed(1)}%)
+                </span>
               </div>
-            );
-          })}
-          <div className="flex items-center justify-between pt-2 border-t text-sm">
-            <span className="text-muted-foreground">Stocks Total</span>
-            <div className="text-right">
-              <span className="font-semibold">{formatCurrency(totalValue, currency)}</span>
-              <span className={`ml-2 text-xs ${totalGain >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
-                {totalGain >= 0 ? '+' : ''}{formatCurrency(totalGain, currency)} ({totalGainPercent.toFixed(1)}%)
-              </span>
             </div>
           </div>
+        )}
+      </div>
+
+      {/* Provident Funds */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h4 className="font-medium text-sm flex items-center gap-1.5">
+            <PiggyBank className="h-4 w-4 text-primary" />
+            Provident Funds
+          </h4>
+          <Button size="sm" variant="outline" className="gap-1 h-7 text-xs" onClick={() => setShowAdd(showAdd === 'provident_fund' ? null : 'provident_fund')}>
+            <Plus className="h-3 w-3" />
+            Add Fund
+          </Button>
         </div>
-      )}
-    </div>
+
+        {showAdd === 'provident_fund' && (
+          <form onSubmit={handleAddFund} className="space-y-3 p-3 rounded-lg bg-secondary/20 border">
+            <div>
+              <Label className="text-xs">Fund Name</Label>
+              <Input className="h-8 text-sm" placeholder="e.g. Migdal Provident" value={fundForm.name} onChange={(e) => setFundForm({ ...fundForm, name: e.target.value })} required />
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <Label className="text-xs">Total Invested</Label>
+                <Input className="h-8 text-sm" type="number" step="any" placeholder="0" value={fundForm.totalInvested} onChange={(e) => setFundForm({ ...fundForm, totalInvested: e.target.value })} required />
+              </div>
+              <div>
+                <Label className="text-xs">Current Value</Label>
+                <Input className="h-8 text-sm" type="number" step="any" placeholder="0" value={fundForm.currentValue} onChange={(e) => setFundForm({ ...fundForm, currentValue: e.target.value })} required />
+              </div>
+            </div>
+            <Button type="submit" size="sm" className="w-full h-8">Add Fund</Button>
+          </form>
+        )}
+
+        {funds.length === 0 ? (
+          <p className="text-xs text-muted-foreground text-center py-3">No provident funds tracked</p>
+        ) : (
+          <div className="space-y-2">
+            {funds.map((fund) => {
+              const gain = fund.current_price - fund.purchase_price;
+              const gainPct = fund.purchase_price > 0 ? (gain / fund.purchase_price) * 100 : 0;
+              const isUp = gain > 0;
+              return (
+                <div key={fund.id} className="flex items-center justify-between p-3 rounded-lg bg-secondary/20 group">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <PiggyBank className="h-3.5 w-3.5 text-primary" />
+                      <span className="font-semibold text-sm">{fund.name}</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      Invested: {formatCurrency(fund.purchase_price, currency)}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="text-right">
+                      <p className="text-sm font-semibold">{formatCurrency(fund.current_price, currency)}</p>
+                      <p className={`text-xs ${isUp ? 'text-emerald-600' : 'text-red-600'}`}>
+                        {isUp ? '+' : ''}{formatCurrency(gain, currency)} ({isUp ? '+' : ''}{gainPct.toFixed(1)}%)
+                      </p>
+                    </div>
+                    <button onClick={() => deleteHolding(fund.id)} className="p-1 opacity-0 group-hover:opacity-100 hover:bg-destructive/10 rounded transition-all">
+                      <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+            <div className="flex items-center justify-between pt-2 border-t text-sm">
+              <span className="text-muted-foreground">Funds Total</span>
+              <div className="text-right">
+                <span className="font-semibold">{formatCurrency(fundsTotal, currency)}</span>
+                <span className={`ml-2 text-xs ${fundsGain >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                  {fundsGain >= 0 ? '+' : ''}{formatCurrency(fundsGain, currency)} ({fundsGainPct.toFixed(1)}%)
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
   );
 };
 
