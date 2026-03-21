@@ -40,12 +40,12 @@ const SavingsPage = () => {
           <TabsTrigger value="recurring" className="text-xs sm:text-sm">Recurring</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="overview" className="space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <TabsContent value="overview" className="space-y-4 sm:space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
             <SavingsCurrentStatus />
             <SavingsPredictionPortfolio />
           </div>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
             <SavingsMonthlyActivity highlightId={navState?.highlightId} />
             <RiskAllocationChart />
           </div>
