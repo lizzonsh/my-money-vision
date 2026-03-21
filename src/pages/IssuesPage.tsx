@@ -267,18 +267,18 @@ const IssuesPage = () => {
         </Card>
       ) : (
         <DragDropContext onDragEnd={handleDragEnd}>
-          <div className="grid gap-6 md:grid-cols-3">
+           <div className="grid gap-4 sm:gap-6 grid-cols-1 md:grid-cols-3">
             {columns.map((col) => (
               <Droppable droppableId={col.id} key={col.id}>
                 {(provided, snapshot) => (
                   <div
                     ref={provided.innerRef}
                     {...provided.droppableProps}
-                    className={`space-y-4 min-h-[200px] rounded-lg p-2 transition-colors ${
+                    className={`space-y-3 sm:space-y-4 min-h-[150px] sm:min-h-[200px] rounded-lg p-1.5 sm:p-2 transition-colors ${
                       snapshot.isDraggingOver ? 'bg-accent/30' : ''
                     }`}
                   >
-                    <h2 className="text-lg font-semibold flex items-center gap-2">
+                    <h2 className="text-base sm:text-lg font-semibold flex items-center gap-2">
                       {col.icon}
                       {col.label} ({col.items.length})
                     </h2>
