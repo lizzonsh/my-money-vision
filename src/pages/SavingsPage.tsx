@@ -32,7 +32,7 @@ const SavingsPage = () => {
         <MonthNavigation />
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 sm:space-y-6">
         <TabsList className="w-full overflow-x-auto flex justify-start no-scrollbar">
           <TabsTrigger value="overview" className="text-xs sm:text-sm">Overview</TabsTrigger>
           <TabsTrigger value="analysis" className="text-xs sm:text-sm">Analysis & Stocks</TabsTrigger>
