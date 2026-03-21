@@ -136,7 +136,7 @@ function computeAvgGrowthPerAccount(
     result.set(name, {
       avgGrowthPct: weightedMonthCount > 0 ? weightedPctSum / weightedMonthCount : 0,
       dataPoints: sortedMonths.length,
-      baselineMonth: sortedMonths[0][0],
+      baselineMonth: sortedMonths[1][0], // Growth starts from the second data point
       monthlyRates: rates,
     });
   }
