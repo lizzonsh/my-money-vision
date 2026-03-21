@@ -2,16 +2,22 @@ import { useState, useMemo } from 'react';
 import { useFinance, Savings } from '@/contexts/FinanceContext';
 import { formatCurrency } from '@/lib/formatters';
 import { convertToILS } from '@/lib/currencyUtils';
-import { TrendingUp, TrendingDown, Minus, Eye, EyeOff, BarChart3, Target } from 'lucide-react';
+import { TrendingUp, TrendingDown, Minus, Eye, EyeOff, BarChart3, Target, Info, ChevronDown, ChevronUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine, Legend,
 } from 'recharts';
 
-/** Compute average monthly growth % per account from historical records */
+/**
+ * Compute average monthly MARKET growth % per account from historical records.
+ * This excludes deposits/withdrawals to isolate pure market/interest growth.
+ * 
+ * Formula per month: market_growth = balance_current - (balance_prev + net_deposits)
+ * Where net_deposits = sum(deposit action_amounts) - sum(withdrawal action_amounts)
+ */
 function computeAvgGrowthPerAccount(savings: Savings[], currentMonth: string) {
-  // Group records by account name, sorted chronologically
+  // Group records by account name
   const byName = new Map<string, Savings[]>();
   for (const s of savings) {
     if (s.month > currentMonth) continue;
@@ -20,15 +26,26 @@ function computeAvgGrowthPerAccount(savings: Savings[], currentMonth: string) {
     byName.set(s.name, list);
   }
 
-  const result = new Map<string, { avgGrowthPct: number; dataPoints: number; monthlyRates: Array<{ month: string; pct: number; actual: number; prev: number }> }>();
+  const result = new Map<string, { avgGrowthPct: number; dataPoints: number; monthlyRates: Array<{ month: string; pct: number; actual: number; prev: number; netDeposits: number }> }>();
 
   for (const [name, records] of byName) {
-    // Get latest record per month
+    // Get latest balance per month AND sum net deposits per month
     const latestPerMonth = new Map<string, Savings>();
+    const netDepositsPerMonth = new Map<string, number>();
+
     for (const r of records) {
+      // Track latest record for final balance
       const existing = latestPerMonth.get(r.month);
       if (!existing || new Date(r.updated_at) > new Date(existing.updated_at)) {
         latestPerMonth.set(r.month, r);
+      }
+
+      // Accumulate net deposits for each month
+      const currentNet = netDepositsPerMonth.get(r.month) || 0;
+      if (r.action === 'deposit' && r.action_amount) {
+        netDepositsPerMonth.set(r.month, currentNet + Number(r.action_amount));
+      } else if (r.action === 'withdrawal' && r.action_amount) {
+        netDepositsPerMonth.set(r.month, currentNet - Number(r.action_amount));
       }
     }
 
@@ -40,13 +57,17 @@ function computeAvgGrowthPerAccount(savings: Savings[], currentMonth: string) {
       continue;
     }
 
-    const rates: Array<{ month: string; pct: number; actual: number; prev: number }> = [];
+    const rates: Array<{ month: string; pct: number; actual: number; prev: number; netDeposits: number }> = [];
     for (let i = 1; i < sortedMonths.length; i++) {
       const prevAmt = Number(sortedMonths[i - 1][1].amount);
       const currAmt = Number(sortedMonths[i][1].amount);
+      const netDep = netDepositsPerMonth.get(sortedMonths[i][0]) || 0;
+
       if (prevAmt > 0) {
-        const pct = ((currAmt - prevAmt) / prevAmt) * 100;
-        rates.push({ month: sortedMonths[i][0], pct, actual: currAmt, prev: prevAmt });
+        // Market growth = current balance - previous balance - net deposits
+        const marketGrowth = currAmt - prevAmt - netDep;
+        const pct = (marketGrowth / prevAmt) * 100;
+        rates.push({ month: sortedMonths[i][0], pct, actual: currAmt, prev: prevAmt, netDeposits: netDep });
       }
     }
 
@@ -73,9 +94,10 @@ function formatMonth(month: string): string {
 }
 
 const SavingsGrowthPredictions = () => {
-  const { savings, currentMonth } = useFinance();
+  const { savings, currentMonth, recurringSavings } = useFinance();
   const [selectedAccount, setSelectedAccount] = useState<string | null>(null);
   const [showActual, setShowActual] = useState(true);
+  const [showMethodology, setShowMethodology] = useState(false);
 
   const currentMonthDate = new Date(currentMonth + '-01');
 
@@ -101,6 +123,18 @@ const SavingsGrowthPredictions = () => {
   // Future months
   const futureMonths = useMemo(() => getNextMonths(currentMonth, 6), [currentMonth]);
 
+  // Build monthly recurring deposit map per account name
+  const recurringDepositPerAccount = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const rs of recurringSavings) {
+      if (rs.is_active && rs.action_type === 'deposit') {
+        const current = map.get(rs.name) || 0;
+        map.set(rs.name, current + Number(rs.default_amount));
+      }
+    }
+    return map;
+  }, [recurringSavings]);
+
   // Build predictions per account
   const predictions = useMemo(() => {
     const result = new Map<string, Array<{ month: string; predicted: number; actual: number | null }>>();
@@ -109,15 +143,16 @@ const SavingsGrowthPredictions = () => {
       const stats = growthStats.get(name);
       const avgPct = stats?.avgGrowthPct || 0;
       const currentAmt = Number(saving.amount);
-      const currency = saving.currency || 'ILS';
+      const monthlyDeposit = recurringDepositPerAccount.get(name) || 0;
 
       const items: Array<{ month: string; predicted: number; actual: number | null }> = [];
       let runningAmt = currentAmt;
 
       for (const fm of futureMonths) {
-        runningAmt = runningAmt * (1 + avgPct / 100);
+        // Apply market growth first, then add recurring deposit
+        runningAmt = runningAmt * (1 + avgPct / 100) + monthlyDeposit;
 
-        // Check if actual data exists for this future month
+        // Check if actual data exists for this future month (latest record)
         const actualRecords = savings
           .filter(s => s.name === name && s.month === fm)
           .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
@@ -130,7 +165,7 @@ const SavingsGrowthPredictions = () => {
     }
 
     return result;
-  }, [latestPerName, growthStats, futureMonths, savings]);
+  }, [latestPerName, growthStats, futureMonths, savings, recurringDepositPerAccount]);
 
   // Portfolio-level prediction (sum in ILS)
   const portfolioPrediction = useMemo(() => {
@@ -456,6 +491,41 @@ const SavingsGrowthPredictions = () => {
           </div>
         </div>
       )}
+
+      {/* Methodology Explanation */}
+      <div className="glass rounded-xl p-5 shadow-card">
+        <button
+          onClick={() => setShowMethodology(!showMethodology)}
+          className="flex items-center gap-2 w-full text-left"
+        >
+          <Info className="h-4 w-4 text-primary" />
+          <h4 className="font-semibold text-sm">How Predictions Work</h4>
+          {showMethodology ? <ChevronUp className="h-4 w-4 ml-auto text-muted-foreground" /> : <ChevronDown className="h-4 w-4 ml-auto text-muted-foreground" />}
+        </button>
+        {showMethodology && (
+          <div className="mt-4 space-y-3 text-sm text-muted-foreground">
+            <div>
+              <p className="font-medium text-foreground mb-1">1. Market Growth Rate (excluding deposits)</p>
+              <p>For each account, we compare balances between consecutive months and <strong>subtract any deposits/withdrawals</strong> to isolate pure market/interest growth. This gives us the real return rate independent of money you added or removed.</p>
+              <p className="mt-1 italic">Formula: market_growth% = (balance_now − balance_prev − net_deposits) / balance_prev × 100</p>
+            </div>
+            <div>
+              <p className="font-medium text-foreground mb-1">2. Average Growth Rate</p>
+              <p>We average all monthly market growth rates across the account's entire history to get a single average monthly growth percentage.</p>
+            </div>
+            <div>
+              <p className="font-medium text-foreground mb-1">3. Prediction Calculation</p>
+              <p>Starting from the current balance, each future month is projected by:</p>
+              <p className="mt-1 italic">predicted = previous_balance × (1 + avg_growth%) + expected_monthly_deposit</p>
+              <p className="mt-1">Expected monthly deposits come from your active recurring savings templates.</p>
+            </div>
+            <div>
+              <p className="font-medium text-foreground mb-1">4. Actual vs Predicted</p>
+              <p>When real data exists for a future month, we show it alongside the prediction so you can compare — this is especially useful for stock-dependent accounts where actual returns vary from the average.</p>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 };
