@@ -27,15 +27,17 @@ const GrowthIndicator = ({ value, percent, label, currency }: { value: number | 
   const colorClass = isPositive ? 'text-emerald-600' : isZero ? 'text-muted-foreground' : 'text-red-600';
 
   return (
-    <div className="flex flex-col">
-      <span className="text-xs text-muted-foreground mb-1">{label}</span>
-      <div className={`flex items-center gap-1.5 ${colorClass}`}>
-        <Icon className="h-4 w-4" />
-        <span className="font-semibold text-sm">
-          {isPositive ? '+' : ''}{formatCurrency(value, currency)}
-        </span>
+    <div className="flex flex-col min-w-0">
+      <span className="text-[10px] sm:text-xs text-muted-foreground mb-1">{label}</span>
+      <div className={`flex flex-col sm:flex-row sm:items-center gap-0.5 sm:gap-1.5 ${colorClass}`}>
+        <div className="flex items-center gap-1">
+          <Icon className="h-3 w-3 sm:h-4 sm:w-4 shrink-0" />
+          <span className="font-semibold text-xs sm:text-sm truncate">
+            {isPositive ? '+' : ''}{formatCurrency(value, currency)}
+          </span>
+        </div>
         {percent !== null && (
-          <span className="text-xs opacity-80">({isPositive ? '+' : ''}{percent.toFixed(1)}%)</span>
+          <span className="text-[10px] sm:text-xs opacity-80">({isPositive ? '+' : ''}{percent.toFixed(1)}%)</span>
         )}
       </div>
     </div>
@@ -517,12 +519,12 @@ const SavingsAnalysisPanel = () => {
       <div className="lg:col-span-2">
         {selected && selectedGrowth ? (
           <div className="glass rounded-xl p-3 sm:p-5 shadow-card space-y-5">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <BarChart3 className="h-5 w-5 text-primary" />
-                <h3 className="font-semibold text-lg">{selected.name}</h3>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <BarChart3 className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+                <h3 className="font-semibold text-base sm:text-lg">{selected.name}</h3>
               </div>
-              <p className="text-xl font-bold">{formatCurrency(Number(selected.amount), selected.currency || 'ILS')}</p>
+              <p className="text-lg sm:text-xl font-bold">{formatCurrency(Number(selected.amount), selected.currency || 'ILS')}</p>
             </div>
 
             {/* Risk Level Selector */}
@@ -544,8 +546,8 @@ const SavingsAnalysisPanel = () => {
             </div>
 
             {/* Growth Cards */}
-            <div className="grid grid-cols-3 gap-4">
-              <div className="p-4 rounded-lg bg-secondary/30">
+            <div className="grid grid-cols-3 gap-2 sm:gap-4">
+              <div className="p-2 sm:p-4 rounded-lg bg-secondary/30">
                 <GrowthIndicator
                   value={selectedGrowth.monthlyGrowth}
                   percent={selectedGrowth.monthlyGrowthPercent}
@@ -553,7 +555,7 @@ const SavingsAnalysisPanel = () => {
                   currency={selected.currency || 'ILS'}
                 />
               </div>
-              <div className="p-4 rounded-lg bg-secondary/30">
+              <div className="p-2 sm:p-4 rounded-lg bg-secondary/30">
                 <GrowthIndicator
                   value={selectedGrowth.ytdGrowth}
                   percent={selectedGrowth.ytdGrowthPercent}
@@ -561,7 +563,7 @@ const SavingsAnalysisPanel = () => {
                   currency={selected.currency || 'ILS'}
                 />
               </div>
-              <div className="p-4 rounded-lg bg-secondary/30">
+              <div className="p-2 sm:p-4 rounded-lg bg-secondary/30">
                 <GrowthIndicator
                   value={selectedGrowth.allTimeGrowth}
                   percent={selectedGrowth.allTimeGrowthPercent}
