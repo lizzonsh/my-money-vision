@@ -189,13 +189,13 @@ const SavingsAnalysisPanel = () => {
         .sort((a, b) => b.month.localeCompare(a.month) || new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
       const prevRecord = prevRecords[0];
 
-      // YTD: earliest record from Jan of current year
+      // YTD: compare against the last record from before the current year (closing balance of last year)
       const currentYear = currentMonth.split('-')[0];
       const janMonth = `${currentYear}-01`;
-      const ytdRecords = savings
-        .filter(s => s.name === saving.name && s.month >= janMonth && s.month <= currentMonth)
-        .sort((a, b) => a.month.localeCompare(b.month) || new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
-      const firstYtdRecord = ytdRecords[0];
+      const lastYearRecords = savings
+        .filter(s => s.name === saving.name && s.month < janMonth)
+        .sort((a, b) => b.month.localeCompare(a.month) || new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
+      const lastYearClosing = lastYearRecords[0];
 
       // All-time: earliest record ever
       const allRecords = savings
@@ -210,11 +210,10 @@ const SavingsAnalysisPanel = () => {
       const monthlyGrowthPercent = lastMonthAmount !== null && lastMonthAmount > 0
         ? ((currentAmount - lastMonthAmount) / lastMonthAmount) * 100 : null;
 
-      const firstYtdAmount = firstYtdRecord ? Number(firstYtdRecord.amount) : null;
-      const hasYtd = firstYtdRecord && firstYtdRecord.id !== saving.id;
-      const ytdGrowth = hasYtd && firstYtdAmount !== null ? currentAmount - firstYtdAmount : null;
-      const ytdGrowthPercent = hasYtd && firstYtdAmount !== null && firstYtdAmount > 0
-        ? ((currentAmount - firstYtdAmount) / firstYtdAmount) * 100 : null;
+      const lastYearAmount = lastYearClosing ? Number(lastYearClosing.amount) : null;
+      const ytdGrowth = lastYearAmount !== null ? currentAmount - lastYearAmount : null;
+      const ytdGrowthPercent = lastYearAmount !== null && lastYearAmount > 0
+        ? ((currentAmount - lastYearAmount) / lastYearAmount) * 100 : null;
 
       const firstEverAmount = firstEverRecord ? Number(firstEverRecord.amount) : null;
       const hasAllTime = firstEverRecord && firstEverRecord.id !== saving.id;
