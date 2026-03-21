@@ -31,6 +31,9 @@ const RecurringSavingsPanel = () => {
     addRecurringSavings, 
     updateRecurringSavings, 
     deleteRecurringSavings,
+    savings,
+    updateSavings,
+    currentMonth,
   } = useFinance();
   
   const [isOpen, setIsOpen] = useState(false);
