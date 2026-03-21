@@ -158,23 +158,14 @@ const StockSection = ({ savingsName, currency }: { savingsName: string; currency
         <div className="space-y-2">
           <h5 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Provident Funds</h5>
           {funds.map((fund) => {
-            const gain = fund.current_price - fund.purchase_price;
-            const gainPct = fund.purchase_price > 0 ? (gain / fund.purchase_price) * 100 : 0;
-            const isUp = gain > 0;
             return (
               <div key={fund.id} className="flex items-center justify-between p-3 rounded-lg bg-secondary/20 group">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <PiggyBank className="h-3.5 w-3.5 text-primary" />
-                    <span className="font-semibold text-sm">{fund.name}</span>
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-0.5">Invested: {formatCurrency(fund.purchase_price, currency)}</p>
+                <div className="flex items-center gap-2">
+                  <PiggyBank className="h-3.5 w-3.5 text-primary" />
+                  <span className="font-semibold text-sm">{fund.name}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="text-right">
-                    <p className="text-sm font-semibold">{formatCurrency(fund.current_price, currency)}</p>
-                    <p className={`text-xs ${isUp ? 'text-emerald-600' : 'text-red-600'}`}>{isUp ? '+' : ''}{formatCurrency(gain, currency)} ({isUp ? '+' : ''}{gainPct.toFixed(1)}%)</p>
-                  </div>
+                  <p className="text-sm font-semibold">{formatCurrency(fund.current_price, currency)}</p>
                   <button onClick={() => deleteHolding(fund.id)} className="p-1 opacity-0 group-hover:opacity-100 hover:bg-destructive/10 rounded transition-all"><Trash2 className="h-3.5 w-3.5 text-destructive" /></button>
                 </div>
               </div>
