@@ -175,20 +175,24 @@ const SavingsAnalysisPanel = () => {
   const uniqueSavings = Array.from(latestSavingsPerName.values());
 
   const growthDataMap = useMemo(() => {
-    const map = new Map<string, { lastMonthAmount: number | null; currentAmount: number; monthlyGrowth: number | null; monthlyGrowthPercent: number | null; firstAmount: number | null; totalGrowth: number | null; totalGrowthPercent: number | null }>();
+    const map = new Map<string, {
+      lastMonthAmount: number | null; currentAmount: number;
+      monthlyGrowth: number | null; monthlyGrowthPercent: number | null;
+      ytdGrowth: number | null; ytdGrowthPercent: number | null;
+      allTimeGrowth: number | null; allTimeGrowthPercent: number | null;
+    }>();
 
     for (const saving of uniqueSavings) {
       const [y, m] = currentMonth.split('-').map(Number);
       const prevDate = new Date(y, m - 2, 1);
       const prevMonth = `${prevDate.getFullYear()}-${String(prevDate.getMonth() + 1).padStart(2, '0')}`;
 
-      // Find the latest record for this account in the previous month (any record, not just non-action)
       const prevRecords = savings
         .filter(s => s.name === saving.name && s.month === prevMonth)
         .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
       const prevRecord = prevRecords[0];
 
-      // Find the earliest record from the beginning of the current year for YTD growth
+      // YTD: earliest record from Jan of current year
       const currentYear = currentMonth.split('-')[0];
       const janMonth = `${currentYear}-01`;
       const ytdRecords = savings
@@ -196,21 +200,32 @@ const SavingsAnalysisPanel = () => {
         .sort((a, b) => a.month.localeCompare(b.month) || new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
       const firstYtdRecord = ytdRecords[0];
 
+      // All-time: earliest record ever
+      const allRecords = savings
+        .filter(s => s.name === saving.name)
+        .sort((a, b) => a.month.localeCompare(b.month) || new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+      const firstEverRecord = allRecords[0];
+
       const currentAmount = Number(saving.amount);
       const lastMonthAmount = prevRecord ? Number(prevRecord.amount) : null;
-      const firstYtdAmount = firstYtdRecord ? Number(firstYtdRecord.amount) : null;
 
       const monthlyGrowth = lastMonthAmount !== null ? currentAmount - lastMonthAmount : null;
       const monthlyGrowthPercent = lastMonthAmount !== null && lastMonthAmount > 0
         ? ((currentAmount - lastMonthAmount) / lastMonthAmount) * 100 : null;
 
-      // YTD growth: compare current amount vs first record of the year
-      const hasYtdHistory = firstYtdRecord && firstYtdRecord.id !== saving.id;
-      const totalGrowth = hasYtdHistory && firstYtdAmount !== null ? currentAmount - firstYtdAmount : null;
-      const totalGrowthPercent = hasYtdHistory && firstYtdAmount !== null && firstYtdAmount > 0
+      const firstYtdAmount = firstYtdRecord ? Number(firstYtdRecord.amount) : null;
+      const hasYtd = firstYtdRecord && firstYtdRecord.id !== saving.id;
+      const ytdGrowth = hasYtd && firstYtdAmount !== null ? currentAmount - firstYtdAmount : null;
+      const ytdGrowthPercent = hasYtd && firstYtdAmount !== null && firstYtdAmount > 0
         ? ((currentAmount - firstYtdAmount) / firstYtdAmount) * 100 : null;
 
-      map.set(saving.name, { lastMonthAmount, currentAmount, monthlyGrowth, monthlyGrowthPercent, firstAmount: firstYtdAmount, totalGrowth, totalGrowthPercent });
+      const firstEverAmount = firstEverRecord ? Number(firstEverRecord.amount) : null;
+      const hasAllTime = firstEverRecord && firstEverRecord.id !== saving.id;
+      const allTimeGrowth = hasAllTime && firstEverAmount !== null ? currentAmount - firstEverAmount : null;
+      const allTimeGrowthPercent = hasAllTime && firstEverAmount !== null && firstEverAmount > 0
+        ? ((currentAmount - firstEverAmount) / firstEverAmount) * 100 : null;
+
+      map.set(saving.name, { lastMonthAmount, currentAmount, monthlyGrowth, monthlyGrowthPercent, ytdGrowth, ytdGrowthPercent, allTimeGrowth, allTimeGrowthPercent });
     }
     return map;
   }, [uniqueSavings, savings, currentMonth]);
@@ -305,7 +320,7 @@ const SavingsAnalysisPanel = () => {
             </div>
 
             {/* Growth Cards */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-3 gap-4">
               <div className="p-4 rounded-lg bg-secondary/30">
                 <GrowthIndicator
                   value={selectedGrowth.monthlyGrowth}
@@ -316,9 +331,17 @@ const SavingsAnalysisPanel = () => {
               </div>
               <div className="p-4 rounded-lg bg-secondary/30">
                 <GrowthIndicator
-                  value={selectedGrowth.totalGrowth}
-                  percent={selectedGrowth.totalGrowthPercent}
+                  value={selectedGrowth.ytdGrowth}
+                  percent={selectedGrowth.ytdGrowthPercent}
                   label="YTD Growth"
+                  currency={selected.currency || 'ILS'}
+                />
+              </div>
+              <div className="p-4 rounded-lg bg-secondary/30">
+                <GrowthIndicator
+                  value={selectedGrowth.allTimeGrowth}
+                  percent={selectedGrowth.allTimeGrowthPercent}
+                  label="All-Time Growth"
                   currency={selected.currency || 'ILS'}
                 />
               </div>
