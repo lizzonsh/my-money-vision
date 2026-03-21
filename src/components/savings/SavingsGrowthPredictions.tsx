@@ -123,6 +123,18 @@ const SavingsGrowthPredictions = () => {
   // Future months
   const futureMonths = useMemo(() => getNextMonths(currentMonth, 6), [currentMonth]);
 
+  // Build monthly recurring deposit map per account name
+  const recurringDepositPerAccount = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const rs of recurringSavings) {
+      if (rs.is_active && rs.action_type === 'deposit') {
+        const current = map.get(rs.name) || 0;
+        map.set(rs.name, current + Number(rs.default_amount));
+      }
+    }
+    return map;
+  }, [recurringSavings]);
+
   // Build predictions per account
   const predictions = useMemo(() => {
     const result = new Map<string, Array<{ month: string; predicted: number; actual: number | null }>>();
@@ -131,15 +143,16 @@ const SavingsGrowthPredictions = () => {
       const stats = growthStats.get(name);
       const avgPct = stats?.avgGrowthPct || 0;
       const currentAmt = Number(saving.amount);
-      const currency = saving.currency || 'ILS';
+      const monthlyDeposit = recurringDepositPerAccount.get(name) || 0;
 
       const items: Array<{ month: string; predicted: number; actual: number | null }> = [];
       let runningAmt = currentAmt;
 
       for (const fm of futureMonths) {
-        runningAmt = runningAmt * (1 + avgPct / 100);
+        // Apply market growth first, then add recurring deposit
+        runningAmt = runningAmt * (1 + avgPct / 100) + monthlyDeposit;
 
-        // Check if actual data exists for this future month
+        // Check if actual data exists for this future month (latest record)
         const actualRecords = savings
           .filter(s => s.name === name && s.month === fm)
           .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
@@ -152,7 +165,7 @@ const SavingsGrowthPredictions = () => {
     }
 
     return result;
-  }, [latestPerName, growthStats, futureMonths, savings]);
+  }, [latestPerName, growthStats, futureMonths, savings, recurringDepositPerAccount]);
 
   // Portfolio-level prediction (sum in ILS)
   const portfolioPrediction = useMemo(() => {
