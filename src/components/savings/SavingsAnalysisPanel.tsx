@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useFinance, Savings } from '@/contexts/FinanceContext';
+import { useSavings } from '@/hooks/useSavings';
 import { useStockHoldings } from '@/hooks/useStockHoldings';
 import { formatCurrency } from '@/lib/formatters';
 import { convertToILS } from '@/lib/currencyUtils';
@@ -152,6 +153,7 @@ const StockSection = ({ savingsName, currency }: { savingsName: string; currency
 
 const SavingsAnalysisPanel = () => {
   const { savings, updateSavings, currentMonth } = useFinance();
+  const { updateSavingsByName } = useSavings();
   const [selectedAccount, setSelectedAccount] = useState<string | null>(null);
 
   const currentMonthDate = new Date(currentMonth + '-01');
@@ -217,7 +219,7 @@ const SavingsAnalysisPanel = () => {
   const selectedGrowth = selected ? growthDataMap.get(selected.name) : null;
 
   const handleRiskChange = (saving: Savings, newRisk: string) => {
-    updateSavings({ id: saving.id, risk_level: newRisk });
+    updateSavingsByName({ name: saving.name, updates: { risk_level: newRisk } });
   };
 
   return (
