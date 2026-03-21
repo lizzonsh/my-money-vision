@@ -46,7 +46,7 @@ const StockSection = ({ savingsName, currency }: { savingsName: string; currency
   const { holdings, addHolding, deleteHolding } = useStockHoldings(savingsName);
   const [showAdd, setShowAdd] = useState<'stock' | 'provident_fund' | null>(null);
   const [form, setForm] = useState({ ticker: '', name: '', quantity: '', purchasePrice: '', currentPrice: '' });
-  const [fundForm, setFundForm] = useState({ name: '', totalInvested: '', currentValue: '' });
+  const [fundForm, setFundForm] = useState({ name: '', currentValue: '' });
 
   const stocks = holdings.filter(h => h.holding_type !== 'provident_fund');
   const funds = holdings.filter(h => h.holding_type === 'provident_fund');
