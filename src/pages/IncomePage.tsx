@@ -108,7 +108,6 @@ const IncomePage = () => {
         <TabsList>
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="defaults">Default Incomes</TabsTrigger>
-          <TabsTrigger value="projections">Projections</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
