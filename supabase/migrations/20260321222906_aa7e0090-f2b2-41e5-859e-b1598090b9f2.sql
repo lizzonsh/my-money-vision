@@ -1,0 +1,1 @@
+ALTER TABLE public.savings_stock_holdings ADD COLUMN month character varying NOT NULL DEFAULT to_char(now(), 'YYYY-MM');

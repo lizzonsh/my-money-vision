@@ -666,6 +666,7 @@ export type Database = {
           holding_type: string
           id: string
           last_updated: string | null
+          month: string
           name: string
           purchase_price: number
           quantity: number
@@ -681,6 +682,7 @@ export type Database = {
           holding_type?: string
           id?: string
           last_updated?: string | null
+          month?: string
           name: string
           purchase_price?: number
           quantity?: number
@@ -696,6 +698,7 @@ export type Database = {
           holding_type?: string
           id?: string
           last_updated?: string | null
+          month?: string
           name?: string
           purchase_price?: number
           quantity?: number
