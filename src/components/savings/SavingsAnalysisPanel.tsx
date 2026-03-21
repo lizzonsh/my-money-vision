@@ -562,7 +562,7 @@ const SavingsAnalysisPanel = () => {
             </div>
 
             {/* Stocks */}
-            <StockSection savingsName={selected.name} currency={selected.currency || 'ILS'} />
+            <StockSection savingsName={selected.name} currency={selected.currency || 'ILS'} currentMonth={currentMonth} />
           </div>
         ) : (
           <div className="glass rounded-xl p-5 shadow-card flex items-center justify-center h-64">
