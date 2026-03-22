@@ -146,10 +146,10 @@ const SavingsMonthlyActivity = ({ highlightId }: { highlightId?: string }) => {
 
   const netChangeILS = monthlyDepositsILS - monthlyWithdrawalsILS;
 
-  // Get unique account names for the dropdown (from all savings + recurring templates)
+  // Get unique account names for the dropdown (from ALL savings history + recurring templates)
   const accountNames = [...new Set([
-    ...savings.filter(s => !s.closed_at).map(s => s.name),
-    ...recurringSavings.filter(rs => rs.is_active).map(rs => rs.name),
+    ...savings.map(s => s.name),
+    ...recurringSavings.map(rs => rs.name),
   ])];
 
   // Format month for display
