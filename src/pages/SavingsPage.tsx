@@ -7,6 +7,7 @@ import RecurringSavingsPanel from '@/components/savings/RecurringSavingsPanel';
 import SavingsAnalysisPanel from '@/components/savings/SavingsAnalysisPanel';
 import SavingsGrowthPredictions from '@/components/savings/SavingsGrowthPredictions';
 import RiskAllocationChart from '@/components/savings/RiskAllocationChart';
+import SavingsPlanner from '@/components/savings/SavingsPlanner';
 import MonthNavigation from '@/components/navigation/MonthNavigation';
 import { SavingsGrowthChart } from '@/components/charts/FinanceCharts';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -33,10 +34,11 @@ const SavingsPage = () => {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 sm:space-y-6">
-        <TabsList className="w-full grid grid-cols-4 no-scrollbar">
+        <TabsList className="w-full grid grid-cols-5 no-scrollbar">
           <TabsTrigger value="overview" className="text-[11px] sm:text-sm px-1 sm:px-3">Overview</TabsTrigger>
           <TabsTrigger value="analysis" className="text-[11px] sm:text-sm px-1 sm:px-3">Analysis</TabsTrigger>
           <TabsTrigger value="predictions" className="text-[11px] sm:text-sm px-1 sm:px-3">Predictions</TabsTrigger>
+          <TabsTrigger value="planner" className="text-[11px] sm:text-sm px-1 sm:px-3">Planner</TabsTrigger>
           <TabsTrigger value="recurring" className="text-[11px] sm:text-sm px-1 sm:px-3">Recurring</TabsTrigger>
         </TabsList>
 
@@ -58,6 +60,10 @@ const SavingsPage = () => {
 
         <TabsContent value="predictions" className="animate-fade-in">
           <SavingsGrowthPredictions />
+        </TabsContent>
+
+        <TabsContent value="planner" className="animate-fade-in">
+          <SavingsPlanner />
         </TabsContent>
 
         <TabsContent value="recurring">
