@@ -1,0 +1,1 @@
+DROP TABLE IF EXISTS public.planned_savings_actions;
