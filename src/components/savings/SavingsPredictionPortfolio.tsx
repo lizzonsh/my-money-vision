@@ -1,16 +1,24 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useFinance, Savings } from '@/contexts/FinanceContext';
 import { formatCurrency } from '@/lib/formatters';
 import { convertToILS } from '@/lib/currencyUtils';
 import { isDateUpToToday, isCurrentMonth } from '@/lib/dateUtils';
-import { TrendingUp, PiggyBank } from 'lucide-react';
+import { TrendingUp, PiggyBank, Plus, ArrowRightLeft, Trash2, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import { usePlannedSavingsActions } from '@/hooks/usePlannedSavingsActions';
+import AddPlannedActionDialog from '@/components/savings/AddPlannedActionDialog';
 
 const SavingsPredictionPortfolio = () => {
   const { savings, recurringSavings, currentMonth } = useFinance();
+  const { plannedActions, addAction, deleteAction, markExecuted } = usePlannedSavingsActions();
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [defaultFromAccount, setDefaultFromAccount] = useState<string | undefined>();
 
   const currentMonthDate = new Date(currentMonth + '-01');
   const shouldFilterByDate = isCurrentMonth(currentMonth);
+
+  const monthPlannedActions = plannedActions.filter(a => a.month === currentMonth && !a.is_executed);
 
   // Get latest balance per account (same logic as SavingsCurrentStatus)
   const latestSavingsPerName = useMemo(() => {
@@ -29,7 +37,9 @@ const SavingsPredictionPortfolio = () => {
       }, new Map<string, Savings>());
   }, [savings, currentMonth]);
 
-  // Get this month's activity items (same logic as SavingsMonthlyActivity)
+  const accountNames = Array.from(latestSavingsPerName.keys());
+
+  // Get this month's activity items
   const monthlySavings = savings.filter(s => {
     if (s.month !== currentMonth) return false;
     if (!s.closed_at) return true;
@@ -48,22 +58,19 @@ const SavingsPredictionPortfolio = () => {
       .map(s => s.name)
   );
 
-  // Find uncompleted (not crossed over) actual transactions
   const uncompletedTransactions = savingsUpToDate.filter(s =>
     ((s.action_amount && s.action_amount > 0) || (s.monthly_deposit && s.monthly_deposit > 0)) &&
     !(s as any).is_completed
   );
 
-  // Find pending recurring (not yet recorded at all)
   const pendingRecurring = activeRecurringSavings.filter(
     rs => !recordedSavingsNames.has(rs.name)
   );
 
   // Build predicted balance per account
   const predictedPerAccount = useMemo(() => {
-    const accountMap = new Map<string, { current: number; predicted: number; currency: string; pendingItems: Array<{ action: string; amount: number }> }>();
+    const accountMap = new Map<string, { current: number; predicted: number; currency: string; pendingItems: Array<{ action: string; amount: number; source?: string }> }>();
 
-    // Initialize with current balances (only includes already crossed-over transactions)
     latestSavingsPerName.forEach((saving, name) => {
       accountMap.set(name, {
         current: Number(saving.amount),
@@ -73,7 +80,7 @@ const SavingsPredictionPortfolio = () => {
       });
     });
 
-    // Add uncompleted manual/actual transactions (not yet crossed over, so not in balance yet)
+    // Add uncompleted manual/actual transactions
     uncompletedTransactions.forEach(s => {
       const entry = accountMap.get(s.name);
       if (entry) {
@@ -89,23 +96,56 @@ const SavingsPredictionPortfolio = () => {
       }
     });
 
-    // Add pending recurring savings (no record at all yet for this month)
+    // Add pending recurring savings
     pendingRecurring.forEach(rs => {
       const entry = accountMap.get(rs.name);
       if (entry) {
         const amount = Number(rs.default_amount);
         if (rs.action_type === 'deposit') {
           entry.predicted += amount;
-          entry.pendingItems.push({ action: 'deposit', amount });
+          entry.pendingItems.push({ action: 'deposit', amount, source: 'recurring' });
         } else {
           entry.predicted -= amount;
-          entry.pendingItems.push({ action: 'withdrawal', amount });
+          entry.pendingItems.push({ action: 'withdrawal', amount, source: 'recurring' });
+        }
+      }
+    });
+
+    // Add planned actions
+    monthPlannedActions.forEach(pa => {
+      const amount = Number(pa.amount);
+      if (pa.action_type === 'transfer') {
+        if (pa.from_account) {
+          const fromEntry = accountMap.get(pa.from_account);
+          if (fromEntry) {
+            fromEntry.predicted -= amount;
+            fromEntry.pendingItems.push({ action: 'transfer out', amount, source: 'planned' });
+          }
+        }
+        if (pa.to_account) {
+          const toEntry = accountMap.get(pa.to_account);
+          if (toEntry) {
+            toEntry.predicted += amount;
+            toEntry.pendingItems.push({ action: 'transfer in', amount, source: 'planned' });
+          }
+        }
+      } else if (pa.action_type === 'deposit' && pa.to_account) {
+        const entry = accountMap.get(pa.to_account);
+        if (entry) {
+          entry.predicted += amount;
+          entry.pendingItems.push({ action: 'planned deposit', amount, source: 'planned' });
+        }
+      } else if (pa.action_type === 'withdrawal' && pa.from_account) {
+        const entry = accountMap.get(pa.from_account);
+        if (entry) {
+          entry.predicted -= amount;
+          entry.pendingItems.push({ action: 'planned withdrawal', amount, source: 'planned' });
         }
       }
     });
 
     return accountMap;
-  }, [latestSavingsPerName, uncompletedTransactions, pendingRecurring]);
+  }, [latestSavingsPerName, uncompletedTransactions, pendingRecurring, monthPlannedActions]);
 
   const totalCurrentILS = Array.from(latestSavingsPerName.values())
     .reduce((sum, s) => sum + convertToILS(Number(s.amount), s.currency || 'ILS'), 0);
@@ -115,8 +155,10 @@ const SavingsPredictionPortfolio = () => {
 
   const difference = totalPredictedILS - totalCurrentILS;
 
-  const accountsWithPending = Array.from(predictedPerAccount.entries())
-    .filter(([_, entry]) => entry.pendingItems.length > 0);
+  const handleAddFromAccount = (accountName: string) => {
+    setDefaultFromAccount(accountName);
+    setDialogOpen(true);
+  };
 
   return (
     <div className="glass rounded-xl p-3 sm:p-5 shadow-card animate-slide-up">
@@ -130,16 +172,57 @@ const SavingsPredictionPortfolio = () => {
             </p>
           )}
         </div>
-        <div className="p-2.5 rounded-lg bg-primary/10 text-primary">
-          <TrendingUp className="h-5 w-5" />
+        <div className="flex items-center gap-2">
+          <Button size="sm" variant="outline" className="gap-1 text-xs h-7" onClick={() => { setDefaultFromAccount(undefined); setDialogOpen(true); }}>
+            <ArrowRightLeft className="h-3.5 w-3.5" />
+            Plan
+          </Button>
+          <div className="p-2.5 rounded-lg bg-primary/10 text-primary">
+            <TrendingUp className="h-5 w-5" />
+          </div>
         </div>
       </div>
+
+      {/* Planned Actions Summary */}
+      {monthPlannedActions.length > 0 && (
+        <div className="mb-3 p-2 rounded-lg bg-primary/5 border border-primary/10">
+          <p className="text-xs font-medium text-primary mb-1.5">📋 Planned Actions ({monthPlannedActions.length})</p>
+          <div className="space-y-1">
+            {monthPlannedActions.map(pa => (
+              <div key={pa.id} className="flex items-center justify-between text-xs group">
+                <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                  <span className="shrink-0">
+                    {pa.action_type === 'transfer' ? '🔄' : pa.action_type === 'deposit' ? '📥' : '📤'}
+                  </span>
+                  <span className="truncate text-muted-foreground">
+                    {pa.action_type === 'transfer' 
+                      ? `${pa.from_account} → ${pa.to_account}` 
+                      : pa.action_type === 'deposit' 
+                        ? `→ ${pa.to_account}` 
+                        : `${pa.from_account} →`
+                    }
+                  </span>
+                  <span className="font-medium shrink-0">{formatCurrency(pa.amount, pa.currency)}</span>
+                </div>
+                <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+                  <button onClick={() => markExecuted(pa.id)} className="p-1 hover:bg-success/10 rounded" title="Mark as done">
+                    <Check className="h-3 w-3 text-success" />
+                  </button>
+                  <button onClick={() => deleteAction(pa.id)} className="p-1 hover:bg-destructive/10 rounded" title="Remove">
+                    <Trash2 className="h-3 w-3 text-destructive" />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="space-y-3">
         {Array.from(predictedPerAccount.entries()).map(([name, entry]) => (
           <div
             key={name}
-            className="p-2.5 sm:p-4 rounded-lg bg-secondary/30"
+            className="p-2.5 sm:p-4 rounded-lg bg-secondary/30 group/card"
           >
             <div className="flex items-start justify-between">
               <div className="flex items-center gap-2 sm:gap-3">
@@ -163,15 +246,24 @@ const SavingsPredictionPortfolio = () => {
                   </p>
                 </div>
               </div>
-              <div className="text-right">
-                <p className="text-base sm:text-lg font-bold">
-                  {formatCurrency(entry.predicted, entry.currency)}
-                </p>
-                {entry.current !== entry.predicted && (
-                  <p className="text-xs text-muted-foreground line-through">
-                    {formatCurrency(entry.current, entry.currency)}
+              <div className="flex items-center gap-1.5">
+                <div className="text-right">
+                  <p className="text-base sm:text-lg font-bold">
+                    {formatCurrency(entry.predicted, entry.currency)}
                   </p>
-                )}
+                  {entry.current !== entry.predicted && (
+                    <p className="text-xs text-muted-foreground line-through">
+                      {formatCurrency(entry.current, entry.currency)}
+                    </p>
+                  )}
+                </div>
+                <button
+                  onClick={() => handleAddFromAccount(name)}
+                  className="p-1 opacity-0 group-hover/card:opacity-100 hover:bg-primary/10 rounded transition-all"
+                  title="Plan action for this account"
+                >
+                  <Plus className="h-3.5 w-3.5 text-primary" />
+                </button>
               </div>
             </div>
             {entry.pendingItems.length > 0 && (
@@ -179,9 +271,12 @@ const SavingsPredictionPortfolio = () => {
                 {entry.pendingItems.map((item, i) => (
                   <p key={i} className={cn(
                     "text-xs",
-                    item.action === 'deposit' ? "text-success" : "text-destructive"
+                    item.action.includes('deposit') || item.action === 'transfer in' ? "text-success" : "text-destructive"
                   )}>
-                    {item.action === 'deposit' ? '+' : '-'}{formatCurrency(item.amount, entry.currency)} {item.action}
+                    {item.action.includes('deposit') || item.action === 'transfer in' ? '+' : '-'}
+                    {formatCurrency(item.amount, entry.currency)} {item.action}
+                    {item.source === 'planned' && <span className="text-primary ml-1">• planned</span>}
+                    {item.source === 'recurring' && <span className="text-muted-foreground ml-1">• recurring</span>}
                   </p>
                 ))}
               </div>
@@ -189,6 +284,15 @@ const SavingsPredictionPortfolio = () => {
           </div>
         ))}
       </div>
+
+      <AddPlannedActionDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        accountNames={accountNames}
+        currentMonth={currentMonth}
+        onSubmit={addAction}
+        defaultFromAccount={defaultFromAccount}
+      />
     </div>
   );
 };
