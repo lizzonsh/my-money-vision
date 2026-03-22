@@ -146,8 +146,11 @@ const SavingsMonthlyActivity = ({ highlightId }: { highlightId?: string }) => {
 
   const netChangeILS = monthlyDepositsILS - monthlyWithdrawalsILS;
 
-  // Get unique account names for the dropdown
-  const accountNames = [...new Set(savings.filter(s => !s.closed_at).map(s => s.name))];
+  // Get unique account names for the dropdown (from all savings + recurring templates)
+  const accountNames = [...new Set([
+    ...savings.filter(s => !s.closed_at).map(s => s.name),
+    ...recurringSavings.filter(rs => rs.is_active).map(rs => rs.name),
+  ])];
 
   // Format month for display
   const [year, month] = currentMonth.split('-');
@@ -374,19 +377,28 @@ const SavingsMonthlyActivity = ({ highlightId }: { highlightId?: string }) => {
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
                 <Label>Account</Label>
-                <Select
-                  value={formData.name}
-                  onValueChange={(value) => setFormData({ ...formData, name: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select account" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {accountNames.map((name) => (
-                      <SelectItem key={name} value={name}>{name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                {accountNames.length > 0 ? (
+                  <Select
+                    value={formData.name}
+                    onValueChange={(value) => setFormData({ ...formData, name: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select account" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {accountNames.map((name) => (
+                        <SelectItem key={name} value={name}>{name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <Input
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    placeholder="Enter account name"
+                    required
+                  />
+                )}
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
