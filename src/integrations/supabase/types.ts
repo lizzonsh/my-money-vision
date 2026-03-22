@@ -658,6 +658,48 @@ export type Database = {
           },
         ]
       }
+      savings_plan_events: {
+        Row: {
+          amount: number
+          created_at: string
+          currency: string | null
+          description: string | null
+          event_type: string
+          from_account: string | null
+          id: string
+          target_month: string
+          to_account: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          currency?: string | null
+          description?: string | null
+          event_type: string
+          from_account?: string | null
+          id?: string
+          target_month: string
+          to_account?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          currency?: string | null
+          description?: string | null
+          event_type?: string
+          from_account?: string | null
+          id?: string
+          target_month?: string
+          to_account?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       savings_stock_holdings: {
         Row: {
           created_at: string
