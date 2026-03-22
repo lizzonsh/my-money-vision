@@ -416,51 +416,6 @@ export type Database = {
           },
         ]
       }
-      planned_savings_actions: {
-        Row: {
-          action_type: string
-          amount: number
-          created_at: string
-          currency: string | null
-          from_account: string | null
-          id: string
-          is_executed: boolean
-          month: string
-          notes: string | null
-          to_account: string | null
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          action_type: string
-          amount: number
-          created_at?: string
-          currency?: string | null
-          from_account?: string | null
-          id?: string
-          is_executed?: boolean
-          month: string
-          notes?: string | null
-          to_account?: string | null
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          action_type?: string
-          amount?: number
-          created_at?: string
-          currency?: string | null
-          from_account?: string | null
-          id?: string
-          is_executed?: boolean
-          month?: string
-          notes?: string | null
-          to_account?: string | null
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
       recurring_incomes: {
         Row: {
           created_at: string
