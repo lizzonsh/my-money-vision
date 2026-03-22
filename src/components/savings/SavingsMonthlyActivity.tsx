@@ -377,27 +377,19 @@ const SavingsMonthlyActivity = ({ highlightId }: { highlightId?: string }) => {
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
                 <Label>Account</Label>
-                {accountNames.length > 0 && (
-                  <Select
-                    value={accountNames.includes(formData.name) ? formData.name : ''}
-                    onValueChange={(value) => setFormData({ ...formData, name: value })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select existing account" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {accountNames.map((name) => (
-                        <SelectItem key={name} value={name}>{name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
-                <Input
+                <Select
                   value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder={accountNames.length > 0 ? "Or type a new account name" : "Enter account name"}
-                  required
-                />
+                  onValueChange={(value) => setFormData({ ...formData, name: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select account" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {accountNames.map((name) => (
+                      <SelectItem key={name} value={name}>{name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
