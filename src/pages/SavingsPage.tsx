@@ -9,6 +9,7 @@ import SavingsGrowthPredictions from '@/components/savings/SavingsGrowthPredicti
 import RiskAllocationChart from '@/components/savings/RiskAllocationChart';
 import SavingsPlanner from '@/components/savings/SavingsPlanner';
 import MonthNavigation from '@/components/navigation/MonthNavigation';
+import MonthlyNotes from '@/components/MonthlyNotes';
 import { SavingsGrowthChart } from '@/components/charts/FinanceCharts';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
