@@ -3,6 +3,7 @@ import IncomesList from '@/components/income/IncomesList';
 import RecurringIncomesPanel from '@/components/income/RecurringIncomesPanel';
 
 import MonthNavigation from '@/components/navigation/MonthNavigation';
+import MonthlyNotes from '@/components/MonthlyNotes';
 import { useFinance } from '@/contexts/FinanceContext';
 import { convertToILS } from '@/lib/currencyUtils';
 import { formatCurrency } from '@/lib/formatters';
