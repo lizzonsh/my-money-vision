@@ -435,6 +435,30 @@ const SavingsMonthlyActivity = ({ highlightId }: { highlightId?: string }) => {
                       </SelectContent>
                     </Select>
                   </div>
+                  {/* Withdraw All button */}
+                  {formData.action === 'withdrawal' && formData.name && (() => {
+                    const latestAccount = savings
+                      .filter(s => s.name === formData.name && !s.closed_at)
+                      .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())[0];
+                    const accountBalance = latestAccount ? Number(latestAccount.amount) : 0;
+                    const acctCurrency = latestAccount?.currency || 'ILS';
+                    if (accountBalance <= 0) return null;
+                    return (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="w-full text-xs text-destructive border-destructive/30 hover:bg-destructive/10"
+                        onClick={() => setFormData({
+                          ...formData,
+                          actionAmount: accountBalance.toString(),
+                          inputCurrency: acctCurrency,
+                        })}
+                      >
+                        Withdraw All ({formatCurrency(accountBalance, acctCurrency)})
+                      </Button>
+                    );
+                  })()}
                   {/* Show conversion preview */}
                   {formData.name && inputAmount > 0 && (
                     <div className="text-xs text-muted-foreground space-y-0.5">
