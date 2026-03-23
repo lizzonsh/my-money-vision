@@ -4,6 +4,7 @@ import BudgetProgress from '@/components/dashboard/BudgetProgress';
 import MonthNavigation from '@/components/navigation/MonthNavigation';
 import PlannedGoalsPanel from '@/components/expenses/PlannedGoalsPanel';
 import { SpendingByCategoryChart } from '@/components/charts/FinanceCharts';
+import MonthlyNotes from '@/components/MonthlyNotes';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useIsMobile } from '@/hooks/use-mobile';
 
