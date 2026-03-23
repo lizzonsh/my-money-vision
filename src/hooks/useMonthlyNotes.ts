@@ -18,7 +18,7 @@ export const useMonthlyNotes = (month: string, pageType: string) => {
         .eq('page_type', pageType)
         .maybeSingle();
       if (error) throw error;
-      return data as { id: string; content: string } | null;
+      return data as unknown as { id: string; content: string } | null;
     },
     enabled: !!user && !!month,
   });
