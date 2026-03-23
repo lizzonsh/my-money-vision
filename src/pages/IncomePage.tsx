@@ -102,7 +102,10 @@ const IncomePage = () => {
           <h1 className="text-3xl font-bold">Income</h1>
           <p className="text-muted-foreground">Track your earnings and revenue</p>
         </div>
-        <MonthNavigation />
+        <div className="flex items-center gap-3">
+          <MonthlyNotes pageType="income" />
+          <MonthNavigation />
+        </div>
       </div>
 
       <Tabs defaultValue="overview" className="space-y-6">
