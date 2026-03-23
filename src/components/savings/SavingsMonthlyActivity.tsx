@@ -189,11 +189,23 @@ const SavingsMonthlyActivity = ({ highlightId }: { highlightId?: string }) => {
     const inputAmount = parseFloat(formData.actionAmount) || 0;
 
     if (editingActivity) {
-      // When editing, preserve is_completed and recalculate amount only if needed
       const wasCompleted = !!(editingActivity as any).is_completed;
-      // Read from action_amount first, fall back to monthly_deposit
       const oldActionAmount = Number(editingActivity.action_amount ?? editingActivity.monthly_deposit ?? 0);
-      const accountCurrency = editingActivity.currency || 'ILS';
+      const nameChanged = formData.name !== editingActivity.name;
+
+      // If account name changed, look up the NEW account's currency and balance
+      let accountCurrency: string;
+      let baseAmount: number;
+      if (nameChanged) {
+        const latestForNewAccount = savings
+          .filter(s => s.name === formData.name && !s.closed_at)
+          .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())[0];
+        accountCurrency = latestForNewAccount?.currency || 'ILS';
+        baseAmount = latestForNewAccount ? Number(latestForNewAccount.amount) : 0;
+      } else {
+        accountCurrency = editingActivity.currency || 'ILS';
+        baseAmount = Number(editingActivity.amount);
+      }
 
       // Convert input amount to account currency if different
       let newActionAmount = inputAmount;
@@ -202,9 +214,9 @@ const SavingsMonthlyActivity = ({ highlightId }: { highlightId?: string }) => {
         newActionAmount = convertFromILS(amountInILS, accountCurrency);
       }
 
-      // If already completed, adjust the stored balance for the difference
-      let newAmount = Number(editingActivity.amount);
-      if (wasCompleted) {
+      // Calculate new balance
+      let newAmount = baseAmount;
+      if (wasCompleted && !nameChanged) {
         const isDeposit = formData.action === 'deposit';
         const wasDeposit = (editingActivity.action || 'deposit') === 'deposit';
         // Reverse old effect
@@ -225,10 +237,10 @@ const SavingsMonthlyActivity = ({ highlightId }: { highlightId?: string }) => {
         action: formData.action as 'deposit' | 'withdrawal',
         action_amount: newActionAmount,
         amount: newAmount,
+        currency: accountCurrency,
         transfer_method: formData.transferMethod as 'bank_account' | 'credit_card',
         card_id: formData.cardId || null,
-        is_completed: wasCompleted,
-        // Null out monthly_deposit only when migrating from it (set action_amount instead)
+        is_completed: nameChanged ? false : wasCompleted,
         monthly_deposit: hadMonthlyDeposit ? null : editingActivity.monthly_deposit,
         recurring_type: null,
         recurring_day_of_month: null,
