@@ -4,6 +4,7 @@ import BudgetProgress from '@/components/dashboard/BudgetProgress';
 import MonthNavigation from '@/components/navigation/MonthNavigation';
 import PlannedGoalsPanel from '@/components/expenses/PlannedGoalsPanel';
 import { SpendingByCategoryChart } from '@/components/charts/FinanceCharts';
+import MonthlyNotes from '@/components/MonthlyNotes';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useIsMobile } from '@/hooks/use-mobile';
 
@@ -17,7 +18,10 @@ const ExpensesPage = () => {
           <h1 className="text-xl sm:text-3xl font-bold">Expenses</h1>
           <p className="text-xs sm:text-base text-muted-foreground">Track and manage your spending</p>
         </div>
-        <MonthNavigation />
+        <div className="flex items-center gap-3">
+          <MonthlyNotes pageType="expenses" />
+          <MonthNavigation />
+        </div>
       </div>
 
       <Tabs defaultValue="overview" className="space-y-4 sm:space-y-6">

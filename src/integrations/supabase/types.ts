@@ -416,6 +416,36 @@ export type Database = {
           },
         ]
       }
+      monthly_notes: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          month: string
+          page_type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          content?: string
+          created_at?: string
+          id?: string
+          month: string
+          page_type: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          month?: string
+          page_type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       recurring_incomes: {
         Row: {
           created_at: string
