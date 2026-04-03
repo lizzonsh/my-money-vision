@@ -193,18 +193,20 @@ const SavingsMonthlyActivity = ({ highlightId }: { highlightId?: string }) => {
       const oldActionAmount = Number(editingActivity.action_amount ?? editingActivity.monthly_deposit ?? 0);
       const nameChanged = formData.name !== editingActivity.name;
 
-      // If account name changed, look up the NEW account's currency and balance
+      // Always look up the latest balance for the target account (not the stale record amount)
+      const latestForTargetAccount = savings
+        .filter(s => s.name === formData.name && !s.closed_at)
+        .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())[0];
+      
       let accountCurrency: string;
       let baseAmount: number;
       if (nameChanged) {
-        const latestForNewAccount = savings
-          .filter(s => s.name === formData.name && !s.closed_at)
-          .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())[0];
-        accountCurrency = latestForNewAccount?.currency || 'ILS';
-        baseAmount = latestForNewAccount ? Number(latestForNewAccount.amount) : 0;
+        accountCurrency = latestForTargetAccount?.currency || 'ILS';
+        baseAmount = latestForTargetAccount ? Number(latestForTargetAccount.amount) : 0;
       } else {
         accountCurrency = editingActivity.currency || 'ILS';
-        baseAmount = Number(editingActivity.amount);
+        // Use the latest known balance for this account, not the possibly stale record amount
+        baseAmount = latestForTargetAccount ? Number(latestForTargetAccount.amount) : Number(editingActivity.amount);
       }
 
       // Convert input amount to account currency if different
