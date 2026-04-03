@@ -193,20 +193,20 @@ const SavingsMonthlyActivity = ({ highlightId }: { highlightId?: string }) => {
       const oldActionAmount = Number(editingActivity.action_amount ?? editingActivity.monthly_deposit ?? 0);
       const nameChanged = formData.name !== editingActivity.name;
 
-      // Always look up the latest balance for the target account (not the stale record amount)
-      const latestForTargetAccount = savings
-        .filter(s => s.name === formData.name && !s.closed_at)
-        .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())[0];
-      
+      // Determine account currency and base amount
       let accountCurrency: string;
       let baseAmount: number;
       if (nameChanged) {
-        accountCurrency = latestForTargetAccount?.currency || 'ILS';
-        baseAmount = latestForTargetAccount ? Number(latestForTargetAccount.amount) : 0;
+        // When switching accounts, find latest balance for the NEW account
+        const latestForNewAccount = savings
+          .filter(s => s.name === formData.name && !s.closed_at)
+          .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())[0];
+        accountCurrency = latestForNewAccount?.currency || 'ILS';
+        baseAmount = latestForNewAccount ? Number(latestForNewAccount.amount) : 0;
       } else {
         accountCurrency = editingActivity.currency || 'ILS';
-        // Use the latest known balance for this account, not the possibly stale record amount
-        baseAmount = latestForTargetAccount ? Number(latestForTargetAccount.amount) : Number(editingActivity.amount);
+        // Use THIS record's own amount — never look across months
+        baseAmount = Number(editingActivity.amount);
       }
 
       // Convert input amount to account currency if different
@@ -216,12 +216,12 @@ const SavingsMonthlyActivity = ({ highlightId }: { highlightId?: string }) => {
         newActionAmount = convertFromILS(amountInILS, accountCurrency);
       }
 
-      // Calculate new balance
+      // Only recalculate balance if the record was already completed
       let newAmount = baseAmount;
       if (wasCompleted && !nameChanged) {
         const isDeposit = formData.action === 'deposit';
         const wasDeposit = (editingActivity.action || 'deposit') === 'deposit';
-        // Reverse old effect
+        // Reverse old effect on this record's balance
         if (wasDeposit) newAmount -= oldActionAmount;
         else newAmount += oldActionAmount;
         // Apply new effect
