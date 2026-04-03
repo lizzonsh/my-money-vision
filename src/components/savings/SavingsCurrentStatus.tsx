@@ -13,6 +13,22 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger,
 } from '@/components/ui/dialog';
 
+const isPortfolioSnapshot = (saving: Savings) => (
+  saving.action == null &&
+  saving.action_amount == null &&
+  saving.monthly_deposit == null &&
+  saving.recurring_type == null &&
+  saving.recurring_day_of_month == null
+);
+
+const isLaterSavingsRecord = (candidate: Savings, current: Savings) => {
+  if (candidate.month !== current.month) {
+    return candidate.month > current.month;
+  }
+
+  return new Date(candidate.updated_at).getTime() > new Date(current.updated_at).getTime();
+};
+
 const SavingsCurrentStatus = () => {
   const { savings, addSavings, updateSavings, closeSavingsAccount, currentMonth } = useFinance();
   const [isOpen, setIsOpen] = useState(false);
@@ -31,7 +47,7 @@ const SavingsCurrentStatus = () => {
     })
     .reduce((acc, saving) => {
       const existing = acc.get(saving.name);
-      if (!existing || new Date(saving.updated_at) > new Date(existing.updated_at)) {
+      if (!existing || isLaterSavingsRecord(saving, existing)) {
         acc.set(saving.name, saving);
       }
       return acc;
@@ -59,20 +75,59 @@ const SavingsCurrentStatus = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
+    const portfolioFields = {
+      name: formData.name,
+      amount: parseFloat(formData.amount),
+      currency: formData.currency,
+      transfer_method: formData.transferMethod as 'bank_account' | 'credit_card',
+      card_id: formData.cardId || null,
+      risk_level: formData.riskLevel,
+    };
+
     if (editingSaving) {
-      // Only update portfolio-level fields, preserve activity fields
-      updateSavings({
-        id: editingSaving.id,
-        month: currentMonth, name: formData.name, amount: parseFloat(formData.amount), currency: formData.currency,
-        transfer_method: formData.transferMethod as 'bank_account' | 'credit_card', card_id: formData.cardId || null,
-        risk_level: formData.riskLevel,
-      });
+      const currentMonthSnapshot = savings
+        .filter(s => s.name === editingSaving.name && s.month === currentMonth)
+        .filter(s => {
+          if (!s.closed_at) return true;
+          return new Date(s.closed_at) > currentMonthDate;
+        })
+        .filter(isPortfolioSnapshot)
+        .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())[0];
+
+      const editableSnapshot = editingSaving.month === currentMonth && isPortfolioSnapshot(editingSaving)
+        ? editingSaving
+        : currentMonthSnapshot;
+
+      if (editableSnapshot) {
+        updateSavings({
+          id: editableSnapshot.id,
+          ...portfolioFields,
+        });
+      } else {
+        addSavings({
+          month: currentMonth,
+          ...portfolioFields,
+          action: null,
+          action_amount: null,
+          monthly_deposit: null,
+          recurring_type: null,
+          recurring_day_of_month: null,
+          closed_at: null,
+          is_completed: false,
+        });
+      }
     } else {
       addSavings({
-        month: currentMonth, name: formData.name, amount: parseFloat(formData.amount), currency: formData.currency,
-        transfer_method: formData.transferMethod as 'bank_account' | 'credit_card', card_id: formData.cardId || null,
-        action: null, action_amount: null, monthly_deposit: null, recurring_type: null, recurring_day_of_month: null,
-        closed_at: null, is_completed: false, risk_level: formData.riskLevel,
+        month: currentMonth,
+        ...portfolioFields,
+        action: null,
+        action_amount: null,
+        monthly_deposit: null,
+        recurring_type: null,
+        recurring_day_of_month: null,
+        closed_at: null,
+        is_completed: false,
       });
     }
     resetForm();
