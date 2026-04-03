@@ -248,10 +248,13 @@ const SavingsMonthlyActivity = ({ highlightId }: { highlightId?: string }) => {
         recurring_day_of_month: null,
       } as any);
     } else {
-      // New transaction — find latest balance for this account
-      const latestForAccount = savings
-        .filter(s => s.name === formData.name && !s.closed_at)
+      // New transaction — find latest balance for this account in the current month first, then globally
+      const latestForAccountInMonth = savings
+        .filter(s => s.name === formData.name && s.month === currentMonth && !s.closed_at)
         .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())[0];
+      const latestForAccount = latestForAccountInMonth || savings
+        .filter(s => s.name === formData.name && !s.closed_at && s.month <= currentMonth)
+        .sort((a, b) => b.month.localeCompare(a.month) || new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())[0];
 
       const currentAmount = latestForAccount ? Number(latestForAccount.amount) : 0;
       const accountCurrency = latestForAccount?.currency || 'ILS';
