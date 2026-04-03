@@ -2,7 +2,7 @@
  // Using ILS as base currency
  const EXCHANGE_RATES: Record<string, number> = {
    ILS: 1,
-   USD: 3.65, // 1 USD = ~3.65 ILS
+  USD: 3.14, // 1 USD = ~3.14 ILS
    EUR: 4.0,  // 1 EUR = ~4.0 ILS
    GBP: 4.65, // 1 GBP = ~4.65 ILS
  };
