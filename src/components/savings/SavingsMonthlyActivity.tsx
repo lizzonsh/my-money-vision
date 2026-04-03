@@ -289,8 +289,8 @@ const SavingsMonthlyActivity = ({ highlightId }: { highlightId?: string }) => {
   // Dismiss a recurring item for the current month (creates a zero-amount "skipped" record)
   const handleDismissRecurring = (item: ActivityItem) => {
     const latestForAccount = savings
-      .filter(s => s.name === item.name && !s.closed_at)
-      .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())[0];
+      .filter(s => s.name === item.name && !s.closed_at && s.month <= currentMonth)
+      .sort((a, b) => b.month.localeCompare(a.month) || new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())[0];
 
     addSavings({
       month: currentMonth,
@@ -312,8 +312,8 @@ const SavingsMonthlyActivity = ({ highlightId }: { highlightId?: string }) => {
   // Actualize a recurring item — creates a real savings record from the template
   const handleActualizeRecurring = (item: ActivityItem, markCompleted: boolean) => {
     const latestForAccount = savings
-      .filter(s => s.name === item.name && !s.closed_at)
-      .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())[0];
+      .filter(s => s.name === item.name && !s.closed_at && s.month <= currentMonth)
+      .sort((a, b) => b.month.localeCompare(a.month) || new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())[0];
 
     const currentAmount = latestForAccount ? Number(latestForAccount.amount) : 0;
     const actionAmount = item.amount;
