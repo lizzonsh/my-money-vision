@@ -79,8 +79,11 @@ const NextMonthBankPrediction = () => {
     };
   }, [currentMonth, totalBankBalance, getTotalBalanceForMonth, recurringIncomes, recurringSavings, recurringPayments]);
 
-  // Final projected balance after accounting for remaining budget to be spent
-  const finalProjectedBalance = prediction.predictedBalance - calculatedBudget.leftBudget;
+  // Final projected balance after accounting for remaining budget to be spent.
+  // Only subtract leftBudget if it's positive (money still to be spent).
+  // If overspent (negative), the overspend is already reflected in current balance — don't add it back.
+  const remainingBudgetToSpend = Math.max(0, calculatedBudget.leftBudget);
+  const finalProjectedBalance = prediction.predictedBalance - remainingBudgetToSpend;
 
   const formatNextMonth = (month: string) => {
     const [year, monthNum] = month.split('-').map(Number);
@@ -165,7 +168,7 @@ const NextMonthBankPrediction = () => {
             <Wallet className="h-4 w-4 text-warning" />
             <span className="text-sm">Remaining Budget</span>
           </div>
-          <span className="text-sm font-medium text-warning">-{formatCurrency(calculatedBudget.leftBudget)}</span>
+          <span className="text-sm font-medium text-warning">-{formatCurrency(remainingBudgetToSpend)}</span>
         </div>
       </div>
 
