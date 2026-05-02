@@ -168,7 +168,7 @@ const NextMonthBankPrediction = () => {
             <Wallet className="h-4 w-4 text-warning" />
             <span className="text-sm">Remaining Budget</span>
           </div>
-          <span className="text-sm font-medium text-warning">-{formatCurrency(calculatedBudget.leftBudget)}</span>
+          <span className="text-sm font-medium text-warning">-{formatCurrency(remainingBudgetToSpend)}</span>
         </div>
       </div>
 
