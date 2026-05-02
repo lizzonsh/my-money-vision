@@ -82,15 +82,30 @@ const BankBalanceCard = () => {
     .filter(i => i.month === currentMonth)
     .reduce((sum, i) => sum + Number(i.amount), 0);
   
-  // Next month expected income from recurring incomes
+  // Next month expected income — kept in sync with the Incomes slide:
+  // sums actual income entries + savings withdrawals for next month, and
+  // falls back to active recurring income templates when nothing is recorded yet.
   const [yearNum, monthNum] = currentMonth.split('-').map(Number);
   const nextMonthDate = new Date(yearNum, monthNum, 1);
   const nextMonthStr = `${nextMonthDate.getFullYear()}-${String(nextMonthDate.getMonth() + 1).padStart(2, '0')}`;
-  
-  const expectedNextMonthIncome = recurringIncomes
+
+  const nextMonthActualIncome = incomes
+    .filter(i => i.month === nextMonthStr)
+    .reduce((sum, i) => sum + Number(i.amount), 0);
+
+  const nextMonthWithdrawalsIncome = savings
+    .filter(s => s.month === nextMonthStr && s.action === 'withdrawal' && s.action_amount && Number(s.action_amount) > 0)
+    .reduce((sum, s) => sum + convertToILS(Number(s.action_amount), s.currency || 'ILS'), 0);
+
+  const nextMonthRecurringIncome = recurringIncomes
     .filter(i => i.is_active)
     .filter(i => !i.end_date || i.end_date >= nextMonthStr)
     .reduce((sum, i) => sum + Number(i.default_amount), 0);
+
+  // Prefer actuals when present (matches the Incomes slide); otherwise project from recurring templates.
+  const expectedNextMonthIncome = nextMonthActualIncome > 0
+    ? nextMonthActualIncome + nextMonthWithdrawalsIncome
+    : nextMonthRecurringIncome + nextMonthWithdrawalsIncome;
 
   // Credit card debit = expenses with category 'debit_from_credit_card' in current month
   // (User records this on the 3rd when the debit happens)
